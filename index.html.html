@@ -1271,13 +1271,16 @@ function enviarEmailResend(forcado){
   }
   if(!forcado && !emailDeveEnviar()) return;
   const {venc, venciendo} = getResumoPendencias();
-  if(!forcado && !venc.length && !venciendo.length) return;
+  const arts = alertasART();
+  if(!forcado && !venc.length && !venciendo.length && !arts.length) return;
 
   const assunto = venc.length
-    ? `SECONCI — ${venc.length} documento(s) vencido(s)`
+    ? `SECONCI — 🚨 ${venc.length} documento(s) vencido(s)`
     : venciendo.length
-      ? `SECONCI — ${venciendo.length} documento(s) vencendo`
-      : 'SECONCI — Sem pendências';
+      ? `SECONCI — ⏰ ${venciendo.length} documento(s) vencendo`
+      : arts.length
+        ? `SECONCI — ⚠️ ${arts.length} LTCAT(s) com avaliações pendentes`
+        : 'SECONCI — Sem pendências';
 
   fetch('/api/send-email', {
     method: 'POST',
