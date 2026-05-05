@@ -429,6 +429,7 @@
     </div>
     <div class="envio-row">
       <label><input type="checkbox" id="md-env-financeiro" /> Enviado para o financeiro</label>
+      <input type="date" id="md-env-financeiro-data" title="Data de envio ao financeiro" />
     </div>
   </div>
 </form></div>
@@ -792,7 +793,7 @@ function renderDocs(){
       <td><span class="pill ${s.key}">${s.label}</span></td>
       <td style="white-space:nowrap">
         ${d.envCliente ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span> ` : ''}
-        ${d.envFinanceiro ? `<span class="pill enviado-f">✔ Financeiro</span>` : ''}
+        ${d.envFinanceiro ? `<span class="pill enviado-f">✔ Financeiro${d.envFinanceiroData?' '+fmtDate(d.envFinanceiroData):''}</span>` : ''}
       </td>
       <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
     </tr>`;
@@ -944,6 +945,7 @@ function openDoc(id){
   $('#md-env-cliente').checked = d?.envCliente || false;
   $('#md-env-cliente-data').value = d?.envClienteData || '';
   $('#md-env-financeiro').checked = d?.envFinanceiro || false;
+  $('#md-env-financeiro-data').value = d?.envFinanceiroData || '';
   $('#md-delete').style.display = d ? '' : 'none';
   updateValidadeAuto();
   openModal('modal-doc');
@@ -1147,7 +1149,7 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked};
+    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value};
     const idx = state.docs.findIndex(d => d.id === id);
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
     save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
@@ -1440,7 +1442,8 @@ async function salvarDocumentoNuvem(doc) {
     observacoes:       doc.obs || '',
     enviado_cliente:   doc.envCliente || false,
     data_envio_cliente:doc.envClienteData || null,
-    enviado_financeiro:doc.envFinanceiro || false
+    enviado_financeiro:      doc.envFinanceiro || false,
+    data_envio_financeiro:   doc.envFinanceiroData || null
   })
   if (error) console.error('Erro ao salvar no Supabase:', error.message)
 }
