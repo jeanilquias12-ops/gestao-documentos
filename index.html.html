@@ -450,7 +450,7 @@
     </div>
     <div class="field-block full"><label>Resumo atual de pendências</label><div id="nf-resumo" style="background:var(--green-50);border:1px solid var(--line);border-radius:9px;padding:12px;font-size:13px"></div></div>
   </div></div>
-  <div class="modal-f" style="flex-wrap:wrap;gap:6px"><button class="btn sm" id="nf-copy" style="margin-right:auto">📋 Copiar resumo</button><button class="btn sm" id="nf-gmail">✉ Gmail</button><button class="btn sm" id="nf-outlook">✉ Outlook</button><button class="btn primary" id="nf-save">Salvar preferências</button></div>
+  <div class="modal-f" style="flex-wrap:wrap;gap:6px"><button class="btn sm" id="nf-copy" style="margin-right:auto">📋 Copiar resumo</button><button class="btn sm" id="nf-gmail">✉ Gmail</button><button class="btn sm" id="nf-outlook">✉ Outlook</button><button class="btn sm" id="nf-send-now">📤 Enviar e-mail</button><button class="btn primary" id="nf-save">Salvar preferências</button></div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -1142,6 +1142,7 @@ function setupEvents(){
     const url = `https://outlook.live.com/owa/?path=/mail/action/compose&to=${encodeURIComponent(to)}&subject=${encodeURIComponent('SECONCI · Resumo')}&body=${encodeURIComponent(buildEmailBody())}`;
     window.open(url, '_blank');
   };
+  $('#nf-send-now').onclick = () => enviarEmailResend(true);
 
   // Sort
   setupSort('tbl-empresas','empresas');
@@ -1168,7 +1169,46 @@ function initApp(){
   setupEvents();
   renderAll();
   scheduleDesktopNotification();
+  enviarEmailResend(false);
   registerSW();
+}
+
+/* ================== ENVIO DE E-MAIL (Resend) ================== */
+function emailDeveEnviar(){
+  const hoje = todayISO();
+  const last = localStorage.getItem('seconci_email_last') || '';
+  if(notifyPrefs.freq === 'sempre') return true;
+  if(notifyPrefs.freq === 'semanal') return !last || daysBetween(last, hoje) >= 7;
+  return last !== hoje;
+}
+
+function enviarEmailResend(forcado){
+  if(!notifyPrefs.email){
+    if(forcado) toast('Informe o e-mail do responsável nas preferências', 'danger');
+    return;
+  }
+  if(!forcado && !emailDeveEnviar()) return;
+  const {venc, venciendo} = getResumoPendencias();
+  if(!forcado && !venc.length && !venciendo.length) return;
+
+  const assunto = venc.length
+    ? `SECONCI — ${venc.length} documento(s) vencido(s)`
+    : venciendo.length
+      ? `SECONCI — ${venciendo.length} documento(s) vencendo`
+      : 'SECONCI — Sem pendências';
+
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({to: notifyPrefs.email, subject: assunto, message: buildEmailBody()})
+  }).then(r => r.json()).then(data => {
+    if(data.success){
+      localStorage.setItem('seconci_email_last', todayISO());
+      toast('✅ E-mail enviado para ' + notifyPrefs.email, 'ok');
+    } else {
+      toast('Erro: ' + (data.error || 'verifique configuração'), 'danger');
+    }
+  }).catch(() => toast('Erro ao enviar. Verifique conexão.', 'danger'));
 }
 
 /* ================== NOTIFICAÇÃO DESKTOP ================== */
