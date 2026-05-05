@@ -453,8 +453,13 @@
     <div class="field-block full" style="margin-top:6px;padding-top:14px;border-top:1px solid var(--line)">
       <label style="font-size:13px;font-weight:600;color:var(--ink)">📧 Envio automático de e-mail</label>
       <div style="background:var(--green-50);border:1px solid var(--line);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.7">
-        Informe o e-mail abaixo. Na <b>primeira vez</b>, chegará um e-mail de confirmação do Formsubmit — clique no link para ativar. Após isso, o sistema envia automaticamente ao fazer login quando houver documentos pendentes. <b>Sem cadastro necessário.</b>
+        Acesse <b>web3forms.com</b>, informe seu e-mail e copie a <b>chave de acesso</b> que chegará na sua caixa de entrada. Cole abaixo. Gratuito (250 e-mails/mês). Sem cadastro de conta.
       </div>
+    </div>
+    <div class="field-block full">
+      <label>Chave Web3Forms (Access Key)</label>
+      <input id="nf-w3f-key" type="text" placeholder="Ex.: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" />
+      <span class="hint">web3forms.com → informe seu e-mail → chave chega na caixa de entrada</span>
     </div>
     <div class="field-block full" id="nf-email-status" style="display:none">
       <div id="nf-email-status-msg" style="padding:9px 13px;border-radius:8px;font-size:12.5px"></div>
@@ -506,7 +511,7 @@ const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
 let state = {empresas:[], docs:[], contratos:[], avaliacoes:[]};
-let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
+let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:'', w3fKey:''};
 let sortState = {};
 
 const $ = (s, c=document) => c.querySelector(s);
@@ -955,6 +960,7 @@ function openNotifyModal(){
   $('#nf-banner').value = notifyPrefs.banner;
   $('#nf-email').value = notifyPrefs.email;
   $('#nf-freq').value = notifyPrefs.freq;
+  $('#nf-w3f-key').value = notifyPrefs.w3fKey || '';
   const lastEmail = localStorage.getItem('seconci_email_last') || '';
   const statusEl = $('#nf-email-status');
   const statusMsg = $('#nf-email-status-msg');
@@ -962,7 +968,7 @@ function openNotifyModal(){
     statusEl.style.display = '';
     statusMsg.style.cssText = 'padding:9px 13px;border-radius:8px;font-size:12.5px;background:var(--ok-bg);color:var(--ok-fg);border:1px solid var(--ok-line)';
     statusMsg.innerHTML = `✅ Último envio automático: <b>${fmtDate(lastEmail)}</b>`;
-  } else if(notifyPrefs.email) {
+  } else if(notifyPrefs.w3fKey) {
     statusEl.style.display = '';
     statusMsg.style.cssText = 'padding:9px 13px;border-radius:8px;font-size:12.5px;background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line)';
     statusMsg.innerHTML = '⏳ Nenhum e-mail enviado ainda. Clique em "Enviar agora" para testar.';
@@ -1159,6 +1165,7 @@ function setupEvents(){
     notifyPrefs.banner = parseInt($('#nf-banner').value);
     notifyPrefs.email = $('#nf-email').value;
     notifyPrefs.freq = $('#nf-freq').value;
+    notifyPrefs.w3fKey = $('#nf-w3f-key').value.trim();
     saveNotify(); closeModal('modal-notify'); renderAll(); toast('✅ Preferências salvas', 'ok');
   };
   $('#nf-send-now').onclick = () => { enviarEmailVencimentos(true); };
@@ -1214,6 +1221,10 @@ function emailDeveEnviar(){
 }
 
 function enviarEmailVencimentos(forcado){
+  if(!notifyPrefs.w3fKey){
+    if(forcado) toast('Configure a chave Web3Forms nas preferências', 'danger');
+    return;
+  }
   if(!notifyPrefs.email){
     if(forcado) toast('Informe o e-mail do responsável nas preferências', 'danger');
     return;
@@ -1229,23 +1240,25 @@ function enviarEmailVencimentos(forcado){
       ? `SECONCI — ${venciendo.length} documento(s) vencendo`
       : 'SECONCI — Sem pendências de documentos';
 
-  fetch('https://formsubmit.co/ajax/' + encodeURIComponent(notifyPrefs.email), {
+  fetch('https://api.web3forms.com/submit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
     body: JSON.stringify({
-      _subject: assunto,
-      _template: 'table',
+      access_key: notifyPrefs.w3fKey,
+      subject: assunto,
+      from_name: 'SECONCI Goiás',
+      email: notifyPrefs.email,
       message: buildEmailBody()
     })
   }).then(r => r.json()).then(data => {
-    if(data.success === 'true' || data.success === true){
+    if(data.success){
       localStorage.setItem('seconci_email_last', todayISO());
       toast('✅ E-mail enviado para ' + notifyPrefs.email, 'ok');
     } else {
-      toast('Verifique caixa de entrada — confirme o e-mail do Formsubmit', 'danger');
+      toast('Erro: ' + (data.message || 'verifique a chave Web3Forms'), 'danger');
     }
   }).catch(err => {
-    console.error('Formsubmit erro:', err);
+    console.error('Web3Forms erro:', err);
     toast('Erro ao enviar e-mail. Verifique conexão.', 'danger');
   });
 }
