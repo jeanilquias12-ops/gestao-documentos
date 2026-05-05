@@ -823,13 +823,15 @@ function renderDocs(){
       <td><b>${nomeEmpresa(d.empresa)}</b></td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td><span class="mono">${d.numero||'—'}</span></td>
-      <td>${d.responsavel||'—'}</td>
+      <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.responsavel||''}">${d.responsavel||'—'}</td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
       <td><span class="pill ${s.key}">${s.label}</span></td>
-      <td style="white-space:nowrap">
-        ${d.envCliente ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span> ` : ''}
-        ${d.envFinanceiro ? `<span class="pill enviado-f">✔ Financeiro${d.envFinanceiroData?' '+fmtDate(d.envFinanceiroData):''}</span>` : ''}
+      <td style="min-width:120px">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          ${d.envCliente ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span>` : ''}
+          ${d.envFinanceiro ? `<span class="pill enviado-f">✔ Financeiro${d.envFinanceiroData?' '+fmtDate(d.envFinanceiroData):''}</span>` : ''}
+        </div>
       </td>
       <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
     </tr>`;
