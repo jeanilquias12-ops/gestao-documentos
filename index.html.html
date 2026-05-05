@@ -170,6 +170,10 @@
   .field-block input,.field-block select,.field-block textarea{padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .field-block input:focus,.field-block select:focus,.field-block textarea:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(76,175,80,.15)}
   .field-block .hint{font-size:11px;color:var(--ink-muted)}
+  .tipos-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin-top:6px}
+  .tipo-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+  .tipo-row span{font-size:12px;color:var(--ink-soft);flex:1;line-height:1.3}
+  .tipo-row input{width:54px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;text-align:center;font-size:13px;font-weight:500}
   .autofill{position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);z-index:10;display:none;max-height:200px;overflow:auto}
   .autofill.show{display:block}
   .autofill div{padding:8px 11px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:8px}
@@ -459,8 +463,21 @@
   <div class="modal-b"><form id="form-contrato"><input type="hidden" id="mc-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="mc-empresa" required></select></div>
     <div class="field-block"><label>Documento vinculado</label><select id="mc-doc"><option value="">— Sem vínculo —</option></select></div>
-    <div class="field-block"><label>Quantidade contratada *</label><input id="mc-qtd" type="number" min="1" value="10" /></div>
-    <div class="field-block full"><label>Descrição / agentes previstos</label><input id="mc-desc" /></div>
+    <div class="field-block"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
+    <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação</label>
+      <div class="tipos-grid">
+        <div class="tipo-row"><span>Dosimetria de Ruído</span><input id="mc-ruido" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Particulado Total — Poeiras e Sílicas</span><input id="mc-poeira" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Vibrações</span><input id="mc-vibracoes" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>BTXE</span><input id="mc-btxe" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Vapores Orgânicos</span><input id="mc-vapores" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Cloro Gasoso</span><input id="mc-cloro" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Poeira Vegetal</span><input id="mc-poeira-veg" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Metais (10 Metais)</span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+      </div>
+    </div>
+    <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mc-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mc-save">Salvar contrato</button></div>
 </div></div>
@@ -526,6 +543,23 @@ function logout(){
     localStorage.removeItem(AUTH_KEY);
     location.reload();
   }
+}
+
+/* ================== TIPOS DE AVALIAÇÃO ================== */
+const TIPOS_AVALIACAO = [
+  {key:'ruido',      id:'mc-ruido',      nome:'Dosimetria de Ruído',                  valor:120},
+  {key:'poeira',     id:'mc-poeira',     nome:'Particulado Total - Poeiras e Sílicas', valor:380},
+  {key:'vibracoes',  id:'mc-vibracoes',  nome:'Vibrações',                            valor:300},
+  {key:'btxe',       id:'mc-btxe',       nome:'BTXE',                                 valor:600},
+  {key:'vapores',    id:'mc-vapores',    nome:'Varreduras de Vapores Orgânicos',        valor:1000},
+  {key:'cloro',      id:'mc-cloro',      nome:'Cloro Gasoso',                          valor:600},
+  {key:'poeira_veg', id:'mc-poeira-veg', nome:'Poeira Vegetal',                        valor:200},
+  {key:'metais',     id:'mc-metais',     nome:'Varreduras de Metais (10 Metais)',       valor:800},
+];
+
+function recalcTotalContrato(){
+  const total = TIPOS_AVALIACAO.reduce((s,t) => s + (parseInt($('#'+t.id).value)||0), 0);
+  $('#mc-qtd').value = total;
 }
 
 /* ================== ESTADO ================== */
@@ -876,7 +910,8 @@ function renderAvaliacoes(){
       <div class="card-h">
         <div>
           <h3>${nomeEmpresa(c.empresa)}</h3>
-          <p>${c.desc || 'Sem descrição'}${docInfo ? ` · vinculado a ${docInfo.tipo} ${docInfo.numero||''}` : ''}</p>
+          <p>${c.desc || ''}${docInfo ? `${c.desc?' · ':''}vinculado a ${docInfo.tipo} ${docInfo.numero||''}` : ''}</p>
+          ${c.tipos ? `<p style="margin:4px 0 0;font-size:12px;color:var(--ink-muted)">${TIPOS_AVALIACAO.filter(t=>(c.tipos[t.key]||0)>0).map(t=>`<span style="display:inline-block;background:var(--green-100);border-radius:4px;padding:1px 6px;margin:1px 2px 1px 0">${t.nome.split(' ')[0] === 'Particulado' ? 'Part. Total' : t.nome.split(' ')[0] === 'Varreduras' ? (t.key==='metais'?'Metais':'Vapores') : t.nome.split(' ')[0]}: ${c.tipos[t.key]}</span>`).join('')}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn sm" onclick="openContrato('${c.id}')">Editar contrato</button>
@@ -1019,7 +1054,9 @@ function openContrato(id){
   $('#mc-empresa').value = c?.empresa || state.empresas[0]?.id || '';
   $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + state.docs.map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''} (${nomeEmpresa(d.empresa)})</option>`).join('');
   $('#mc-doc').value = c?.doc || '';
-  $('#mc-qtd').value = c?.qtd || 10;
+  const tipos = c?.tipos || {};
+  TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
+  recalcTotalContrato();
   $('#mc-desc').value = c?.desc || '';
   $('#mc-delete').style.display = c ? '' : 'none';
   openModal('modal-contrato');
@@ -1224,10 +1261,12 @@ function setupEvents(){
   // Salvar contrato
   $('#mc-save').onclick = () => {
     const empresa = $('#mc-empresa').value;
-    const qtd = parseInt($('#mc-qtd').value) || 0;
-    if(!empresa || qtd < 1){ toast('Preencha empresa e quantidade', 'danger'); return; }
+    const tipos = {};
+    TIPOS_AVALIACAO.forEach(t => { tipos[t.key] = parseInt($('#'+t.id).value)||0; });
+    const qtd = TIPOS_AVALIACAO.reduce((s,t) => s + tipos[t.key], 0);
+    if(!empresa || qtd < 1){ toast('Preencha empresa e ao menos um tipo de avaliação', 'danger'); return; }
     const id = $('#mc-id').value || 'c'+uid();
-    const data = {id, empresa, doc:$('#mc-doc').value, qtd, desc:$('#mc-desc').value};
+    const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, desc:$('#mc-desc').value};
     const idx = state.contratos.findIndex(c => c.id === id);
     if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
     save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
@@ -1534,7 +1573,8 @@ async function salvarEmpresaNuvem(emp) {
 async function salvarContratoNuvem(c) {
   const { error } = await db.from('contratos').upsert({
     id: c.id, cliente_id: c.empresa, doc_id: c.ltcat || null,
-    qtd: c.qtd, descricao: c.desc || ''
+    qtd: c.qtd, descricao: c.desc || '',
+    tipos_qtd: JSON.stringify(c.tipos || {})
   })
   if (error) console.error('Erro ao salvar contrato:', error.message)
 }
@@ -1602,7 +1642,8 @@ async function carregarDaNuvem() {
       empresa: c.cliente_id,
       ltcat:   c.doc_id || '',
       qtd:     c.qtd,
-      desc:    c.descricao || ''
+      desc:    c.descricao || '',
+      tipos:   c.tipos_qtd ? (() => { try{ return JSON.parse(c.tipos_qtd) }catch(e){ return {} } })() : {}
     }))
   }
 
