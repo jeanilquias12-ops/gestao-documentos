@@ -15,6 +15,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'NOTIFY_EMAIL ou RESEND_API_KEY não configurados' });
   }
 
+  const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
+
   const today = new Date().toISOString().slice(0, 10);
   const in90  = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -61,7 +63,7 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       from: 'SECONCI Goiás <onboarding@resend.dev>',
-      to:   [notifyEmail],
+      to:   recipients,
       subject: assunto,
       text: message
     })
