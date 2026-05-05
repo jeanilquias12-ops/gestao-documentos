@@ -407,9 +407,8 @@
     <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 2 anos de validade</option><option value="LTCAT">LTCAT — sem validade fixa</option></select></div>
     <div class="field-block"><label>Número / Versão</label><input id="md-numero" placeholder="Ex.: PGR-2026-001" /></div>
     <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required /></div>
-    <div class="field-block"><label>Data de validade</label><input id="md-validade" type="date" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
-    <div class="field-block" id="md-art-block" style="display:none"><label>Validade da ART</label><input id="md-art" type="date" /><span class="hint">ART do LTCAT — prazo 12 meses</span></div>
-    <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Eng. Carlos Mendes — CREA-GO 12345</option><option>Dra. Patrícia Lima — CRM 9876</option><option>Eng. Roberto Souza — CREA-GO 22189</option></datalist></div>
+    <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
+    <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
     <div class="field-block full"><label>Observações</label><textarea id="md-obs" rows="2"></textarea></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="md-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="md-save">Salvar documento</button></div>
@@ -597,8 +596,8 @@ function alertasART(){
   const em30 = new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,10);
   const result = [];
   state.docs.forEach(d => {
-    if(d.tipo !== 'LTCAT' || !d.art_validade) return;
-    const diasRestantes = daysBetween(hoje, d.art_validade);
+    if(d.tipo !== 'LTCAT' || !d.validade) return;
+    const diasRestantes = daysBetween(hoje, d.validade);
     if(diasRestantes > 30) return;
     const contrato = state.contratos.find(c => c.doc === d.id);
     if(!contrato) return;
@@ -685,7 +684,7 @@ function renderDashboard(){
       return `<tr>
         <td><b>${nomeEmpresa(doc.empresa)}</b></td>
         <td><span class="mono">${doc.numero||'—'}</span></td>
-        <td class="tight">${fmtDate(doc.art_validade)}</td>
+        <td class="tight">${fmtDate(doc.validade)}</td>
         <td>${realizadas}</td>
         <td><span class="pill ${cls}">${pendentes} pendente${pendentes>1?'s':''}</span></td>
         <td><span class="pill ${cls}">${label}</span></td>
@@ -914,8 +913,8 @@ function openDoc(id){
   $('#md-numero').value = d?.numero || '';
   $('#md-emissao').value = d?.emissao || todayISO();
   $('#md-validade').value = d?.validade || '';
-  $('#md-art').value = d?.art_validade || '';
-  $('#md-resp').value = d?.responsavel || '';
+
+  $('#md-resp').value = d?.responsavel || 'Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO';
   $('#md-obs').value = d?.obs || '';
   $('#md-delete').style.display = d ? '' : 'none';
   updateValidadeAuto();
@@ -925,11 +924,17 @@ function openDoc(id){
 function updateValidadeAuto(){
   const tipo = $('#md-tipo').value;
   const em = $('#md-emissao').value;
-  if(tipo === 'PGR' && em && !$('#md-validade').value){
-    const d = new Date(em+'T00:00:00'); d.setFullYear(d.getFullYear()+2);
-    $('#md-validade').value = d.toISOString().slice(0,10);
+  if(tipo === 'PGR'){
+    $('#md-validade-label').textContent = 'Data de validade';
+    $('#md-validade-hint').textContent = 'PGR é preenchido automaticamente em +2 anos';
+    if(em && !$('#md-validade').value){
+      const d = new Date(em+'T00:00:00'); d.setFullYear(d.getFullYear()+2);
+      $('#md-validade').value = d.toISOString().slice(0,10);
+    }
+  } else {
+    $('#md-validade-label').textContent = 'Validade da ART';
+    $('#md-validade-hint').textContent = 'ART do LTCAT — prazo 12 meses';
   }
-  $('#md-art-block').style.display = tipo === 'LTCAT' ? '' : 'none';
 }
 
 function openContrato(id){
@@ -1005,7 +1010,7 @@ function buildEmailBody(){
   let body = `Resumo SECONCI — ${new Date().toLocaleDateString('pt-BR')}\n\n`;
   if(venc.length){ body += `🚨 ${venc.length} DOCUMENTO(S) VENCIDO(S):\n`; venc.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (venceu em ${fmtDate(d.validade)})\n`; }); body += '\n'; }
   if(venciendo.length){ body += `⏰ ${venciendo.length} DOCUMENTO(S) VENCENDO:\n`; venciendo.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (vence ${fmtDate(d.validade)})\n`; }); body += '\n'; }
-  if(arts.length){ body += `📋 AVALIAÇÕES PENDENTES C/ PRAZO (ART):\n`; arts.forEach(({doc, pendentes, diasRestantes}) => { body += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''}: ${pendentes} avaliação(ões) pendente(s), ART vence em ${diasRestantes} dias (${fmtDate(doc.art_validade)})\n`; }); body += '\n'; }
+  if(arts.length){ body += `📋 AVALIAÇÕES PENDENTES C/ PRAZO (ART):\n`; arts.forEach(({doc, pendentes, diasRestantes}) => { body += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''}: ${pendentes} avaliação(ões) pendente(s), ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n`; }); body += '\n'; }
   if(!venc.length && !venciendo.length && !arts.length) body += '✅ Sem pendências no momento.';
   return body;
 }
@@ -1114,7 +1119,7 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, art_validade:$('#md-art').value, obs:$('#md-obs').value};
+    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value};
     const idx = state.docs.findIndex(d => d.id === id);
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
     save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
@@ -1373,7 +1378,6 @@ async function salvarDocumentoNuvem(doc) {
     responsavel:     doc.responsavel || '',
     data_emissao:    doc.emissao || '',
     data_vencimento: doc.validade || doc.venc || '',
-    art_validade:    doc.art_validade || null,
     observacoes:     doc.obs || ''
   })
   if (error) console.error('Erro ao salvar no Supabase:', error.message)
@@ -1414,7 +1418,6 @@ async function carregarDaNuvem() {
     responsavel: d.responsavel,
     emissao:     d.data_emissao,
     validade:    d.data_vencimento,
-    art_validade: d.art_validade || '',
     obs:         d.observacoes
   }))
 
