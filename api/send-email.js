@@ -6,20 +6,17 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'to, subject e message são obrigatórios' });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'RESEND_API_KEY não configurada' });
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'BREVO_API_KEY não configurada' });
 
-  const response = await fetch('https://api.resend.com/emails', {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'SECONCI Goiás <onboarding@resend.dev>',
-      to: [to],
+      sender: { name: 'SECONCI Goiás', email: 'jeanilquias12@gmail.com' },
+      to: [{ email: to }],
       subject,
-      text: message
+      textContent: message
     })
   });
 
@@ -27,6 +24,6 @@ module.exports = async function handler(req, res) {
   if (response.ok) {
     res.status(200).json({ success: true });
   } else {
-    res.status(500).json({ error: data.message || 'Erro ao enviar' });
+    res.status(500).json({ error: data.message || JSON.stringify(data) });
   }
 };

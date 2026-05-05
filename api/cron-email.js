@@ -7,14 +7,28 @@ const fmtDate = iso => {
   return `${d}/${m}/${y}`;
 };
 
+async function sendBrevo(recipients, subject, message, apiKey) {
+  const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sender: { name: 'SECONCI Goiás', email: 'jeanilquias12@gmail.com' },
+      to: recipients.map(e => ({ email: e })),
+      subject,
+      textContent: message
+    })
+  });
+  return r;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   const notifyEmail = process.env.NOTIFY_EMAIL;
-  const resendKey   = process.env.RESEND_API_KEY;
+  const apiKey      = process.env.BREVO_API_KEY;
 
-  if (!notifyEmail || !resendKey) {
-    return res.status(500).json({ error: 'NOTIFY_EMAIL ou RESEND_API_KEY não configurados' });
+  if (!notifyEmail || !apiKey) {
+    return res.status(500).json({ error: 'NOTIFY_EMAIL ou BREVO_API_KEY não configurados' });
   }
 
   const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
@@ -22,15 +36,12 @@ module.exports = async function handler(req, res) {
   // Alerta imediato disparado ao salvar documento
   if (req.method === 'POST' && req.body && req.body._trigger === 'doc-save') {
     const { assunto, message } = req.body;
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'SECONCI Goiás <onboarding@resend.dev>', to: recipients, subject: assunto, text: message })
-    });
+    const r = await sendBrevo(recipients, assunto, message, apiKey);
     const d = await r.json();
-    return r.ok ? res.json({ success: true }) : res.status(500).json({ error: d.message });
+    return r.ok ? res.json({ success: true }) : res.status(500).json({ error: d.message || JSON.stringify(d) });
   }
 
+  // Resumo diário (cron 7h)
   const today = new Date().toISOString().slice(0, 10);
   const in90  = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -69,20 +80,10 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const emailRes = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: 'SECONCI Goiás <onboarding@resend.dev>',
-      to: recipients,
-      subject: assunto,
-      text: message
-    })
-  });
-
+  const emailRes = await sendBrevo(recipients, assunto, message, apiKey);
   const data = await emailRes.json();
   if (emailRes.ok) {
     return res.status(200).json({ success: true, vencidos: vencidos.length, vencendo: vencendo.length });
   }
-  return res.status(500).json({ error: data.message });
+  return res.status(500).json({ error: data.message || JSON.stringify(data) });
 };
