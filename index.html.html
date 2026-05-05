@@ -254,15 +254,8 @@
 <div class="app" id="appContainer">
   <aside class="sidebar">
     <div class="brand">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:42px;height:42px;background:#27AE60;border-radius:10px;display:grid;place-items:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="white"><rect x="9" y="3" width="6" height="18" rx="2"/><rect x="3" y="9" width="18" height="6" rx="2"/></svg>
-        </div>
-        <div style="display:flex;flex-direction:column;line-height:1.15">
-          <span style="font-size:17px;font-weight:800;color:#fff;letter-spacing:.04em">SECONCI</span>
-          <span style="font-size:11px;font-weight:700;color:#27AE60;letter-spacing:.1em">GOIÁS · SST</span>
-        </div>
-      </div>
+      <div class="logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="white"><rect x="9" y="3" width="6" height="18" rx="2"/><rect x="3" y="9" width="18" height="6" rx="2"/></svg></div>
+      <div class="brand-text"><b>SECONCI</b><span>Goiás · SST</span></div>
     </div>
 
     <div class="navlabel">Operação</div>
@@ -450,20 +443,6 @@
     <div class="field-block"><label>Banner no topo do sistema</label><select id="nf-banner"><option value="1" selected>Mostrar quando houver pendências</option><option value="0">Não mostrar</option></select></div>
     <div class="field-block"><label>E-mail do responsável</label><input id="nf-email" type="email" placeholder="sst@suaempresa.com.br" /></div>
     <div class="field-block"><label>Frequência mínima</label><select id="nf-freq"><option value="sempre">A cada abertura</option><option value="diaria" selected>Uma vez por dia</option><option value="semanal">Uma vez por semana</option></select></div>
-    <div class="field-block full" style="margin-top:6px;padding-top:14px;border-top:1px solid var(--line)">
-      <label style="font-size:13px;font-weight:600;color:var(--ink)">📧 Envio automático de e-mail</label>
-      <div style="background:var(--green-50);border:1px solid var(--line);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.7">
-        Acesse <b>web3forms.com</b>, informe seu e-mail e copie a <b>chave de acesso</b> que chegará na sua caixa de entrada. Cole abaixo. Gratuito (250 e-mails/mês). Sem cadastro de conta.
-      </div>
-    </div>
-    <div class="field-block full">
-      <label>Chave Web3Forms (Access Key)</label>
-      <input id="nf-w3f-key" type="text" placeholder="Ex.: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" />
-      <span class="hint">web3forms.com → informe seu e-mail → chave chega na caixa de entrada</span>
-    </div>
-    <div class="field-block full" id="nf-email-status" style="display:none">
-      <div id="nf-email-status-msg" style="padding:9px 13px;border-radius:8px;font-size:12.5px"></div>
-    </div>
     <div class="field-block full" id="nf-https-warn" style="display:none">
       <div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:10px 13px;border-radius:8px;font-size:12.5px">
         ⚠ <b>Atenção:</b> Notificações requerem <b>HTTPS</b> em produção. Em HTTP o browser bloqueia as notificações. Use HTTPS ou localhost para testar.
@@ -471,7 +450,7 @@
     </div>
     <div class="field-block full"><label>Resumo atual de pendências</label><div id="nf-resumo" style="background:var(--green-50);border:1px solid var(--line);border-radius:9px;padding:12px;font-size:13px"></div></div>
   </div></div>
-  <div class="modal-f" style="flex-wrap:wrap;gap:6px"><button class="btn sm" id="nf-copy" style="margin-right:auto">📋 Copiar resumo</button><button class="btn sm" id="nf-gmail">✉ Gmail</button><button class="btn sm" id="nf-outlook">✉ Outlook</button><button class="btn sm" id="nf-send-now">📤 Enviar agora</button><button class="btn primary" id="nf-save">Salvar preferências</button></div>
+  <div class="modal-f" style="flex-wrap:wrap;gap:6px"><button class="btn sm" id="nf-copy" style="margin-right:auto">📋 Copiar resumo</button><button class="btn sm" id="nf-gmail">✉ Gmail</button><button class="btn sm" id="nf-outlook">✉ Outlook</button><button class="btn primary" id="nf-save">Salvar preferências</button></div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -511,7 +490,7 @@ const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
 let state = {empresas:[], docs:[], contratos:[], avaliacoes:[]};
-let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:'', w3fKey:''};
+let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
 
 const $ = (s, c=document) => c.querySelector(s);
@@ -960,21 +939,6 @@ function openNotifyModal(){
   $('#nf-banner').value = notifyPrefs.banner;
   $('#nf-email').value = notifyPrefs.email;
   $('#nf-freq').value = notifyPrefs.freq;
-  $('#nf-w3f-key').value = notifyPrefs.w3fKey || '';
-  const lastEmail = localStorage.getItem('seconci_email_last') || '';
-  const statusEl = $('#nf-email-status');
-  const statusMsg = $('#nf-email-status-msg');
-  if(lastEmail){
-    statusEl.style.display = '';
-    statusMsg.style.cssText = 'padding:9px 13px;border-radius:8px;font-size:12.5px;background:var(--ok-bg);color:var(--ok-fg);border:1px solid var(--ok-line)';
-    statusMsg.innerHTML = `✅ Último envio automático: <b>${fmtDate(lastEmail)}</b>`;
-  } else if(notifyPrefs.w3fKey) {
-    statusEl.style.display = '';
-    statusMsg.style.cssText = 'padding:9px 13px;border-radius:8px;font-size:12.5px;background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line)';
-    statusMsg.innerHTML = '⏳ Nenhum e-mail enviado ainda. Clique em "Enviar agora" para testar.';
-  } else {
-    statusEl.style.display = 'none';
-  }
   const {venc, venciendo} = getResumoPendencias();
   let resumo = '';
   if(!venc.length && !venciendo.length){ resumo = '✅ Sem pendências no momento.'; }
@@ -1165,10 +1129,8 @@ function setupEvents(){
     notifyPrefs.banner = parseInt($('#nf-banner').value);
     notifyPrefs.email = $('#nf-email').value;
     notifyPrefs.freq = $('#nf-freq').value;
-    notifyPrefs.w3fKey = $('#nf-w3f-key').value.trim();
     saveNotify(); closeModal('modal-notify'); renderAll(); toast('✅ Preferências salvas', 'ok');
   };
-  $('#nf-send-now').onclick = () => { enviarEmailVencimentos(true); };
   $('#nf-copy').onclick = () => { navigator.clipboard.writeText(buildEmailBody()).then(() => toast('✅ Resumo copiado', 'ok')); };
   $('#nf-gmail').onclick = () => {
     const to = notifyPrefs.email || '';
@@ -1206,61 +1168,7 @@ function initApp(){
   setupEvents();
   renderAll();
   scheduleDesktopNotification();
-  enviarEmailVencimentos(false);
   registerSW();
-}
-
-/* ================== ENVIO DE E-MAIL (Formsubmit) ================== */
-function emailDeveEnviar(){
-  const hoje = todayISO();
-  const last = localStorage.getItem('seconci_email_last') || '';
-  const freq = notifyPrefs.freq;
-  if(freq === 'sempre') return true;
-  if(freq === 'semanal') return !last || daysBetween(last, hoje) >= 7;
-  return last !== hoje;
-}
-
-function enviarEmailVencimentos(forcado){
-  if(!notifyPrefs.w3fKey){
-    if(forcado) toast('Configure a chave Web3Forms nas preferências', 'danger');
-    return;
-  }
-  if(!notifyPrefs.email){
-    if(forcado) toast('Informe o e-mail do responsável nas preferências', 'danger');
-    return;
-  }
-  if(!forcado && !emailDeveEnviar()) return;
-
-  const {venc, venciendo} = getResumoPendencias();
-  if(!forcado && !venc.length && !venciendo.length) return;
-
-  const assunto = venc.length
-    ? `SECONCI — ${venc.length} documento(s) vencido(s)`
-    : venciendo.length
-      ? `SECONCI — ${venciendo.length} documento(s) vencendo`
-      : 'SECONCI — Sem pendências de documentos';
-
-  fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    body: JSON.stringify({
-      access_key: notifyPrefs.w3fKey,
-      subject: assunto,
-      from_name: 'SECONCI Goiás',
-      email: notifyPrefs.email,
-      message: buildEmailBody()
-    })
-  }).then(r => r.json()).then(data => {
-    if(data.success){
-      localStorage.setItem('seconci_email_last', todayISO());
-      toast('✅ E-mail enviado para ' + notifyPrefs.email, 'ok');
-    } else {
-      toast('Erro: ' + (data.message || 'verifique a chave Web3Forms'), 'danger');
-    }
-  }).catch(err => {
-    console.error('Web3Forms erro:', err);
-    toast('Erro ao enviar e-mail. Verifique conexão.', 'danger');
-  });
 }
 
 /* ================== NOTIFICAÇÃO DESKTOP ================== */
