@@ -117,6 +117,18 @@
   td.tight{white-space:nowrap}
   td .mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-soft)}
 
+  .hist-section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .hist-section h4{font-size:12px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+  .hist-lista{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+  .hist-entry{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;background:#F7FAF8}
+  .hist-icon{font-size:15px;flex-shrink:0;line-height:1.5}
+  .hist-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .hist-desc{font-size:13px;font-weight:500;color:var(--ink-main)}
+  .hist-data{font-size:11.5px;color:var(--ink-muted)}
+  .hist-entry.hist-criado{background:#E8F5E9}
+  .hist-entry.hist-enviado_cliente{background:#E3F2FD}
+  .hist-entry.hist-enviado_financeiro{background:#EDE7F6}
+  .hist-entry.hist-validade{background:#FFF8E1}
   .envio-section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .envio-section h4{font-size:12px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
   .envio-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px;background:#F7FAF8;margin-bottom:6px}
@@ -421,6 +433,10 @@
     <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
     <div class="field-block full"><label>Observações</label><textarea id="md-obs" rows="2"></textarea></div>
   </div>
+  <div class="hist-section" id="md-hist-section" style="display:none">
+    <h4>Histórico de alterações</h4>
+    <div class="hist-lista" id="md-hist-lista"></div>
+  </div>
   <div class="envio-section">
     <h4>Controle de envio</h4>
     <div class="envio-row">
@@ -515,7 +531,7 @@ function logout(){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], docs:[], contratos:[], avaliacoes:[]};
+let state = {empresas:[], docs:[], contratos:[], avaliacoes:[], historico:[]};
 let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
 
@@ -524,7 +540,27 @@ const $$ = (s, c=document) => [...c.querySelectorAll(s)];
 const uid = () => Math.random().toString(36).slice(2,9);
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return '—'; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('pt-BR'); };
+const fmtDateTime = (iso) => { if(!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
+
+const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰'};
+
+function registrarHistorico(docId, tipo, descricao){
+  if(!state.historico) state.historico = [];
+  const entrada = {id:'h'+uid(), docId, tipo, descricao, dataHora: new Date().toISOString()};
+  state.historico.push(entrada);
+  save();
+  salvarHistoricoNuvem(entrada);
+}
+
+function renderHistoricoModal(docId){
+  const hist = (state.historico||[]).filter(h => h.docId === docId).sort((a,b) => b.dataHora.localeCompare(a.dataHora));
+  const sec = $('#md-hist-section');
+  const lista = $('#md-hist-lista');
+  if(!hist.length){ sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  lista.innerHTML = hist.map(h => `<div class="hist-entry hist-${h.tipo}"><span class="hist-icon">${HIST_ICONS[h.tipo]||'📝'}</span><div class="hist-info"><span class="hist-desc">${h.descricao}</span><span class="hist-data">${fmtDateTime(h.dataHora)}</span></div></div>`).join('');
+}
 
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); syncSW(); }
 function saveNotify(){ localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifyPrefs)); syncSW(); }
@@ -947,6 +983,7 @@ function openDoc(id){
   $('#md-env-financeiro').checked = d?.envFinanceiro || false;
   $('#md-env-financeiro-data').value = d?.envFinanceiroData || '';
   $('#md-delete').style.display = d ? '' : 'none';
+  if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
   openModal('modal-doc');
 }
@@ -1151,9 +1188,23 @@ function setupEvents(){
     const id = $('#md-id').value || 'd'+uid();
     const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value};
     const idx = state.docs.findIndex(d => d.id === id);
+    const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
     save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
     salvarDocumentoNuvem(data);
+    // Registrar histórico
+    if(!docAntigo){
+      registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`);
+    } else {
+      if(docAntigo.validade !== data.validade)
+        registrarHistorico(id, 'validade', `Validade atualizada: ${fmtDate(docAntigo.validade)} → ${fmtDate(data.validade)}`);
+      if(!docAntigo.envCliente && data.envCliente)
+        registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
+      if(!docAntigo.envFinanceiro && data.envFinanceiro)
+        registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
+      if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
+        registrarHistorico(id, 'atualizado', `Documento atualizado`);
+    }
     const st = statusDoc(data);
     if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
   };
@@ -1446,6 +1497,17 @@ async function salvarDocumentoNuvem(doc) {
     data_envio_financeiro:   doc.envFinanceiroData || null
   })
   if (error) console.error('Erro ao salvar no Supabase:', error.message)
+}
+
+async function salvarHistoricoNuvem(entrada) {
+  const { error } = await db.from('historico_documentos').insert({
+    id:        entrada.id,
+    doc_id:    entrada.docId,
+    tipo:      entrada.tipo,
+    descricao: entrada.descricao,
+    data_hora: entrada.dataHora
+  });
+  if (error) console.error('Erro ao salvar histórico:', error.message)
 }
 
 async function salvarEmpresaNuvem(emp) {
