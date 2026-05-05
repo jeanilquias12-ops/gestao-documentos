@@ -1231,6 +1231,7 @@ function initApp(){
   renderAll();
   scheduleDesktopNotification();
   enviarEmailResend(false);
+  alertarEmailARTPendentes();
   registerSW();
 }
 
@@ -1262,6 +1263,28 @@ function alertarEmailDoc(doc, st){
     if(d.success) toast('📧 Alerta enviado por e-mail', 'ok');
     else toast('Erro e-mail: ' + (d.error || 'verifique Vercel'), 'danger');
   }).catch(() => toast('Erro ao enviar alerta por e-mail', 'danger'));
+}
+
+function alertarEmailARTPendentes(){
+  const hoje = todayISO();
+  const lastKey = 'seconci_art_alert_last';
+  if(localStorage.getItem(lastKey) === hoje) return;
+  const arts = alertasART();
+  if(!arts.length) return;
+  localStorage.setItem(lastKey, hoje);
+  const assunto = `SECONCI — ⚠️ ${arts.length} LTCAT(s) com avaliações pendentes`;
+  let message = `Alerta SECONCI — ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  message += `⚠️ AVALIAÇÕES PENDENTES (ART vence em ≤30 dias):\n`;
+  arts.forEach(({doc, pendentes, diasRestantes}) => {
+    message += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''}: ${pendentes} avaliação(ões) pendente(s), ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n`;
+  });
+  fetch('/api/cron-email', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({_trigger: 'doc-save', assunto, message})
+  }).then(r => r.json()).then(d => {
+    if(d.success) toast('📧 Alerta de avaliações pendentes enviado', 'ok');
+  }).catch(() => {});
 }
 
 function enviarEmailResend(forcado){
