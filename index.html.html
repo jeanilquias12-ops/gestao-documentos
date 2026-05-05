@@ -477,7 +477,7 @@
         <div class="tipo-row"><span>Varreduras de Metais (10 Metais)</span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
       </div>
     </div>
-    <div class="field-block"><label>Valor do contrato (R$)</label><input id="mc-valor" type="number" min="0" step="0.01" placeholder="Ex.: 5000.00" oninput="recalcTotalContrato()" /></div>
+    <div class="field-block"><label>Valor do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
     <div class="field-block"><label>Valor por avaliação</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Calculado automaticamente" /></div>
     <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
   </div></form></div>
@@ -562,7 +562,7 @@ const TIPOS_AVALIACAO = [
 function recalcTotalContrato(){
   const total = TIPOS_AVALIACAO.reduce((s,t) => s + (parseInt($('#'+t.id).value)||0), 0);
   $('#mc-qtd').value = total;
-  const valor = parseFloat($('#mc-valor').value) || 0;
+  const valor = parseMcValor();
   $('#mc-valor-unit').value = (valor > 0 && total > 0) ? fmtReal(valor / total) + '/avaliação' : '';
 }
 
@@ -581,6 +581,8 @@ const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return '—'; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('pt-BR'); };
 const fmtDateTime = (iso) => { if(!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 const fmtReal = (v) => v ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+function mascararReal(el){ const digits = el.value.replace(/\D/g,'').replace(/^0+/,'') || '0'; const cents = digits.padStart(3,'0'); const intPart = cents.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value = intPart + ',' + cents.slice(-2); }
+function parseMcValor(){ const raw = ($('#mc-valor').value||'').replace(/\./g,'').replace(',','.'); return parseFloat(raw) || 0; }
 const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
 
 const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰'};
@@ -1062,7 +1064,7 @@ function openContrato(id){
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
-  $('#mc-valor').value = c?.valor || '';
+  $('#mc-valor').value = c?.valor ? Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
   recalcTotalContrato();
   $('#mc-desc').value = c?.desc || '';
   $('#mc-delete').style.display = c ? '' : 'none';
@@ -1273,7 +1275,7 @@ function setupEvents(){
     const qtd = TIPOS_AVALIACAO.reduce((s,t) => s + tipos[t.key], 0);
     if(!empresa || qtd < 1){ toast('Preencha empresa e ao menos um tipo de avaliação', 'danger'); return; }
     const id = $('#mc-id').value || 'c'+uid();
-    const valor = parseFloat($('#mc-valor').value) || 0;
+    const valor = parseMcValor();
     const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
     const idx = state.contratos.findIndex(c => c.id === id);
     if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
