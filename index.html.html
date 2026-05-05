@@ -477,6 +477,8 @@
         <div class="tipo-row"><span>Varreduras de Metais (10 Metais)</span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
       </div>
     </div>
+    <div class="field-block"><label>Valor do contrato (R$)</label><input id="mc-valor" type="number" min="0" step="0.01" placeholder="Ex.: 5000.00" oninput="recalcTotalContrato()" /></div>
+    <div class="field-block"><label>Valor por avaliação</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Calculado automaticamente" /></div>
     <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mc-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mc-save">Salvar contrato</button></div>
@@ -560,6 +562,8 @@ const TIPOS_AVALIACAO = [
 function recalcTotalContrato(){
   const total = TIPOS_AVALIACAO.reduce((s,t) => s + (parseInt($('#'+t.id).value)||0), 0);
   $('#mc-qtd').value = total;
+  const valor = parseFloat($('#mc-valor').value) || 0;
+  $('#mc-valor-unit').value = (valor > 0 && total > 0) ? fmtReal(valor / total) + '/avaliação' : '';
 }
 
 /* ================== ESTADO ================== */
@@ -576,6 +580,7 @@ const uid = () => Math.random().toString(36).slice(2,9);
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return '—'; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('pt-BR'); };
 const fmtDateTime = (iso) => { if(!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+const fmtReal = (v) => v ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
 const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
 
 const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰'};
@@ -924,6 +929,7 @@ function renderAvaliacoes(){
           <span>${r}/${c.qtd}</span>
         </div>
         ${pct >= 0.8 ? `<div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px">⚠ Atenção: ${Math.round(pct*100)}% do saldo contratado utilizado</div>` : ''}
+        ${c.valor > 0 ? (() => { const vUnit = c.valor / c.qtd; const saldoFin = c.valor - r * vUnit; const esgotado = saldoFin <= 0; return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg, #fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line, #fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center"> <span>💰 Valor do contrato: <b>${fmtReal(c.valor)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Por avaliação: <b>${fmtReal(vUnit)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Saldo financeiro: <b style="color:${esgotado?'var(--danger-fg, #dc2626)':'inherit'}">${fmtReal(Math.max(saldoFin,0))}</b></span> ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''} </div>`; })() : ''}
         ${evals.length ? evals.map(a => `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
           <span><b>${a.agente}</b><br><small style="color:var(--ink-muted)">${a.local||'—'}</small></span>
@@ -1056,6 +1062,7 @@ function openContrato(id){
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
+  $('#mc-valor').value = c?.valor || '';
   recalcTotalContrato();
   $('#mc-desc').value = c?.desc || '';
   $('#mc-delete').style.display = c ? '' : 'none';
@@ -1266,7 +1273,8 @@ function setupEvents(){
     const qtd = TIPOS_AVALIACAO.reduce((s,t) => s + tipos[t.key], 0);
     if(!empresa || qtd < 1){ toast('Preencha empresa e ao menos um tipo de avaliação', 'danger'); return; }
     const id = $('#mc-id').value || 'c'+uid();
-    const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, desc:$('#mc-desc').value};
+    const valor = parseFloat($('#mc-valor').value) || 0;
+    const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
     const idx = state.contratos.findIndex(c => c.id === id);
     if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
     save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
