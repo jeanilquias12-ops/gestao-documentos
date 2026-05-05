@@ -1070,6 +1070,8 @@ function setupEvents(){
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
     save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
     salvarDocumentoNuvem(data);
+    const st = statusDoc(data);
+    if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
   };
   $('#md-delete').onclick = () => {
     if(!confirm('Excluir documento?')) return;
@@ -1180,6 +1182,24 @@ function emailDeveEnviar(){
   if(notifyPrefs.freq === 'sempre') return true;
   if(notifyPrefs.freq === 'semanal') return !last || daysBetween(last, hoje) >= 7;
   return last !== hoje;
+}
+
+function alertarEmailDoc(doc, st){
+  const empresa = nomeEmpresa(doc.empresa);
+  const assunto = st.key === 'danger'
+    ? `SECONCI 🚨 Documento vencido — ${empresa}`
+    : `SECONCI ⏰ Documento vencendo — ${empresa}`;
+  const message = `Alerta SECONCI — ${new Date().toLocaleDateString('pt-BR')}\n\n`
+    + `${st.key === 'danger' ? '🚨 VENCIDO' : '⏰ VENCENDO'}\n`
+    + `Empresa: ${empresa}\n`
+    + `Documento: ${doc.tipo} ${doc.numero || ''}\n`
+    + `Validade: ${fmtDate(doc.validade)}\n`
+    + `Status: ${st.label}`;
+  fetch('/api/cron-email', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({_trigger: 'doc-save', assunto, message})
+  }).catch(() => {});
 }
 
 function enviarEmailResend(forcado){

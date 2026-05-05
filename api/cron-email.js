@@ -8,6 +8,7 @@ const fmtDate = iso => {
 };
 
 export default async function handler(req, res) {
+  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
   const notifyEmail = process.env.NOTIFY_EMAIL;
   const resendKey   = process.env.RESEND_API_KEY;
 
@@ -16,6 +17,18 @@ export default async function handler(req, res) {
   }
 
   const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
+
+  // Alerta imediato disparado ao salvar documento
+  if (req.method === 'POST' && req.body?._trigger === 'doc-save') {
+    const { assunto, message } = req.body;
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'SECONCI Goiás <onboarding@resend.dev>', to: recipients, subject: assunto, text: message })
+    });
+    const d = await r.json();
+    return r.ok ? res.json({ success: true }) : res.status(500).json({ error: d.message });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const in90  = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
