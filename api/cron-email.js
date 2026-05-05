@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
 
   const [docsRes, contratosRes, avaliRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/documentos?select=tipo_documento,numero,data_vencimento,clientes(nome)`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,quantidade,documento_id,clientes(nome)`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,clientes(nome)`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
 
@@ -69,10 +69,10 @@ module.exports = async function handler(req, res) {
 
   const artAlerts = [];
   for (const ltcat of ltcats) {
-    const linked = contratos.find(c => c.documento_id === ltcat.id || !c.documento_id);
+    const linked = contratos.find(c => c.doc_id === ltcat.id);
     if (!linked) continue;
     const realizadas = avals.filter(a => a.contrato_id === linked.id).length;
-    const pendentes  = (linked.quantidade || 0) - realizadas;
+    const pendentes  = (linked.qtd || 0) - realizadas;
     if (pendentes > 0) {
       artAlerts.push({
         nome:      linked.clientes?.nome || '—',

@@ -1404,8 +1404,8 @@ async function salvarEmpresaNuvem(emp) {
 
 async function salvarContratoNuvem(c) {
   const { error } = await db.from('contratos').upsert({
-    id: c.id, cliente_id: c.empresa, documento_id: c.ltcat || null,
-    quantidade: c.qtd, descricao: c.desc || ''
+    id: c.id, cliente_id: c.empresa, doc_id: c.ltcat || null,
+    qtd: c.qtd, descricao: c.desc || ''
   })
   if (error) console.error('Erro ao salvar contrato:', error.message)
 }
@@ -1417,9 +1417,9 @@ async function excluirContratoNuvem(id) {
 
 async function salvarAvaliacaoNuvem(a) {
   const { error } = await db.from('avaliacoes').upsert({
-    id: a.id, contrato_id: a.contrato, data_avaliacao: a.data,
+    id: a.id, contrato_id: a.contrato, data: a.data,
     agente: a.agente, resultado: a.resultado,
-    conclusao: a.conclusao || '', local: a.local || ''
+    conclusao: a.conclusao || '', local_avaliacao: a.local || ''
   })
   if (error) console.error('Erro ao salvar avaliação:', error.message)
 }
@@ -1471,8 +1471,8 @@ async function carregarDaNuvem() {
     state.contratos = contratos.map(c => ({
       id:      c.id,
       empresa: c.cliente_id,
-      ltcat:   c.documento_id || '',
-      qtd:     c.quantidade,
+      ltcat:   c.doc_id || '',
+      qtd:     c.qtd,
       desc:    c.descricao || ''
     }))
   }
@@ -1481,11 +1481,11 @@ async function carregarDaNuvem() {
     state.avaliacoes = avaliacoes.map(a => ({
       id:        a.id,
       contrato:  a.contrato_id,
-      data:      a.data_avaliacao,
+      data:      a.data,
       agente:    a.agente,
       resultado: a.resultado,
       conclusao: a.conclusao || '',
-      local:     a.local || ''
+      local:     a.local_avaliacao || ''
     }))
   }
 
