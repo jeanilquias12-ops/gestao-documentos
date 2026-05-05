@@ -7,8 +7,9 @@ const fmtDate = iso => {
   return `${d}/${m}/${y}`;
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
+
   const notifyEmail = process.env.NOTIFY_EMAIL;
   const resendKey   = process.env.RESEND_API_KEY;
 
@@ -19,7 +20,7 @@ export default async function handler(req, res) {
   const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
 
   // Alerta imediato disparado ao salvar documento
-  if (req.method === 'POST' && req.body?._trigger === 'doc-save') {
+  if (req.method === 'POST' && req.body && req.body._trigger === 'doc-save') {
     const { assunto, message } = req.body;
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -70,13 +71,10 @@ export default async function handler(req, res) {
 
   const emailRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: 'SECONCI Goiás <onboarding@resend.dev>',
-      to:   recipients,
+      to: recipients,
       subject: assunto,
       text: message
     })
@@ -87,4 +85,4 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, vencidos: vencidos.length, vencendo: vencendo.length });
   }
   return res.status(500).json({ error: data.message });
-}
+};

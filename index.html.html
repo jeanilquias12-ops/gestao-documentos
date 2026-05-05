@@ -1199,7 +1199,10 @@ function alertarEmailDoc(doc, st){
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({_trigger: 'doc-save', assunto, message})
-  }).catch(() => {});
+  }).then(r => r.json()).then(d => {
+    if(d.success) toast('📧 Alerta enviado por e-mail', 'ok');
+    else toast('Erro e-mail: ' + (d.error || 'verifique Vercel'), 'danger');
+  }).catch(() => toast('Erro ao enviar alerta por e-mail', 'danger'));
 }
 
 function enviarEmailResend(forcado){
