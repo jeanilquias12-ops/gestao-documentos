@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
   const [docsRes, contratosRes, avaliRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=tipo_documento,numero,data_vencimento,clientes(nome)`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,clientes(nome)`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,clientes(nome)`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
