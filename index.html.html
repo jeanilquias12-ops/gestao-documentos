@@ -711,6 +711,15 @@ function alertasART(){
 
 function realizadasContrato(cId){ return state.avaliacoes.filter(a => a.contrato === cId).length; }
 
+function emailDetalheContrato(contrato, realizadas, pendentes){
+  const tipos = contrato.tipos || {};
+  const linhasTipos = TIPOS_AVALIACAO
+    .filter(t => (tipos[t.key] || 0) > 0)
+    .map(t => `    - ${t.nome}: ${tipos[t.key]} contratada(s)`)
+    .join('\n');
+  return `  Realizadas: ${realizadas} de ${contrato.qtd} | Faltam: ${pendentes}\n  Tipos contratados:\n${linhasTipos}`;
+}
+
 /* ================== NAVEGAÇÃO ================== */
 function navigate(route){
   $$('.page').forEach(p => p.classList.remove('active'));
@@ -1130,7 +1139,7 @@ function buildEmailBody(){
   let body = `Resumo SECONCI — ${new Date().toLocaleDateString('pt-BR')}\n\n`;
   if(venc.length){ body += `🚨 ${venc.length} DOCUMENTO(S) VENCIDO(S):\n`; venc.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (venceu em ${fmtDate(d.validade)})\n`; }); body += '\n'; }
   if(venciendo.length){ body += `⏰ ${venciendo.length} DOCUMENTO(S) VENCENDO:\n`; venciendo.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (vence ${fmtDate(d.validade)})\n`; }); body += '\n'; }
-  if(arts.length){ body += `📋 AVALIAÇÕES PENDENTES C/ PRAZO (ART):\n`; arts.forEach(({doc, pendentes, diasRestantes}) => { body += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''}: ${pendentes} avaliação(ões) pendente(s), ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n`; }); body += '\n'; }
+  if(arts.length){ body += `📋 AVALIAÇÕES PENDENTES C/ PRAZO (ART):\n`; arts.forEach(({doc, contrato, realizadas, pendentes, diasRestantes}) => { body += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''} — ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n${emailDetalheContrato(contrato, realizadas, pendentes)}\n`; }); body += '\n'; }
   if(!venc.length && !venciendo.length && !arts.length) body += '✅ Sem pendências no momento.';
   return body;
 }
@@ -1412,8 +1421,8 @@ function alertarEmailARTPendentes(){
   const assunto = `SECONCI — ⚠️ ${arts.length} LTCAT(s) com avaliações pendentes`;
   let message = `Alerta SECONCI — ${new Date().toLocaleDateString('pt-BR')}\n\n`;
   message += `⚠️ AVALIAÇÕES PENDENTES (ART vence em ≤30 dias):\n`;
-  arts.forEach(({doc, pendentes, diasRestantes}) => {
-    message += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''}: ${pendentes} avaliação(ões) pendente(s), ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n`;
+  arts.forEach(({doc, contrato, realizadas, pendentes, diasRestantes}) => {
+    message += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''} — ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n${emailDetalheContrato(contrato, realizadas, pendentes)}\n`;
   });
   fetch('/api/cron-email', {
     method: 'POST',
