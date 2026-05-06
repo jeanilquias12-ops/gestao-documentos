@@ -1253,6 +1253,7 @@ function setupEvents(){
     const id = $('#me-id').value;
     const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
     const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
+    const aIds = state.avaliacoes.filter(a => cIds.includes(a.contrato)).map(a => a.id);
     state.empresas = state.empresas.filter(e => e.id !== id);
     state.docs = state.docs.filter(d => d.empresa !== id);
     state.contratos = state.contratos.filter(c => c.empresa !== id);
@@ -1261,6 +1262,7 @@ function setupEvents(){
     excluirEmpresaNuvem(id);
     docIds.forEach(did => excluirDocumentoNuvem(did));
     cIds.forEach(cid => excluirContratoNuvem(cid));
+    aIds.forEach(aid => excluirAvaliacaoNuvem(aid));
   };
 
   // Doc auto-validade
@@ -1320,10 +1322,12 @@ function setupEvents(){
   $('#mc-delete').onclick = () => {
     if(!confirm('Excluir contrato? Avaliações lançadas também serão removidas.')) return;
     const id = $('#mc-id').value;
+    const aIds = state.avaliacoes.filter(a => a.contrato === id).map(a => a.id);
     state.contratos = state.contratos.filter(c => c.id !== id);
     state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
     save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
     excluirContratoNuvem(id);
+    aIds.forEach(aid => excluirAvaliacaoNuvem(aid));
   };
 
   // Salvar avaliação
