@@ -534,6 +534,7 @@ function handleLogin(e){
     document.getElementById('loginScreen').classList.remove('show');
     document.getElementById('appContainer').classList.add('authenticated');
     initApp();
+    carregarDaNuvem();
   } else {
     err.textContent = '❌ Usuário ou senha incorretos';
     document.getElementById('loginPass').value = '';
@@ -581,7 +582,7 @@ const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return '—'; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('pt-BR'); };
 const fmtDateTime = (iso) => { if(!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 const fmtReal = (v) => v ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
-function mascararReal(el){ const digits = el.value.replace(/\D/g,'').replace(/^0+/,'') || '0'; const cents = digits.padStart(3,'0'); const intPart = cents.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value = intPart + ',' + cents.slice(-2); }
+function mascararReal(el){ const raw = el.value.replace(/\D/g,'').replace(/^0+/,''); if(!raw){ el.value = ''; return; } const cents = raw.padStart(3,'0'); const intPart = cents.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value = intPart + ',' + cents.slice(-2); }
 function parseMcValor(){ const raw = ($('#mc-valor').value||'').replace(/\./g,'').replace(',','.'); return parseFloat(raw) || 0; }
 const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
 
@@ -992,7 +993,7 @@ function renderRelatorios(){
   $('#rel-av-top').innerHTML = top.length ? top.map(({c,r}) => `
     <div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${nomeEmpresa(c.empresa)}</span><b>${r}/${c.qtd}</b></div>
-      <div class="progress"><div class="progress-bar" style="width:${Math.min(r/c.qtd*100,100)}%"></div></div>
+      <div class="progress"><div class="progress-bar" style="width:${c.qtd ? Math.min(r/c.qtd*100,100) : 0}%"></div></div>
     </div>
   `).join('') : '<p style="color:var(--ink-muted);margin:0">Nenhum contrato</p>';
 
@@ -1657,12 +1658,14 @@ async function carregarDaNuvem() {
     { data: docs,      error: errDocs },
     { data: emps,      error: errEmps },
     { data: contratos, error: errContratos },
-    { data: avaliacoes,error: errAval }
+    { data: avaliacoes,error: errAval },
+    { data: historico, error: errHist }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
     db.from('contratos').select('*'),
-    db.from('avaliacoes').select('*')
+    db.from('avaliacoes').select('*'),
+    db.from('historico_documentos').select('*').order('data_hora', { ascending: true })
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); return }
@@ -1714,6 +1717,16 @@ async function carregarDaNuvem() {
       resultado: a.resultado,
       conclusao: a.conclusao || '',
       local:     a.local_avaliacao || ''
+    }))
+  }
+
+  if (!errHist && historico?.length) {
+    state.historico = historico.map(h => ({
+      id:        h.id,
+      docId:     h.doc_id,
+      tipo:      h.tipo,
+      descricao: h.descricao,
+      dataHora:  h.data_hora
     }))
   }
 
