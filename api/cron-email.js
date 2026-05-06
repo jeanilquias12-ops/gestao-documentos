@@ -41,22 +41,51 @@ module.exports = async function handler(req, res) {
     return r.ok ? res.json({ success: true }) : res.status(500).json({ error: d.message || JSON.stringify(d) });
   }
 
-  // Resumo diário (cron 7h)
+  // Resumo diário (cron 7h Brasília / 10h UTC)
   const today = new Date().toISOString().slice(0, 10);
   const in90  = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const in30  = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
-  const [docsRes, contratosRes, avaliRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,clientes(nome)`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,clientes(nome)`, { headers }),
+  // Queries separadas — sem join FK para evitar crash quando relacionamento não está definido
+  const [docsRes, clientesRes, contratosRes, avaliRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,cliente_id`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
 
-  const docs      = await docsRes.json();
-  const contratos = await contratosRes.json();
-  const avals     = await avaliRes.json();
+  // Verificar se cada resposta é válida antes de processar
+  let docs = [], clientes = [], contratos = [], avals = [];
+
+  if (docsRes.ok) {
+    const raw = await docsRes.json();
+    docs = Array.isArray(raw) ? raw : [];
+    if (!Array.isArray(raw)) console.error('Erro na query documentos:', JSON.stringify(raw));
+  } else {
+    console.error('Falha HTTP ao buscar documentos:', docsRes.status);
+  }
+
+  if (clientesRes.ok) {
+    const raw = await clientesRes.json();
+    clientes = Array.isArray(raw) ? raw : [];
+  }
+
+  if (contratosRes.ok) {
+    const raw = await contratosRes.json();
+    contratos = Array.isArray(raw) ? raw : [];
+  }
+
+  if (avaliRes.ok) {
+    const raw = await avaliRes.json();
+    avals = Array.isArray(raw) ? raw : [];
+  }
+
+  // Mapa de clientes para lookup por id
+  const clienteMap = {};
+  clientes.forEach(c => { clienteMap[c.id] = c.nome; });
+  const nomeEmpresa = id => clienteMap[id] || '—';
 
   const vencidos = docs.filter(d => d.data_vencimento && d.data_vencimento < today);
   const vencendo = docs.filter(d => d.data_vencimento && d.data_vencimento >= today && d.data_vencimento <= in90);
@@ -75,7 +104,7 @@ module.exports = async function handler(req, res) {
     const pendentes  = (linked.qtd || 0) - realizadas;
     if (pendentes > 0) {
       artAlerts.push({
-        nome:      linked.clientes?.nome || '—',
+        nome:      nomeEmpresa(ltcat.cliente_id),
         pendentes,
         venceART:  ltcat.data_vencimento
       });
@@ -89,10 +118,10 @@ module.exports = async function handler(req, res) {
     assunto = 'SECONCI — ✅ Sem pendências hoje';
   } else if (vencidos.length) {
     assunto = `SECONCI — 🚨 ${vencidos.length} documento(s) vencido(s)`;
-  } else if (artAlerts.length) {
-    assunto = `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
-  } else {
+  } else if (vencendo.length) {
     assunto = `SECONCI — ⏰ ${vencendo.length} documento(s) vencendo`;
+  } else {
+    assunto = `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
   }
 
   let message = `Resumo diário SECONCI — ${fmtDate(today)}\n\n`;
@@ -102,14 +131,14 @@ module.exports = async function handler(req, res) {
     if (vencidos.length) {
       message += `🚨 VENCIDOS (${vencidos.length}):\n`;
       vencidos.forEach(d => {
-        message += `• ${d.clientes?.nome || '—'} — ${d.tipo_documento} ${d.numero || ''} (venceu ${fmtDate(d.data_vencimento)})\n`;
+        message += `• ${nomeEmpresa(d.cliente_id)} — ${d.tipo_documento} ${d.numero || ''} (venceu ${fmtDate(d.data_vencimento)})\n`;
       });
       message += '\n';
     }
     if (vencendo.length) {
       message += `⏰ VENCENDO EM 90 DIAS (${vencendo.length}):\n`;
       vencendo.forEach(d => {
-        message += `• ${d.clientes?.nome || '—'} — ${d.tipo_documento} ${d.numero || ''} (vence ${fmtDate(d.data_vencimento)})\n`;
+        message += `• ${nomeEmpresa(d.cliente_id)} — ${d.tipo_documento} ${d.numero || ''} (vence ${fmtDate(d.data_vencimento)})\n`;
       });
       message += '\n';
     }
