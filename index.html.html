@@ -693,7 +693,6 @@ function nomeEmpresa(id){ const e = state.empresas.find(x => x.id === id); retur
 
 function alertasART(){
   const hoje = todayISO();
-  const em30 = new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,10);
   const result = [];
   state.docs.forEach(d => {
     if(d.tipo !== 'LTCAT' || !d.validade) return;
@@ -716,7 +715,7 @@ function realizadasPorTipo(cId){
   state.avaliacoes.filter(a => a.contrato === cId).forEach(a => {
     const ag = (a.agente || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
     let key = null;
-    if(ag.includes('ruido') || ag.includes('ruido')) key = 'ruido';
+    if(ag.includes('ruido')) key = 'ruido';
     else if(ag.includes('poeira vegetal') || ag.includes('vegetal')) key = 'poeira_veg';
     else if(ag.includes('poeira') || ag.includes('particulado') || ag.includes('silica')) key = 'poeira';
     else if(ag.includes('vibra')) key = 'vibracoes';
@@ -1251,12 +1250,16 @@ function setupEvents(){
   $('#me-delete').onclick = () => {
     if(!confirm('Excluir empresa? Documentos e contratos vinculados também serão removidos.')) return;
     const id = $('#me-id').value;
+    const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
+    const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
     state.empresas = state.empresas.filter(e => e.id !== id);
     state.docs = state.docs.filter(d => d.empresa !== id);
-    const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
     state.contratos = state.contratos.filter(c => c.empresa !== id);
     state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
     save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
+    excluirEmpresaNuvem(id);
+    docIds.forEach(did => excluirDocumentoNuvem(did));
+    cIds.forEach(cid => excluirContratoNuvem(cid));
   };
 
   // Doc auto-validade
@@ -1292,8 +1295,10 @@ function setupEvents(){
   };
   $('#md-delete').onclick = () => {
     if(!confirm('Excluir documento?')) return;
-    state.docs = state.docs.filter(d => d.id !== $('#md-id').value);
+    const did = $('#md-id').value;
+    state.docs = state.docs.filter(d => d.id !== did);
     save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído', 'danger');
+    excluirDocumentoNuvem(did);
   };
 
   // Salvar contrato
@@ -1611,7 +1616,7 @@ async function salvarEmpresaNuvem(emp) {
 
 async function salvarContratoNuvem(c) {
   const { error } = await db.from('contratos').upsert({
-    id: c.id, cliente_id: c.empresa, doc_id: c.ltcat || null,
+    id: c.id, cliente_id: c.empresa, doc_id: c.doc || null,
     qtd: c.qtd, descricao: c.desc || '',
     tipos_qtd: JSON.stringify(c.tipos || {})
   })
@@ -1621,6 +1626,16 @@ async function salvarContratoNuvem(c) {
 async function excluirContratoNuvem(id) {
   const { error } = await db.from('contratos').delete().eq('id', id)
   if (error) console.error('Erro ao excluir contrato:', error.message)
+}
+
+async function excluirDocumentoNuvem(id) {
+  const { error } = await db.from('documentos').delete().eq('id', id)
+  if (error) console.error('Erro ao excluir documento:', error.message)
+}
+
+async function excluirEmpresaNuvem(id) {
+  const { error } = await db.from('clientes').delete().eq('id', id)
+  if (error) console.error('Erro ao excluir empresa:', error.message)
 }
 
 async function salvarAvaliacaoNuvem(a) {
@@ -1654,14 +1669,18 @@ async function carregarDaNuvem() {
   if (errEmps)      { console.error('Erro clientes:', errEmps.message); return }
 
   state.docs = docs.map(d => ({
-    id:          d.id,
-    empresa:     d.cliente_id,
-    tipo:        d.tipo_documento,
-    numero:      d.numero,
-    responsavel: d.responsavel,
-    emissao:     d.data_emissao,
-    validade:    d.data_vencimento,
-    obs:         d.observacoes
+    id:               d.id,
+    empresa:          d.cliente_id,
+    tipo:             d.tipo_documento,
+    numero:           d.numero,
+    responsavel:      d.responsavel,
+    emissao:          d.data_emissao,
+    validade:         d.data_vencimento,
+    obs:              d.observacoes,
+    envCliente:       d.enviado_cliente || false,
+    envClienteData:   d.data_envio_cliente || '',
+    envFinanceiro:    d.enviado_financeiro || false,
+    envFinanceiroData:d.data_envio_financeiro || ''
   }))
 
   state.empresas = emps.map(e => ({
@@ -1679,7 +1698,7 @@ async function carregarDaNuvem() {
     state.contratos = contratos.map(c => ({
       id:      c.id,
       empresa: c.cliente_id,
-      ltcat:   c.doc_id || '',
+      doc:     c.doc_id || '',
       qtd:     c.qtd,
       desc:    c.descricao || '',
       tipos:   c.tipos_qtd ? (() => { try{ return JSON.parse(c.tipos_qtd) }catch(e){ return {} } })() : {}
