@@ -1623,7 +1623,8 @@ async function salvarContratoNuvem(c) {
   const { error } = await db.from('contratos').upsert({
     id: c.id, cliente_id: c.empresa, doc_id: c.doc || null,
     qtd: c.qtd, descricao: c.desc || '',
-    tipos_qtd: JSON.stringify(c.tipos || {})
+    tipos_qtd: JSON.stringify(c.tipos || {}),
+    valor: c.valor || 0
   })
   if (error) console.error('Erro ao salvar contrato:', error.message)
 }
@@ -1708,6 +1709,7 @@ async function carregarDaNuvem() {
       doc:     c.doc_id || '',
       qtd:     c.qtd,
       desc:    c.descricao || '',
+      valor:   Number(c.valor) || 0,
       tipos:   c.tipos_qtd ? (() => { try{ return JSON.parse(c.tipos_qtd) }catch(e){ return {} } })() : {}
     }))
   }
