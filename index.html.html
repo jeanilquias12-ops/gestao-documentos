@@ -477,8 +477,8 @@
         <div class="tipo-row"><span>Varreduras de Metais (10 Metais)<br><small style="color:var(--ink-muted)">R$ 800,00/un</small></span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
       </div>
     </div>
-    <div class="field-block"><label>Valor total do contrato (R$)</label><input id="mc-valor" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default;font-weight:600" tabindex="-1" placeholder="Calculado automaticamente" /></div>
-    <div class="field-block"><label>Base de cálculo</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Preencha as quantidades acima" /></div>
+    <div class="field-block"><label>Valor total do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
+    <div class="field-block"><label>Valor sugerido pela tabela</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Calculado pelas quantidades" /></div>
     <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mc-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mc-save">Salvar contrato</button></div>
@@ -561,20 +561,17 @@ const TIPOS_AVALIACAO = [
 ];
 
 function recalcTotalContrato(){
-  let total = 0, valorCalc = 0;
+  let total = 0, valorSugerido = 0;
   TIPOS_AVALIACAO.forEach(t => {
     const qty = parseInt($('#'+t.id).value) || 0;
     total += qty;
-    valorCalc += qty * t.valor;
+    valorSugerido += qty * t.valor;
   });
   $('#mc-qtd').value = total;
-  if(valorCalc > 0){
-    $('#mc-valor').value = Number(valorCalc).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    $('#mc-valor-unit').value = 'Calculado pela tabela de preços';
-  } else {
-    $('#mc-valor').value = '';
-    $('#mc-valor-unit').value = '';
-  }
+  // Valor sugerido pela tabela (referência) — sem sobrescrever o que o usuário digitou
+  $('#mc-valor-unit').value = valorSugerido > 0
+    ? 'Sugerido: ' + fmtReal(valorSugerido)
+    : '';
 }
 
 /* ================== ESTADO ================== */
@@ -1121,7 +1118,8 @@ function openContrato(id){
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
-  recalcTotalContrato(); // valor calculado automaticamente pelos tipos × preço tabela
+  $('#mc-valor').value = c?.valor ? Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+  recalcTotalContrato();
   $('#mc-desc').value = c?.desc || '';
   $('#mc-delete').style.display = c ? '' : 'none';
   openModal('modal-contrato');
