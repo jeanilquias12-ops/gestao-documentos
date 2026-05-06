@@ -711,13 +711,33 @@ function alertasART(){
 
 function realizadasContrato(cId){ return state.avaliacoes.filter(a => a.contrato === cId).length; }
 
+function realizadasPorTipo(cId){
+  const map = {};
+  state.avaliacoes.filter(a => a.contrato === cId).forEach(a => {
+    const ag = (a.agente || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    let key = null;
+    if(ag.includes('ruido') || ag.includes('ruido')) key = 'ruido';
+    else if(ag.includes('poeira vegetal') || ag.includes('vegetal')) key = 'poeira_veg';
+    else if(ag.includes('poeira') || ag.includes('particulado') || ag.includes('silica')) key = 'poeira';
+    else if(ag.includes('vibra')) key = 'vibracoes';
+    else if(ag.includes('btxe') || ag.includes('benzeno')) key = 'btxe';
+    else if(ag.includes('vapor') || ag.includes('organico')) key = 'vapores';
+    else if(ag.includes('cloro')) key = 'cloro';
+    else if(ag.includes('metal') || ag.includes('metais')) key = 'metais';
+    if(key) map[key] = (map[key] || 0) + 1;
+  });
+  return map;
+}
+
 function emailDetalheContrato(contrato, realizadas, pendentes){
   const tipos = contrato.tipos || {};
-  const linhasTipos = TIPOS_AVALIACAO
+  const doneMap = realizadasPorTipo(contrato.id);
+  const linhasFaltam = TIPOS_AVALIACAO
     .filter(t => (tipos[t.key] || 0) > 0)
-    .map(t => `    - ${t.nome}: ${tipos[t.key]} contratada(s)`)
+    .map(t => { const falta = Math.max(0, (tipos[t.key]||0) - (doneMap[t.key]||0)); return falta > 0 ? `    - ${t.nome}: ${falta} faltando` : null; })
+    .filter(Boolean)
     .join('\n');
-  return `  Realizadas: ${realizadas} de ${contrato.qtd} | Faltam: ${pendentes}\n  Tipos contratados:\n${linhasTipos}`;
+  return `  Realizadas: ${realizadas} de ${contrato.qtd} | Faltam: ${pendentes}\n  O que falta:\n${linhasFaltam || '    (sem detalhes por tipo disponíveis)'}`;
 }
 
 /* ================== NAVEGAÇÃO ================== */
