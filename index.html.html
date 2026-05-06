@@ -296,7 +296,7 @@
     <button class="navitem" id="notifyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificações</button>
 
     <button class="logout-btn" onclick="logout()">🚪 Sair</button>
-    <div class="sidebar-foot">Modelo de Controle v1.1<br>Dados armazenados localmente</div>
+    <div class="sidebar-foot">Modelo de Controle v1.1<br>Dados sincronizados na nuvem</div>
   </aside>
 
   <main class="main">
@@ -1080,6 +1080,7 @@ function updateValidadeAuto(){
   } else {
     $('#md-validade-label').textContent = 'Validade da ART';
     $('#md-validade-hint').textContent = 'ART do LTCAT — prazo 12 meses';
+    $('#md-validade').value = '';
   }
 }
 
@@ -1089,7 +1090,14 @@ function openContrato(id){
   $('#mc-id').value = c?.id || '';
   $('#mc-empresa').innerHTML = state.empresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#mc-empresa').value = c?.empresa || state.empresas[0]?.id || '';
-  $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + state.docs.map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''} (${nomeEmpresa(d.empresa)})</option>`).join('');
+
+  function atualizarDocsPorEmpresa(){
+    const empId = $('#mc-empresa').value;
+    const docsEmpresa = state.docs.filter(d => d.empresa === empId);
+    $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + docsEmpresa.map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''}</option>`).join('');
+  }
+  atualizarDocsPorEmpresa();
+  $('#mc-empresa').onchange = atualizarDocsPorEmpresa;
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
@@ -1673,10 +1681,12 @@ async function carregarDaNuvem() {
     db.from('historico_documentos').select('*').order('data_hora', { ascending: true })
   ])
 
-  if (errDocs)      { console.error('Erro docs:', errDocs.message); return }
-  if (errEmps)      { console.error('Erro clientes:', errEmps.message); return }
+  if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
+  if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
 
-  state.docs = docs.map(d => ({
+  if (!docs?.length && !emps?.length) { console.warn('Nuvem retornou vazia — mantendo dados locais'); renderAll(); return }
+
+  if (docs?.length) state.docs = docs.map(d => ({
     id:               d.id,
     empresa:          d.cliente_id,
     tipo:             d.tipo_documento,
@@ -1691,7 +1701,7 @@ async function carregarDaNuvem() {
     envFinanceiroData:d.data_envio_financeiro || ''
   }))
 
-  state.empresas = emps.map(e => ({
+  if (emps?.length) state.empresas = emps.map(e => ({
     id:       e.id,
     nome:     e.nome,
     cnpj:     e.cnpj,
