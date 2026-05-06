@@ -216,7 +216,7 @@
   .notify-banner button{padding:6px 11px;border-radius:7px;border:1px solid rgba(155,42,26,.25);background:#fff;color:#5a2418;font-size:12.5px;font-weight:500;cursor:pointer}
   .notify-banner button:hover{background:#fff8f6}
 
-  .ev-row{padding:10px 16px;border-bottom:1px dashed var(--line);font-size:12.5px;display:grid;grid-template-columns:90px 1fr 1fr 1fr auto;gap:12px;align-items:center}
+  .ev-row{padding:10px 16px;border-bottom:1px dashed var(--line);font-size:12.5px;display:grid;grid-template-columns:100px 1fr 1fr auto;gap:12px;align-items:center}
   .ev-row:last-child{border-bottom:none}
 
   @media print{
@@ -489,9 +489,19 @@
   <div class="modal-h"><div><h2>Lançar avaliação realizada</h2><p id="ma-sub">—</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-aval"><input type="hidden" id="ma-contrato" /><input type="hidden" id="ma-id" /><div class="form-grid">
     <div class="field-block"><label>Data *</label><input id="ma-data" type="date" required /></div>
-    <div class="field-block"><label>Agente de risco *</label><input id="ma-agente" list="agentes" /><datalist id="agentes"><option>Ruído</option><option>Calor</option><option>Poeira respirável</option><option>Vibração</option><option>Vapores orgânicos</option><option>Iluminação</option></datalist></div>
-    <div class="field-block"><label>Resultado *</label><input id="ma-resultado" placeholder="Ex.: 87 dB(A)" /></div>
-    <div class="field-block"><label>Conclusão</label><select id="ma-conclusao"><option value="dentro">Dentro do limite</option><option value="fora">Fora do limite</option><option value="indeterminado">Indeterminado</option></select></div>
+    <div class="field-block"><label>Tipo de avaliação *</label>
+      <select id="ma-agente" required>
+        <option value="">— Selecione —</option>
+        <option value="Dosimetria de Ruído">Dosimetria de Ruído — R$ 120,00</option>
+        <option value="Particulado Total - Poeiras e Sílicas">Particulado Total - Poeiras e Sílicas — R$ 380,00</option>
+        <option value="Vibrações">Vibrações — R$ 300,00</option>
+        <option value="BTXE">BTXE — R$ 600,00</option>
+        <option value="Varreduras de Vapores Orgânicos">Varreduras de Vapores Orgânicos — R$ 1.000,00</option>
+        <option value="Cloro Gasoso">Cloro Gasoso — R$ 600,00</option>
+        <option value="Poeira Vegetal">Poeira Vegetal — R$ 200,00</option>
+        <option value="Varreduras de Metais (10 Metais)">Varreduras de Metais (10 Metais) — R$ 800,00</option>
+      </select>
+    </div>
     <div class="field-block full"><label>Local / setor</label><input id="ma-local" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="ma-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="ma-save">Salvar lançamento</button></div>
@@ -975,13 +985,18 @@ function renderAvaliacoes(){
           const esgotado = saldoFin <= 0;
           return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg, #fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line, #fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center"> <span>💰 Contratado: <b>${fmtReal(c.valor)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Realizado: <b>${fmtReal(gastoRealizado)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Saldo: <b style="color:${esgotado?'var(--danger-fg, #dc2626)':'inherit'}">${fmtReal(Math.max(saldoFin, 0))}</b></span> ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''} </div>`;
         })() : ''}
-        ${evals.length ? evals.map(a => `<div class="ev-row">
-          <span class="mono">${fmtDate(a.data)}</span>
-          <span><b>${a.agente}</b><br><small style="color:var(--ink-muted)">${a.local||'—'}</small></span>
-          <span class="mono">${a.resultado}</span>
-          <span><span class="pill ${a.conclusao==='dentro'?'ok':a.conclusao==='fora'?'danger':'muted'}">${a.conclusao==='dentro'?'Dentro':a.conclusao==='fora'?'Fora':'—'}</span></span>
-          <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
-        </div>`).join('') : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:20px">Nenhuma avaliação lançada ainda</p>'}
+        ${evals.length ? evals.map(a => {
+          const tipoInfo = TIPOS_AVALIACAO.find(t => t.nome === a.agente);
+          return `<div class="ev-row">
+            <span class="mono">${fmtDate(a.data)}</span>
+            <span><b>${a.agente}</b></span>
+            <span style="color:var(--ink-muted)">${a.local||'—'}</span>
+            <span style="display:flex;align-items:center;gap:8px">
+              ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
+              <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
+            </span>
+          </div>`;
+        }).join('') : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:20px">Nenhuma avaliação lançada ainda</p>'}
       </div>
     </div>`;
   }).join('');
@@ -1130,8 +1145,6 @@ function openAval(cId, aId){
   $('#ma-id').value = aId || '';
   $('#ma-data').value = a?.data || todayISO();
   $('#ma-agente').value = a?.agente || '';
-  $('#ma-resultado').value = a?.resultado || '';
-  $('#ma-conclusao').value = a?.conclusao || 'dentro';
   $('#ma-local').value = a?.local || '';
   $('#ma-delete').style.display = a ? '' : 'none';
   openModal('modal-aval');
@@ -1354,10 +1367,10 @@ function setupEvents(){
 
   // Salvar avaliação
   $('#ma-save').onclick = () => {
-    const data = $('#ma-data').value, agente = $('#ma-agente').value, resultado = $('#ma-resultado').value;
-    if(!data || !agente || !resultado){ toast('Preencha data, agente e resultado', 'danger'); return; }
+    const data = $('#ma-data').value, agente = $('#ma-agente').value;
+    if(!data || !agente){ toast('Preencha a data e o tipo de avaliação', 'danger'); return; }
     const id = $('#ma-id').value || 'a'+uid();
-    const obj = {id, contrato:$('#ma-contrato').value, data, agente, resultado, conclusao:$('#ma-conclusao').value, local:$('#ma-local').value};
+    const obj = {id, contrato:$('#ma-contrato').value, data, agente, local:$('#ma-local').value};
     const idx = state.avaliacoes.findIndex(a => a.id === id);
     if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
     save(); closeModal('modal-aval'); renderAll(); toast('✅ Avaliação salva', 'ok');
