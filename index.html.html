@@ -465,20 +465,20 @@
     <div class="field-block"><label>Documento vinculado</label><select id="mc-doc"><option value="">— Sem vínculo —</option></select></div>
     <div class="field-block"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
     <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
-      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação</label>
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação <span style="font-weight:400;color:var(--ink-muted)">(valor unitário fixo por tabela)</span></label>
       <div class="tipos-grid">
-        <div class="tipo-row"><span>Dosimetria de Ruído</span><input id="mc-ruido" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Particulado Total — Poeiras e Sílicas</span><input id="mc-poeira" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Vibrações</span><input id="mc-vibracoes" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>BTXE</span><input id="mc-btxe" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Varreduras de Vapores Orgânicos</span><input id="mc-vapores" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Cloro Gasoso</span><input id="mc-cloro" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Poeira Vegetal</span><input id="mc-poeira-veg" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Varreduras de Metais (10 Metais)</span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Dosimetria de Ruído<br><small style="color:var(--ink-muted)">R$ 120,00/un</small></span><input id="mc-ruido" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Particulado Total — Poeiras e Sílicas<br><small style="color:var(--ink-muted)">R$ 380,00/un</small></span><input id="mc-poeira" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Vibrações<br><small style="color:var(--ink-muted)">R$ 300,00/un</small></span><input id="mc-vibracoes" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>BTXE<br><small style="color:var(--ink-muted)">R$ 600,00/un</small></span><input id="mc-btxe" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Vapores Orgânicos<br><small style="color:var(--ink-muted)">R$ 1.000,00/un</small></span><input id="mc-vapores" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Cloro Gasoso<br><small style="color:var(--ink-muted)">R$ 600,00/un</small></span><input id="mc-cloro" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Poeira Vegetal<br><small style="color:var(--ink-muted)">R$ 200,00/un</small></span><input id="mc-poeira-veg" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Metais (10 Metais)<br><small style="color:var(--ink-muted)">R$ 800,00/un</small></span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
       </div>
     </div>
-    <div class="field-block"><label>Valor do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
-    <div class="field-block"><label>Valor por avaliação</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Calculado automaticamente" /></div>
+    <div class="field-block"><label>Valor total do contrato (R$)</label><input id="mc-valor" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default;font-weight:600" tabindex="-1" placeholder="Calculado automaticamente" /></div>
+    <div class="field-block"><label>Base de cálculo</label><input id="mc-valor-unit" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" placeholder="Preencha as quantidades acima" /></div>
     <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mc-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mc-save">Salvar contrato</button></div>
@@ -561,10 +561,20 @@ const TIPOS_AVALIACAO = [
 ];
 
 function recalcTotalContrato(){
-  const total = TIPOS_AVALIACAO.reduce((s,t) => s + (parseInt($('#'+t.id).value)||0), 0);
+  let total = 0, valorCalc = 0;
+  TIPOS_AVALIACAO.forEach(t => {
+    const qty = parseInt($('#'+t.id).value) || 0;
+    total += qty;
+    valorCalc += qty * t.valor;
+  });
   $('#mc-qtd').value = total;
-  const valor = parseMcValor();
-  $('#mc-valor-unit').value = (valor > 0 && total > 0) ? fmtReal(valor / total) + '/avaliação' : '';
+  if(valorCalc > 0){
+    $('#mc-valor').value = Number(valorCalc).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    $('#mc-valor-unit').value = 'Calculado pela tabela de preços';
+  } else {
+    $('#mc-valor').value = '';
+    $('#mc-valor-unit').value = '';
+  }
 }
 
 /* ================== ESTADO ================== */
@@ -960,7 +970,17 @@ function renderAvaliacoes(){
           <span>${r}/${c.qtd}</span>
         </div>
         ${pct >= 0.8 ? `<div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px">⚠ Atenção: ${Math.round(pct*100)}% do saldo contratado utilizado</div>` : ''}
-        ${c.valor > 0 ? (() => { const vUnit = c.valor / c.qtd; const saldoFin = c.valor - r * vUnit; const esgotado = saldoFin <= 0; return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg, #fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line, #fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center"> <span>💰 Valor do contrato: <b>${fmtReal(c.valor)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Por avaliação: <b>${fmtReal(vUnit)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Saldo financeiro: <b style="color:${esgotado?'var(--danger-fg, #dc2626)':'inherit'}">${fmtReal(Math.max(saldoFin,0))}</b></span> ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''} </div>`; })() : ''}
+        ${c.valor > 0 ? (() => {
+          // Saldo financeiro usando preço real por tipo (não média)
+          const doneMap = realizadasPorTipo(c.id);
+          const saldoFin = TIPOS_AVALIACAO.reduce((s,t) => {
+            const contratado = (c.tipos||{})[t.key] || 0;
+            const realizado  = doneMap[t.key] || 0;
+            return s + Math.max(0, contratado - realizado) * t.valor;
+          }, 0);
+          const esgotado = saldoFin <= 0;
+          return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg, #fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line, #fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center"> <span>💰 Valor do contrato: <b>${fmtReal(c.valor)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Saldo financeiro: <b style="color:${esgotado?'var(--danger-fg, #dc2626)':'inherit'}">${fmtReal(saldoFin)}</b></span> ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''} </div>`;
+        })() : ''}
         ${evals.length ? evals.map(a => `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
           <span><b>${a.agente}</b><br><small style="color:var(--ink-muted)">${a.local||'—'}</small></span>
@@ -1101,8 +1121,7 @@ function openContrato(id){
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
-  $('#mc-valor').value = c?.valor ? Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
-  recalcTotalContrato();
+  recalcTotalContrato(); // valor calculado automaticamente pelos tipos × preço tabela
   $('#mc-desc').value = c?.desc || '';
   $('#mc-delete').style.display = c ? '' : 'none';
   openModal('modal-contrato');
