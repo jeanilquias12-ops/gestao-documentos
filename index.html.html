@@ -709,7 +709,15 @@ function alertasART(){
   return result.sort((a,b) => a.diasRestantes - b.diasRestantes);
 }
 
-function realizadasContrato(cId){ return state.avaliacoes.filter(a => a.contrato === cId).length; }
+let _avCache = null;
+function invalidateAvCache(){ _avCache = null; }
+function realizadasContrato(cId){
+  if(!_avCache){
+    _avCache = {};
+    state.avaliacoes.forEach(a => { _avCache[a.contrato] = (_avCache[a.contrato] || 0) + 1; });
+  }
+  return _avCache[cId] || 0;
+}
 
 function emailDetalheContrato(contrato, realizadas, pendentes){
   const tipos = contrato.tipos || {};
@@ -1148,7 +1156,7 @@ function buildEmailBody(){
 function setupGlobalSearch(){
   const inp = $('#globalSearch');
   const res = $('#searchResults');
-  inp.oninput = () => {
+  inp.oninput = debounce(() => {
     const q = inp.value.toLowerCase().trim();
     if(!q){ res.classList.remove('show'); return; }
     const emp = state.empresas.filter(e => e.nome.toLowerCase().includes(q) || e.cnpj.includes(q)).slice(0,5);
@@ -1159,7 +1167,7 @@ function setupGlobalSearch(){
     if(!html) html = '<div class="sr-empty">Nenhum resultado</div>';
     res.innerHTML = html;
     res.classList.add('show');
-  };
+  }, 200);
   document.addEventListener('click', e => { if(!inp.contains(e.target) && !res.contains(e.target)) res.classList.remove('show'); });
 }
 
@@ -1197,6 +1205,9 @@ function setupAutofill(){
   };
 }
 
+/* ================== UTILS PERFORMANCE ================== */
+function debounce(fn, ms){ let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
 /* ================== EVENTOS ================== */
 function setupEvents(){
   // Navegação
@@ -1206,9 +1217,9 @@ function setupEvents(){
   $$('.modal-bg').forEach(m => m.onclick = e => { if(e.target === m) m.classList.remove('show'); });
 
   // Filtros
-  ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
-  ['f-doc-tipo','f-doc-status','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = renderDocs);
-  ['f-av-empresa','f-av-saldo'].forEach(id => $('#'+id).oninput = renderAvaliacoes);
+  ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = debounce(renderEmpresas, 200));
+  ['f-doc-tipo','f-doc-status','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = debounce(renderDocs, 200));
+  ['f-av-empresa','f-av-saldo'].forEach(id => $('#'+id).oninput = debounce(renderAvaliacoes, 200));
 
   // Botões novos
   $('#btnNewEmpresa').onclick = () => openEmpresa();
@@ -1225,7 +1236,7 @@ function setupEvents(){
     const data = {id, nome, cnpj, segmento:$('#me-segmento').value, endereco:$('#me-endereco').value, contato:$('#me-contato').value, telefone:$('#me-telefone').value, status:$('#me-status').value};
     const idx = state.empresas.findIndex(e => e.id === id);
     if(idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
-    save(); closeModal('modal-empresa'); renderAll(); toast('✅ Empresa salva', 'ok');
+    save(); closeModal('modal-empresa'); renderEmpresas(); renderDashboard(); renderRelatorios(); toast('✅ Empresa salva', 'ok');
     salvarEmpresaNuvem(data);
   };
   $('#me-delete').onclick = () => {
@@ -1252,7 +1263,7 @@ function setupEvents(){
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
-    save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
+    save(); closeModal('modal-doc'); renderDocs(); renderDashboard(); renderRelatorios(); toast('✅ Documento salvo', 'ok');
     salvarDocumentoNuvem(data);
     // Registrar histórico
     if(!docAntigo){
@@ -1288,7 +1299,7 @@ function setupEvents(){
     const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
     const idx = state.contratos.findIndex(c => c.id === id);
     if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
-    save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
+    save(); closeModal('modal-contrato'); renderAvaliacoes(); renderDashboard(); renderRelatorios(); toast('✅ Contrato salvo', 'ok');
     salvarContratoNuvem(data);
   };
   $('#mc-delete').onclick = () => {
@@ -1296,7 +1307,7 @@ function setupEvents(){
     const id = $('#mc-id').value;
     state.contratos = state.contratos.filter(c => c.id !== id);
     state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
-    save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
+    invalidateAvCache(); save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
     excluirContratoNuvem(id);
   };
 
@@ -1308,14 +1319,14 @@ function setupEvents(){
     const obj = {id, contrato:$('#ma-contrato').value, data, agente, resultado, conclusao:$('#ma-conclusao').value, local:$('#ma-local').value};
     const idx = state.avaliacoes.findIndex(a => a.id === id);
     if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
-    save(); closeModal('modal-aval'); renderAll(); toast('✅ Avaliação salva', 'ok');
+    invalidateAvCache(); save(); closeModal('modal-aval'); renderAvaliacoes(); renderDashboard(); renderRelatorios(); toast('✅ Avaliação salva', 'ok');
     salvarAvaliacaoNuvem(obj);
   };
   $('#ma-delete').onclick = () => {
     if(!confirm('Excluir avaliação?')) return;
     const aid = $('#ma-id').value;
     state.avaliacoes = state.avaliacoes.filter(a => a.id !== aid);
-    save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
+    invalidateAvCache(); save(); closeModal('modal-aval'); renderAvaliacoes(); renderDashboard(); renderRelatorios(); toast('Avaliação excluída', 'danger');
     excluirAvaliacaoNuvem(aid);
   };
 
@@ -1678,6 +1689,7 @@ async function carregarDaNuvem() {
     }))
   }
 
+  invalidateAvCache()
   save()
   renderAll()
 }
