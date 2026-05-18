@@ -1076,8 +1076,9 @@ function openDoc(id){
   const d = id ? state.docs.find(x => x.id === id) : null;
   $('#md-title').textContent = d ? 'Editar documento' : 'Novo documento';
   $('#md-id').value = d?.id || '';
-  $('#md-empresa').innerHTML = state.empresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
-  $('#md-empresa').value = d?.empresa || state.empresas[0]?.id || '';
+  $('#md-empresa').innerHTML = (d ? '' : '<option value="">— Selecione a empresa —</option>') +
+    state.empresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#md-empresa').value = d?.empresa || '';
   $('#md-tipo').value = d?.tipo || 'PGR';
   $('#md-numero').value = d?.numero || '';
   $('#md-emissao').value = d?.emissao || todayISO();
