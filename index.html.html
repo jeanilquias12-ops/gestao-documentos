@@ -1468,7 +1468,6 @@ function renderAll(){
 
 function initApp(){
   load();
-  if(!state.empresas || !state.empresas.length) seedData();
   setupEvents();
   renderAll();
   scheduleDesktopNotification();
@@ -1742,7 +1741,10 @@ async function carregarDaNuvem() {
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
   if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
 
-  if (!docs?.length && !emps?.length) { console.warn('Nuvem retornou vazia — mantendo dados locais'); renderAll(); return }
+  if (!docs?.length && !emps?.length) {
+    state.docs = []; state.empresas = []; state.contratos = []; state.avaliacoes = []; state.historico = [];
+    save(); renderAll(); return;
+  }
 
   if (docs?.length) state.docs = docs.map(d => ({
     id:               d.id,
