@@ -1277,10 +1277,14 @@ function setupEvents(){
     if(!nome || !cnpj){ toast('Preencha nome e CNPJ', 'danger'); return; }
     const id = $('#me-id').value || 'e'+uid();
     const data = {id, nome, cnpj, segmento:$('#me-segmento').value, endereco:$('#me-endereco').value, contato:$('#me-contato').value, telefone:$('#me-telefone').value, status:$('#me-status').value};
-    const idx = state.empresas.findIndex(e => e.id === id);
-    if(idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
-    await salvarEmpresaNuvem(data);
-    save(); closeModal('modal-empresa'); renderAll(); toast('✅ Empresa salva', 'ok');
+    try {
+      await salvarEmpresaNuvem(data);
+      const idx = state.empresas.findIndex(e => e.id === id);
+      if(idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
+      save(); closeModal('modal-empresa'); renderAll(); toast('✅ Empresa salva', 'ok');
+    } catch(err) {
+      toast('Erro ao salvar no servidor: ' + err.message, 'danger');
+    }
   };
   $('#me-delete').onclick = async () => {
     if(!confirm('Excluir empresa? Documentos e contratos vinculados também serão removidos.')) return;
@@ -1288,15 +1292,19 @@ function setupEvents(){
     const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
     const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
     const aIds = state.avaliacoes.filter(a => cIds.includes(a.contrato)).map(a => a.id);
-    state.empresas = state.empresas.filter(e => e.id !== id);
-    state.docs = state.docs.filter(d => d.empresa !== id);
-    state.contratos = state.contratos.filter(c => c.empresa !== id);
-    state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
-    await excluirEmpresaNuvem(id);
-    await Promise.all(docIds.map(did => excluirDocumentoNuvem(did)));
-    await Promise.all(cIds.map(cid => excluirContratoNuvem(cid)));
-    await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
-    save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
+    try {
+      await excluirEmpresaNuvem(id);
+      await Promise.all(docIds.map(did => excluirDocumentoNuvem(did)));
+      await Promise.all(cIds.map(cid => excluirContratoNuvem(cid)));
+      await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
+      state.empresas = state.empresas.filter(e => e.id !== id);
+      state.docs = state.docs.filter(d => d.empresa !== id);
+      state.contratos = state.contratos.filter(c => c.empresa !== id);
+      state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
+      save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
+    } catch(err) {
+      toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
   };
 
   // Doc auto-validade
@@ -1311,31 +1319,39 @@ function setupEvents(){
     const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
-    if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
-    await salvarDocumentoNuvem(data);
-    save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
-    // Registrar histórico
-    if(!docAntigo){
-      registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`);
-    } else {
-      if(docAntigo.validade !== data.validade)
-        registrarHistorico(id, 'validade', `Validade atualizada: ${fmtDate(docAntigo.validade)} → ${fmtDate(data.validade)}`);
-      if(!docAntigo.envCliente && data.envCliente)
-        registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
-      if(!docAntigo.envFinanceiro && data.envFinanceiro)
-        registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
-      if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
-        registrarHistorico(id, 'atualizado', `Documento atualizado`);
+    try {
+      await salvarDocumentoNuvem(data);
+      if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
+      save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
+      // Registrar histórico
+      if(!docAntigo){
+        registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`);
+      } else {
+        if(docAntigo.validade !== data.validade)
+          registrarHistorico(id, 'validade', `Validade atualizada: ${fmtDate(docAntigo.validade)} → ${fmtDate(data.validade)}`);
+        if(!docAntigo.envCliente && data.envCliente)
+          registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
+        if(!docAntigo.envFinanceiro && data.envFinanceiro)
+          registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
+        if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
+          registrarHistorico(id, 'atualizado', `Documento atualizado`);
+      }
+      const st = statusDoc(data);
+      if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
+    } catch(err) {
+      toast('Erro ao salvar no servidor: ' + err.message, 'danger');
     }
-    const st = statusDoc(data);
-    if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
   };
   $('#md-delete').onclick = async () => {
     if(!confirm('Excluir documento?')) return;
     const did = $('#md-id').value;
-    state.docs = state.docs.filter(d => d.id !== did);
-    await excluirDocumentoNuvem(did);
-    save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído', 'danger');
+    try {
+      await excluirDocumentoNuvem(did);
+      state.docs = state.docs.filter(d => d.id !== did);
+      save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído', 'danger');
+    } catch(err) {
+      toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
   };
 
   // Salvar contrato
@@ -1348,20 +1364,28 @@ function setupEvents(){
     const id = $('#mc-id').value || 'c'+uid();
     const valor = parseMcValor();
     const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
-    const idx = state.contratos.findIndex(c => c.id === id);
-    if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
-    await salvarContratoNuvem(data);
-    save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
+    try {
+      await salvarContratoNuvem(data);
+      const idx = state.contratos.findIndex(c => c.id === id);
+      if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
+      save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
+    } catch(err) {
+      toast('Erro ao salvar no servidor: ' + err.message, 'danger');
+    }
   };
   $('#mc-delete').onclick = async () => {
     if(!confirm('Excluir contrato? Avaliações lançadas também serão removidas.')) return;
     const id = $('#mc-id').value;
     const aIds = state.avaliacoes.filter(a => a.contrato === id).map(a => a.id);
-    state.contratos = state.contratos.filter(c => c.id !== id);
-    state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
-    await excluirContratoNuvem(id);
-    await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
-    save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
+    try {
+      await excluirContratoNuvem(id);
+      await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
+      state.contratos = state.contratos.filter(c => c.id !== id);
+      state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
+      save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
+    } catch(err) {
+      toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
   };
 
   // Salvar avaliação
@@ -1370,17 +1394,25 @@ function setupEvents(){
     if(!data || !agente){ toast('Preencha a data e o tipo de avaliação', 'danger'); return; }
     const id = $('#ma-id').value || 'a'+uid();
     const obj = {id, contrato:$('#ma-contrato').value, data, agente, local:$('#ma-local').value};
-    const idx = state.avaliacoes.findIndex(a => a.id === id);
-    if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
-    await salvarAvaliacaoNuvem(obj);
-    save(); closeModal('modal-aval'); renderAll(); toast('✅ Avaliação salva', 'ok');
+    try {
+      await salvarAvaliacaoNuvem(obj);
+      const idx = state.avaliacoes.findIndex(a => a.id === id);
+      if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
+      save(); closeModal('modal-aval'); renderAll(); toast('✅ Avaliação salva', 'ok');
+    } catch(err) {
+      toast('Erro ao salvar no servidor: ' + err.message, 'danger');
+    }
   };
   $('#ma-delete').onclick = async () => {
     if(!confirm('Excluir avaliação?')) return;
     const aid = $('#ma-id').value;
-    state.avaliacoes = state.avaliacoes.filter(a => a.id !== aid);
-    await excluirAvaliacaoNuvem(aid);
-    save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
+    try {
+      await excluirAvaliacaoNuvem(aid);
+      state.avaliacoes = state.avaliacoes.filter(a => a.id !== aid);
+      save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
+    } catch(err) {
+      toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
   };
 
   // PDF
@@ -1625,7 +1657,7 @@ async function salvarDocumentoNuvem(doc) {
     enviado_financeiro:      doc.envFinanceiro || false,
     data_envio_financeiro:   doc.envFinanceiroData || null
   })
-  if (error) console.error('Erro ao salvar no Supabase:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function salvarHistoricoNuvem(entrada) {
@@ -1636,7 +1668,7 @@ async function salvarHistoricoNuvem(entrada) {
     descricao: entrada.descricao,
     data_hora: entrada.dataHora
   });
-  if (error) console.error('Erro ao salvar histórico:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function salvarEmpresaNuvem(emp) {
@@ -1650,7 +1682,7 @@ async function salvarEmpresaNuvem(emp) {
     telefone: emp.telefone || '',
     status:   emp.status || ''
   })
-  if (error) console.error('Erro ao salvar empresa no Supabase:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function salvarContratoNuvem(c) {
@@ -1660,22 +1692,22 @@ async function salvarContratoNuvem(c) {
     tipos_qtd: JSON.stringify(c.tipos || {}),
     valor: c.valor || 0
   })
-  if (error) console.error('Erro ao salvar contrato:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function excluirContratoNuvem(id) {
   const { error } = await db.from('contratos').delete().eq('id', id)
-  if (error) console.error('Erro ao excluir contrato:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function excluirDocumentoNuvem(id) {
   const { error } = await db.from('documentos').delete().eq('id', id)
-  if (error) console.error('Erro ao excluir documento:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function excluirEmpresaNuvem(id) {
   const { error } = await db.from('clientes').delete().eq('id', id)
-  if (error) console.error('Erro ao excluir empresa:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function salvarAvaliacaoNuvem(a) {
@@ -1684,12 +1716,12 @@ async function salvarAvaliacaoNuvem(a) {
     agente: a.agente, resultado: a.resultado,
     conclusao: a.conclusao || '', local_avaliacao: a.local || ''
   })
-  if (error) console.error('Erro ao salvar avaliação:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function excluirAvaliacaoNuvem(id) {
   const { error } = await db.from('avaliacoes').delete().eq('id', id)
-  if (error) console.error('Erro ao excluir avaliação:', error.message)
+  if (error) throw new Error(error.message)
 }
 
 async function carregarDaNuvem() {
