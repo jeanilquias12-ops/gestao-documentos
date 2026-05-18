@@ -1257,7 +1257,6 @@ function setupEvents(){
   $$('[data-route]').forEach(b => b.onclick = () => navigate(b.dataset.route));
   // Fechar modal
   $$('[data-close]').forEach(b => b.onclick = () => b.closest('.modal-bg').classList.remove('show'));
-  $$('.modal-bg').forEach(m => m.onclick = e => { if(e.target === m) m.classList.remove('show'); });
 
   // Filtros
   ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
