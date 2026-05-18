@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -1272,7 +1271,7 @@ function setupEvents(){
   $('#btnNewContrato').onclick = () => openContrato();
 
   // Salvar empresa
-  $('#me-save').onclick = () => {
+  $('#me-save').onclick = async () => {
     const nome = $('#me-nome').value.trim();
     const cnpj = $('#me-cnpj').value.trim();
     if(!nome || !cnpj){ toast('Preencha nome e CNPJ', 'danger'); return; }
@@ -1280,10 +1279,10 @@ function setupEvents(){
     const data = {id, nome, cnpj, segmento:$('#me-segmento').value, endereco:$('#me-endereco').value, contato:$('#me-contato').value, telefone:$('#me-telefone').value, status:$('#me-status').value};
     const idx = state.empresas.findIndex(e => e.id === id);
     if(idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
+    await salvarEmpresaNuvem(data);
     save(); closeModal('modal-empresa'); renderAll(); toast('✅ Empresa salva', 'ok');
-    salvarEmpresaNuvem(data);
   };
-  $('#me-delete').onclick = () => {
+  $('#me-delete').onclick = async () => {
     if(!confirm('Excluir empresa? Documentos e contratos vinculados também serão removidos.')) return;
     const id = $('#me-id').value;
     const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
@@ -1293,18 +1292,18 @@ function setupEvents(){
     state.docs = state.docs.filter(d => d.empresa !== id);
     state.contratos = state.contratos.filter(c => c.empresa !== id);
     state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
+    await excluirEmpresaNuvem(id);
+    await Promise.all(docIds.map(did => excluirDocumentoNuvem(did)));
+    await Promise.all(cIds.map(cid => excluirContratoNuvem(cid)));
+    await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
     save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
-    excluirEmpresaNuvem(id);
-    docIds.forEach(did => excluirDocumentoNuvem(did));
-    cIds.forEach(cid => excluirContratoNuvem(cid));
-    aIds.forEach(aid => excluirAvaliacaoNuvem(aid));
   };
 
   // Doc auto-validade
   $('#md-tipo').onchange = $('#md-emissao').onchange = updateValidadeAuto;
 
   // Salvar doc
-  $('#md-save').onclick = () => {
+  $('#md-save').onclick = async () => {
     const empresa = $('#md-empresa').value;
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
@@ -1313,8 +1312,8 @@ function setupEvents(){
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
+    await salvarDocumentoNuvem(data);
     save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
-    salvarDocumentoNuvem(data);
     // Registrar histórico
     if(!docAntigo){
       registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`);
@@ -1331,16 +1330,16 @@ function setupEvents(){
     const st = statusDoc(data);
     if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
   };
-  $('#md-delete').onclick = () => {
+  $('#md-delete').onclick = async () => {
     if(!confirm('Excluir documento?')) return;
     const did = $('#md-id').value;
     state.docs = state.docs.filter(d => d.id !== did);
+    await excluirDocumentoNuvem(did);
     save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído', 'danger');
-    excluirDocumentoNuvem(did);
   };
 
   // Salvar contrato
-  $('#mc-save').onclick = () => {
+  $('#mc-save').onclick = async () => {
     const empresa = $('#mc-empresa').value;
     const tipos = {};
     TIPOS_AVALIACAO.forEach(t => { tipos[t.key] = parseInt($('#'+t.id).value)||0; });
@@ -1351,37 +1350,37 @@ function setupEvents(){
     const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
     const idx = state.contratos.findIndex(c => c.id === id);
     if(idx >= 0) state.contratos[idx] = data; else state.contratos.push(data);
+    await salvarContratoNuvem(data);
     save(); closeModal('modal-contrato'); renderAll(); toast('✅ Contrato salvo', 'ok');
-    salvarContratoNuvem(data);
   };
-  $('#mc-delete').onclick = () => {
+  $('#mc-delete').onclick = async () => {
     if(!confirm('Excluir contrato? Avaliações lançadas também serão removidas.')) return;
     const id = $('#mc-id').value;
     const aIds = state.avaliacoes.filter(a => a.contrato === id).map(a => a.id);
     state.contratos = state.contratos.filter(c => c.id !== id);
     state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
+    await excluirContratoNuvem(id);
+    await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
     save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
-    excluirContratoNuvem(id);
-    aIds.forEach(aid => excluirAvaliacaoNuvem(aid));
   };
 
   // Salvar avaliação
-  $('#ma-save').onclick = () => {
+  $('#ma-save').onclick = async () => {
     const data = $('#ma-data').value, agente = $('#ma-agente').value;
     if(!data || !agente){ toast('Preencha a data e o tipo de avaliação', 'danger'); return; }
     const id = $('#ma-id').value || 'a'+uid();
     const obj = {id, contrato:$('#ma-contrato').value, data, agente, local:$('#ma-local').value};
     const idx = state.avaliacoes.findIndex(a => a.id === id);
     if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
+    await salvarAvaliacaoNuvem(obj);
     save(); closeModal('modal-aval'); renderAll(); toast('✅ Avaliação salva', 'ok');
-    salvarAvaliacaoNuvem(obj);
   };
-  $('#ma-delete').onclick = () => {
+  $('#ma-delete').onclick = async () => {
     if(!confirm('Excluir avaliação?')) return;
     const aid = $('#ma-id').value;
     state.avaliacoes = state.avaliacoes.filter(a => a.id !== aid);
+    await excluirAvaliacaoNuvem(aid);
     save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
-    excluirAvaliacaoNuvem(aid);
   };
 
   // PDF
