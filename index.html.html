@@ -346,6 +346,11 @@
             <div class="card-b" id="saldos-baixos" style="display:flex;flex-direction:column;gap:14px"></div>
           </div>
         </div>
+        <div class="card" style="margin-top:18px">
+          <div class="card-h"><div><h3>Agendamentos psicossociais</h3><p>Próximas avaliações pendentes ou reagendadas</p></div><button class="btn ghost sm" data-route="psicossociais">Ver todos →</button></div>
+          <div id="dash-psi-lista"></div>
+        </div>
+
         <div class="card" id="card-art-alertas" style="margin-top:18px;display:none">
           <div class="card-h"><div><h3>Avaliações pendentes c/ prazo</h3><p>LTCATs com ART vencendo em 30 dias e avaliações em aberto</p></div></div>
           <div class="table-wrap"><table id="tbl-art-alertas"><thead><tr><th>Empresa</th><th>LTCAT</th><th>Validade ART</th><th>Realizadas</th><th>Pendentes</th><th>Dias restantes</th></tr></thead><tbody></tbody></table></div>
@@ -855,6 +860,27 @@ function renderDashboard(){
       <div class="progress"><div class="progress-bar ${pct>=1?'danger':'warn'}" style="width:${Math.min(pct*100,100)}%"></div></div>
     </div>
   `).join('') : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:20px">Nenhum saldo baixo</p>';
+
+  // Agendamentos psicossociais
+  const psiLista = (state.psicossociais||[])
+    .filter(p => p.status === 'pendente' || p.status === 'reagendado')
+    .sort((a,b) => (a.data||'').localeCompare(b.data||''))
+    .slice(0, 6);
+  const psiEl = $('#dash-psi-lista');
+  const STATUS_PSI = {pendente:{cls:'warn',label:'Pendente'}, reagendado:{cls:'muted',label:'Reagendado'}};
+  psiEl.innerHTML = psiLista.length ? `<div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Data</th><th>Horário</th><th>Local</th><th>Status</th></tr></thead><tbody>` +
+    psiLista.map(p => {
+      const cfg = STATUS_PSI[p.status] || {cls:'muted', label:p.status};
+      const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
+      return `<tr>
+        <td><b>${nomeEmpresa(p.empresa)}</b></td>
+        <td class="tight">${dataFmt}</td>
+        <td class="tight">${p.hora || '—'}</td>
+        <td>${p.local || '—'}</td>
+        <td><span class="pill ${cfg.cls}">${cfg.label}</span></td>
+      </tr>`;
+    }).join('') + `</tbody></table></div>`
+    : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:24px">Nenhum agendamento pendente</p>';
 
   // Avaliações pendentes c/ prazo (ART)
   const arts = alertasART();
