@@ -69,6 +69,18 @@
   .search-results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg);max-height:340px;overflow:auto;display:none;z-index:50}
   .search-results.show{display:block}
   .sr-head{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);padding:8px 12px 4px;font-weight:600}
+  .ss-wrap{position:relative}
+  .ss-input{width:100%;padding:8px 32px 8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;cursor:pointer}
+  .ss-input:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(76,175,80,.15)}
+  .ss-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-muted);font-size:11px}
+  .ss-drop{position:absolute;left:0;right:0;top:calc(100% + 3px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg);max-height:220px;overflow-y:auto;z-index:300;display:none}
+  .ss-drop.open{display:block}
+  .ss-search{padding:8px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+  .ss-search input{width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+  .ss-search input:focus{outline:none;border-color:var(--green-500)}
+  .ss-opt{padding:8px 12px;font-size:13px;cursor:pointer;border-radius:0}
+  .ss-opt:hover,.ss-opt.focused{background:var(--green-50)}
+  .ss-empty{padding:10px 12px;font-size:13px;color:var(--ink-muted);text-align:center}
   .sr-item{padding:8px 12px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
   .sr-item:hover{background:var(--green-50)}
   .sr-item small{color:var(--ink-muted);font-family:'JetBrains Mono',monospace;font-size:11px}
@@ -1360,6 +1372,63 @@ function setupAutofill(){
   };
 }
 
+/* ================== SELECT PESQUISÁVEL ================== */
+function makeSearchableSelect(sel){
+  const wrap = document.createElement('div');
+  wrap.className = 'ss-wrap';
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.style.display = 'none';
+
+  const btn = document.createElement('div');
+  btn.className = 'ss-input';
+  btn.tabIndex = 0;
+  btn.innerHTML = '<span class="ss-label"></span><span class="ss-arrow">▼</span>';
+  wrap.insertBefore(btn, sel);
+
+  const drop = document.createElement('div');
+  drop.className = 'ss-drop';
+  drop.innerHTML = '<div class="ss-search"><input placeholder="Buscar…" autocomplete="off" /></div><div class="ss-opts"></div>';
+  wrap.appendChild(drop);
+
+  const searchInp = drop.querySelector('.ss-search input');
+  const opts = drop.querySelector('.ss-opts');
+
+  function label(){ return sel.options[sel.selectedIndex]?.text || ''; }
+
+  function syncLabel(){
+    btn.querySelector('.ss-label').textContent = label();
+  }
+
+  function renderOpts(q){
+    const filtered = [...sel.options].filter(o => !q || o.text.toLowerCase().includes(q.toLowerCase()));
+    opts.innerHTML = filtered.length
+      ? filtered.map(o => `<div class="ss-opt" data-val="${o.value}">${o.text}</div>`).join('')
+      : '<div class="ss-empty">Nenhum resultado</div>';
+    opts.querySelectorAll('.ss-opt').forEach(d => {
+      d.onmousedown = e => {
+        e.preventDefault();
+        sel.value = d.dataset.val;
+        syncLabel();
+        close();
+        sel.dispatchEvent(new Event('input', {bubbles:true}));
+        sel.dispatchEvent(new Event('change', {bubbles:true}));
+      };
+    });
+  }
+
+  function open(){ drop.classList.add('open'); searchInp.value = ''; renderOpts(''); setTimeout(()=>searchInp.focus(),0); }
+  function close(){ drop.classList.remove('open'); }
+
+  btn.onclick = () => drop.classList.contains('open') ? close() : open();
+  btn.onkeydown = e => { if(e.key==='Enter'||e.key===' ') open(); };
+  searchInp.oninput = () => renderOpts(searchInp.value);
+  document.addEventListener('mousedown', e => { if(!wrap.contains(e.target)) close(); });
+
+  new MutationObserver(syncLabel).observe(sel, {childList:true, subtree:true, attributes:true});
+  syncLabel();
+}
+
 /* ================== EVENTOS ================== */
 function setupEvents(){
   // Navegação
@@ -1640,6 +1709,12 @@ function setupEvents(){
   // Search & autofill
   setupGlobalSearch();
   setupAutofill();
+
+  // Selects pesquisáveis de empresa
+  ['f-doc-empresa','f-av-empresa','f-psi-empresa','mc-empresa','md-empresa','mp-empresa'].forEach(id => {
+    const sel = $('#'+id);
+    if(sel) makeSearchableSelect(sel);
+  });
 }
 
 /* ================== INIT ================== */
