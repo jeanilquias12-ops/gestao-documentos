@@ -950,7 +950,7 @@ function renderDocs(){
   const empresa = $('#f-doc-empresa').value;
   const q = $('#f-doc-q').value.toLowerCase();
 
-  $('#f-doc-empresa').innerHTML = '<option value="">Todas</option>' + state.empresas.map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-doc-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
 
   let list = state.docs.filter(d => {
     const s = statusDoc(d);
@@ -999,7 +999,7 @@ function renderAvaliacoes(){
   const empresa = $('#f-av-empresa').value;
   const saldo = $('#f-av-saldo').value;
 
-  $('#f-av-empresa').innerHTML = '<option value="">Todas</option>' + state.empresas.map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-av-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
 
   const list = state.contratos.filter(c => {
     if(empresa && c.empresa !== empresa) return false;
@@ -1142,7 +1142,7 @@ function openDoc(id){
   $('#md-title').textContent = d ? 'Editar documento' : 'Novo documento';
   $('#md-id').value = d?.id || '';
   $('#md-empresa').innerHTML = (d ? '' : '<option value="">— Selecione a empresa —</option>') +
-    state.empresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#md-empresa').value = d?.empresa || '';
   $('#md-tipo').value = d?.tipo || 'PGR';
   $('#md-numero').value = d?.numero || '';
@@ -1182,13 +1182,13 @@ function openContrato(id){
   const c = id ? state.contratos.find(x => x.id === id) : null;
   $('#mc-title').textContent = c ? 'Editar contrato' : 'Novo contrato de avaliações';
   $('#mc-id').value = c?.id || '';
-  $('#mc-empresa').innerHTML = state.empresas.map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#mc-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#mc-empresa').value = c?.empresa || state.empresas[0]?.id || '';
 
   function atualizarDocsPorEmpresa(){
     const empId = $('#mc-empresa').value;
     const docsEmpresa = state.docs.filter(d => d.empresa === empId);
-    $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + docsEmpresa.map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''}</option>`).join('');
+    $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + [...docsEmpresa].sort((a,b)=>(`${a.tipo} ${a.numero||''}`).localeCompare(`${b.tipo} ${b.numero||''}`,'pt')).map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''}</option>`).join('');
   }
   atualizarDocsPorEmpresa();
   $('#mc-empresa').onchange = atualizarDocsPorEmpresa;
@@ -1908,7 +1908,7 @@ function renderPsicossociais(){
   const statusFiltro = $('#f-psi-status').value;
 
   $('#f-psi-empresa').innerHTML = '<option value="">Todas</option>' +
-    state.empresas.map(e => `<option value="${e.id}" ${e.id===empFiltro?'selected':''}>${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empFiltro?'selected':''}>${e.nome}</option>`).join('');
 
   const STATUS_CFG = {
     pendente:  {cls:'warn',    label:'Pendente'},
@@ -1956,7 +1956,7 @@ function openPsi(id){
   $('#mp-id').value        = id || '';
   $('#mp-title').textContent = id ? 'Editar Avaliação Psicossocial' : 'Nova Avaliação Psicossocial';
   $('#mp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
-    state.empresas.map(e => `<option value="${e.id}"${p?.empresa===e.id?' selected':''}>${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}"${p?.empresa===e.id?' selected':''}>${e.nome}</option>`).join('');
   $('#mp-data').value          = p?.data          || todayISO();
   $('#mp-hora').value          = p?.hora          || '';
   $('#mp-status').value        = p?.status        || 'pendente';
