@@ -530,10 +530,7 @@
       </select></div>
       <div class="field-block"><label>Data *</label><input id="mp-data" type="date" required /></div>
       <div class="field-block"><label>Horário</label><input id="mp-hora" type="time" /></div>
-      <div class="field-block full"><label>Local / endereço</label><input id="mp-local" placeholder="Ex.: Rua das Flores, 100 — Canteiro B" /></div>
-      <div class="field-block"><label>Responsável / Aplicador</label><input id="mp-responsavel" placeholder="Nome do profissional" /></div>
-      <div class="field-block"><label>Contato na empresa</label><input id="mp-contato-nome" placeholder="Nome do responsável" /></div>
-      <div class="field-block"><label>Telefone do contato</label><input id="mp-contato-tel" type="tel" placeholder="(00) 00000-0000" /></div>
+      <div class="field-block full"><label>Responsável / Aplicador</label><input id="mp-responsavel" placeholder="Nome do profissional" /></div>
       <div class="field-block full"><label>Observações</label><input id="mp-obs" placeholder="Anotações gerais sobre a avaliação" /></div>
       <div class="field-block full" id="mp-reagend-section" style="display:none">
         <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px">
@@ -671,7 +668,8 @@ function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); syncS
 function saveNotify(){ localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifyPrefs)); syncSW(); }
 
 function load(){
-  try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); if(s) state = s; } catch(e){}
+  try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); if(s) state = {...state, ...s}; } catch(e){}
+  if(!state.psicossociais) state.psicossociais = [];
   try { const p = JSON.parse(localStorage.getItem(NOTIFY_KEY)); if(p) notifyPrefs = {...notifyPrefs, ...p}; } catch(e){}
 }
 
@@ -1611,9 +1609,6 @@ function setupEvents(){
       hora:         $('#mp-hora').value,
       status,
       responsavel:  $('#mp-responsavel').value,
-      local:        $('#mp-local').value,
-      contatoNome:  $('#mp-contato-nome').value,
-      contatoTel:   $('#mp-contato-tel').value,
       obs:          $('#mp-obs').value,
       motivo:       $('#mp-motivo').value,
       historico
@@ -1957,7 +1952,6 @@ function renderPsicossociais(){
           <button class="btn sm" onclick="openPsi('${p.id}')">Editar</button>
         </div>
       </div>
-      ${(p.contatoNome||p.contatoTel) ? `<div class="card-b" style="padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)">Contato: <b>${p.contatoNome||''}</b>${p.contatoTel ? ' — '+p.contatoTel : ''}</div>` : ''}
       ${p.obs ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:var(--ink-muted)">📝 ${p.obs}</div>` : ''}
       ${p.motivo && (p.status==='reagendado'||p.status==='cancelado') ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:#b45309">⚠ ${p.motivo}</div>` : ''}
     </div>`;
@@ -1974,9 +1968,6 @@ function openPsi(id){
   $('#mp-hora').value          = p?.hora          || '';
   $('#mp-status').value        = p?.status        || 'pendente';
   $('#mp-responsavel').value   = p?.responsavel   || '';
-  $('#mp-local').value         = p?.local         || '';
-  $('#mp-contato-nome').value  = p?.contatoNome   || '';
-  $('#mp-contato-tel').value   = p?.contatoTel    || '';
   $('#mp-obs').value           = p?.obs           || '';
   $('#mp-motivo').value        = p?.motivo        || '';
   const showMotivo = p?.status === 'reagendado' || p?.status === 'cancelado';
@@ -2007,9 +1998,6 @@ async function salvarPsiNuvem(p){
     hora:                     p.hora || null,
     status:                   p.status,
     responsavel:              p.responsavel || '',
-    local:                    p.local || '',
-    contato_nome:             p.contatoNome || '',
-    contato_telefone:         p.contatoTel || '',
     observacoes:              p.obs || '',
     motivo:                   p.motivo || '',
     historico_reagendamentos: p.historico || []
@@ -2116,8 +2104,6 @@ async function carregarDaNuvem() {
       status:      p.status || 'pendente',
       responsavel: p.responsavel || '',
       local:       p.local || '',
-      contatoNome: p.contato_nome || '',
-      contatoTel:  p.contato_telefone || '',
       obs:         p.observacoes || '',
       motivo:      p.motivo || '',
       historico:   Array.isArray(p.historico_reagendamentos) ? p.historico_reagendamentos : []
