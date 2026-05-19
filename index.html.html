@@ -1143,14 +1143,15 @@ function maAgenteOpts(val=''){
     `<option value="${n}"${val===n?' selected':''}>${n} — ${p}</option>`).join('');
 }
 
-function maAddLinha(agente='', local=''){
+function maAddLinha(agente='', local='', qty=1){
   const div = document.createElement('div');
-  div.className = 'ma-linha form-grid';
-  div.style.cssText = 'margin-bottom:8px;padding:10px 12px;background:#f4f6f9;border-radius:8px;border:1px solid #e2e6ea;position:relative';
+  div.className = 'ma-linha';
+  div.style.cssText = 'margin-bottom:8px;padding:10px 12px;background:#f4f6f9;border-radius:8px;border:1px solid #e2e6ea;display:grid;grid-template-columns:1fr 70px 1fr auto;gap:8px;align-items:end';
   div.innerHTML = `
-    <div class="field-block"><label>Tipo de avaliação *</label><select class="ma-agente" required>${maAgenteOpts(agente)}</select></div>
-    <div class="field-block"><label>Local / setor</label><input class="ma-local" value="${local}" /></div>
-    <button type="button" class="btn ghost sm ma-rm" style="position:absolute;top:6px;right:6px;padding:1px 7px;font-size:12px" title="Remover">✕</button>
+    <div class="field-block" style="margin:0"><label>Tipo de avaliação *</label><select class="ma-agente" required>${maAgenteOpts(agente)}</select></div>
+    <div class="field-block" style="margin:0"><label>Qtd *</label><input class="ma-qty" type="number" min="1" value="${qty}" style="text-align:center" /></div>
+    <div class="field-block" style="margin:0"><label>Local / setor</label><input class="ma-local" value="${local}" /></div>
+    <button type="button" class="btn ghost sm ma-rm" style="padding:6px 10px;margin-bottom:1px" title="Remover">✕</button>
   `;
   div.querySelector('.ma-rm').onclick = () => {
     if($('#ma-linhas').querySelectorAll('.ma-linha').length > 1) div.remove();
@@ -1421,7 +1422,8 @@ function setupEvents(){
     const linhas = [...$('#ma-linhas').querySelectorAll('.ma-linha')];
     const items = linhas.map(l => ({
       agente: l.querySelector('.ma-agente').value,
-      local:  l.querySelector('.ma-local').value
+      local:  l.querySelector('.ma-local').value,
+      qty:    Math.max(1, parseInt(l.querySelector('.ma-qty').value) || 1)
     }));
     if(items.some(i => !i.agente)){ toast('Selecione o tipo em todas as avaliações', 'danger'); return; }
     try {
@@ -1432,14 +1434,19 @@ function setupEvents(){
         const idx = state.avaliacoes.findIndex(a => a.id === id);
         if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
       } else {
+        let total = 0;
         for(const item of items){
-          const obj = {id:'a'+uid(), contrato, data, agente: item.agente, local: item.local};
-          await salvarAvaliacaoNuvem(obj);
-          state.avaliacoes.push(obj);
+          for(let i = 0; i < item.qty; i++){
+            const obj = {id:'a'+uid(), contrato, data, agente: item.agente, local: item.local};
+            await salvarAvaliacaoNuvem(obj);
+            state.avaliacoes.push(obj);
+            total++;
+          }
         }
       }
       save(); closeModal('modal-aval'); renderAll();
-      toast(isEdit ? '✅ Avaliação salva' : `✅ ${items.length} avaliação(ões) salva(s)`, 'ok');
+      const total2 = isEdit ? 0 : items.reduce((s,i)=>s+i.qty,0);
+      toast(isEdit ? '✅ Avaliação salva' : `✅ ${total2} avaliação(ões) salva(s)`, 'ok');
     } catch(err) {
       toast('Erro ao salvar no servidor: ' + err.message, 'danger');
     }
