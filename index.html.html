@@ -601,6 +601,8 @@ function logout(){
   }
 }
 
+const DESCONTO_FIXO_CONTRATO = 2104; // valor fixo automaticamente abatido de todo contrato
+
 /* ================== TIPOS DE AVALIAÇÃO ================== */
 const TIPOS_AVALIACAO = [
   {key:'ruido',      id:'mc-ruido',      nome:'Dosimetria de Ruído',                  valor:120},
@@ -1042,12 +1044,23 @@ function renderAvaliacoes(){
         </div>
         ${pct >= 0.8 ? `<div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px">⚠ Atenção: ${Math.round(pct*100)}% do saldo contratado utilizado</div>` : ''}
         ${c.valor > 0 ? (() => {
-          // Saldo = valor total contratado − Σ(avaliações realizadas × preço unitário por tipo)
+          const baseContrato = c.valor - DESCONTO_FIXO_CONTRATO;
           const doneMap = realizadasPorTipo(c.id);
           const gastoRealizado = TIPOS_AVALIACAO.reduce((s,t) => s + (doneMap[t.key] || 0) * t.valor, 0);
-          const saldoFin = c.valor - gastoRealizado;
+          const saldoFin = baseContrato - gastoRealizado;
           const esgotado = saldoFin <= 0;
-          return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg, #fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line, #fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center"> <span>💰 Contratado: <b>${fmtReal(c.valor)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Realizado: <b>${fmtReal(gastoRealizado)}</b></span> <span style="color:var(--ink-muted)">|</span> <span>Saldo: <b style="color:${esgotado?'var(--danger-fg, #dc2626)':'inherit'}">${fmtReal(Math.max(saldoFin, 0))}</b></span> ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''} </div>`;
+          return `<div style="display:flex;gap:12px;flex-wrap:wrap;background:${esgotado?'var(--danger-bg,#fff0f0)':'var(--green-50)'};border:1px solid ${esgotado?'var(--danger-line,#fca5a5)':'var(--line)'};border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center">
+            <span>💰 Contratado: <b>${fmtReal(c.valor)}</b></span>
+            <span style="color:var(--ink-muted)">|</span>
+            <span style="color:#b45309">Desconto fixo: <b>−${fmtReal(DESCONTO_FIXO_CONTRATO)}</b></span>
+            <span style="color:var(--ink-muted)">|</span>
+            <span>Base: <b>${fmtReal(Math.max(baseContrato,0))}</b></span>
+            <span style="color:var(--ink-muted)">|</span>
+            <span>Realizado: <b>${fmtReal(gastoRealizado)}</b></span>
+            <span style="color:var(--ink-muted)">|</span>
+            <span>Saldo: <b style="color:${esgotado?'var(--danger-fg,#dc2626)':'inherit'}">${fmtReal(Math.max(saldoFin,0))}</b></span>
+            ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''}
+          </div>`;
         })() : ''}
         ${evals.length ? evals.map(a => {
           const tipoInfo = TIPOS_AVALIACAO.find(t => t.nome === a.agente);
