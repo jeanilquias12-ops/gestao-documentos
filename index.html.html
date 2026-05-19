@@ -375,7 +375,7 @@
           <div class="field"><label>Tipo</label><select id="f-doc-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="LTCAT">LTCAT</option></select></div>
           <div class="field"><label>Status</label><select id="f-doc-status"><option value="">Todos</option><option value="valido">Válido</option><option value="vencendo">Vencendo</option><option value="vencido">Vencido</option></select></div>
           <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
-          <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Número, responsável…" /></div>
+          <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="numero">Nº/Versão <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -882,7 +882,7 @@ function renderDocs(){
     const s = statusDoc(d);
     const sk = s.key === 'ok' ? 'valido' : s.key === 'warn' ? 'vencendo' : s.key === 'danger' ? 'vencido' : '';
     return (!tipo || d.tipo === tipo) && (!status || sk === status) && (!empresa || d.empresa === empresa) &&
-      (!q || (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q));
+      (!q || (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q) || nomeEmpresa(d.empresa).toLowerCase().includes(q));
   });
 
   const sort = sortState.docs || {col:'validade', dir:1};
