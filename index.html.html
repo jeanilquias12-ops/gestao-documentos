@@ -522,6 +522,13 @@
     <div class="form-grid" style="margin-bottom:10px">
       <div class="field-block"><label>Data *</label><input id="ma-data" type="date" required /></div>
     </div>
+    <div class="field-block" style="margin-bottom:12px">
+      <label>GHE — Grupo Homogêneo de Exposição</label>
+      <div style="display:flex;gap:8px">
+        <select id="ma-ghe" style="flex:1"><option value="">Sem GHE</option></select>
+        <button type="button" id="ma-ghe-add" class="btn ghost sm">+ Novo GHE</button>
+      </div>
+    </div>
     <div id="ma-linhas"></div>
     <button type="button" id="ma-add-linha" class="btn ghost sm" style="margin-top:4px;display:none">+ Adicionar outra avaliação</button>
   </form></div>
@@ -642,7 +649,7 @@ function recalcTotalContrato(){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[]};
+let state = {empresas:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[]};
 let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
 
@@ -1072,18 +1079,39 @@ function renderAvaliacoes(){
             ${esgotado ? '<span style="background:var(--danger-fg,#dc2626);color:#fff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:600">🔴 Saldo esgotado — aditivo necessário</span>' : ''}
           </div>`;
         })() : ''}
-        ${evals.length ? evals.map(a => {
-          const tipoInfo = TIPOS_AVALIACAO.find(t => t.nome === a.agente);
-          return `<div class="ev-row">
-            <span class="mono">${fmtDate(a.data)}</span>
-            <span><b>${a.agente}</b></span>
-            <span style="color:var(--ink-muted)">${a.local||'—'}</span>
-            <span style="display:flex;align-items:center;gap:8px">
-              ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
-              <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
-            </span>
-          </div>`;
-        }).join('') : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:20px">Nenhuma avaliação lançada ainda</p>'}
+        ${(() => {
+          if(!evals.length) return '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:20px">Nenhuma avaliação lançada ainda</p>';
+          const gheList = state.ghe.filter(g => g.contrato === c.id);
+          const renderRow = (a) => {
+            const tipoInfo = TIPOS_AVALIACAO.find(t => t.nome === a.agente);
+            return `<div class="ev-row">
+              <span class="mono">${fmtDate(a.data)}</span>
+              <span><b>${a.agente}</b></span>
+              <span style="color:var(--ink-muted)">${a.local||'—'}</span>
+              <span style="display:flex;align-items:center;gap:8px">
+                ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
+                <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
+              </span>
+            </div>`;
+          };
+          if(!gheList.length) return evals.map(renderRow).join('');
+          let html = '';
+          gheList.forEach(g => {
+            const gevs = evals.filter(a => a.ghe === g.id);
+            html += `<div style="margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-muted);background:var(--green-50,#f0fdf4);border-left:3px solid var(--green-400,#4ade80);padding:4px 8px;border-radius:0 4px 4px 0;margin-bottom:4px">🏷 GHE: ${g.nome}</div>
+              ${gevs.length ? gevs.map(renderRow).join('') : '<p style="color:var(--ink-muted);font-size:12px;padding:6px 8px;margin:0">Nenhuma avaliação neste GHE</p>'}
+            </div>`;
+          });
+          const semGhe = evals.filter(a => !a.ghe || !gheList.find(g => g.id === a.ghe));
+          if(semGhe.length){
+            html += `<div style="margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-muted);background:var(--muted-bg,#f5f5f5);border-left:3px solid #d1d5db;padding:4px 8px;border-radius:0 4px 4px 0;margin-bottom:4px">Sem GHE</div>
+              ${semGhe.map(renderRow).join('')}
+            </div>`;
+          }
+          return html;
+        })()}
       </div>
     </div>`;
   }).join('');
@@ -1263,6 +1291,10 @@ function openAval(cId, aId){
   $('#ma-contrato').value = cId;
   $('#ma-id').value = aId || '';
   $('#ma-data').value = a?.data || todayISO();
+  // Popula select de GHE do contrato
+  const gheList = state.ghe.filter(g => g.contrato === cId);
+  $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+  $('#ma-ghe').value = a?.ghe || '';
   $('#ma-linhas').innerHTML = '';
   maAddLinha(a?.agente || '', a?.local || '');
   $('#ma-add-linha').style.display = aId ? 'none' : '';
@@ -1570,10 +1602,29 @@ function setupEvents(){
   // Salvar avaliação (uma ou múltiplas)
   $('#ma-add-linha').onclick = () => maAddLinha();
 
+  // Criar novo GHE inline
+  $('#ma-ghe-add').onclick = async () => {
+    const nome = prompt('Nome do GHE:');
+    if(!nome?.trim()) return;
+    const cId = $('#ma-contrato').value;
+    const g = {id: 'g'+uid(), contrato: cId, nome: nome.trim()};
+    try {
+      await salvarGheNuvem(g);
+      state.ghe.push(g);
+      const gheList = state.ghe.filter(x => x.contrato === cId);
+      $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+      $('#ma-ghe').value = g.id;
+      toast('✅ GHE criado', 'ok');
+    } catch(err) {
+      toast('Erro ao criar GHE: ' + err.message, 'danger');
+    }
+  };
+
   $('#ma-save').onclick = async () => {
     const data = $('#ma-data').value;
     if(!data){ toast('Preencha a data', 'danger'); return; }
     const contrato = $('#ma-contrato').value;
+    const gheId = $('#ma-ghe').value || null;
     const isEdit = !!$('#ma-id').value;
     const linhas = [...$('#ma-linhas').querySelectorAll('.ma-linha')];
     const items = linhas.map(l => ({
@@ -1585,7 +1636,7 @@ function setupEvents(){
     try {
       if(isEdit){
         const id = $('#ma-id').value;
-        const obj = {id, contrato, data, agente: items[0].agente, local: items[0].local};
+        const obj = {id, contrato, data, agente: items[0].agente, local: items[0].local, ghe: gheId};
         await salvarAvaliacaoNuvem(obj);
         const idx = state.avaliacoes.findIndex(a => a.id === id);
         if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
@@ -1593,7 +1644,7 @@ function setupEvents(){
         let total = 0;
         for(const item of items){
           for(let i = 0; i < item.qty; i++){
-            const obj = {id:'a'+uid(), contrato, data, agente: item.agente, local: item.local};
+            const obj = {id:'a'+uid(), contrato, data, agente: item.agente, local: item.local, ghe: gheId};
             await salvarAvaliacaoNuvem(obj);
             state.avaliacoes.push(obj);
             total++;
@@ -1975,8 +2026,21 @@ async function salvarAvaliacaoNuvem(a) {
   const { error } = await db.from('avaliacoes').upsert({
     id: a.id, contrato_id: a.contrato, data: a.data,
     agente: a.agente, resultado: a.resultado,
-    conclusao: a.conclusao || '', local_avaliacao: a.local || ''
+    conclusao: a.conclusao || '', local_avaliacao: a.local || '',
+    ghe_id: a.ghe || null
   })
+  if (error) throw new Error(error.message)
+}
+
+async function salvarGheNuvem(g) {
+  const { error } = await db.from('ghe').upsert({
+    id: g.id, contrato_id: g.contrato, nome: g.nome
+  })
+  if (error) throw new Error(error.message)
+}
+
+async function excluirGheNuvem(id) {
+  const { error } = await db.from('ghe').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -2092,14 +2156,16 @@ async function carregarDaNuvem() {
     { data: contratos,      error: errContratos },
     { data: avaliacoes,     error: errAval },
     { data: historico,      error: errHist },
-    { data: psicossociais,  error: errPsi }
+    { data: psicossociais,  error: errPsi },
+    { data: gheRows,        error: errGhe }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
     db.from('contratos').select('*'),
     db.from('avaliacoes').select('*'),
     db.from('historico_documentos').select('*').order('data_hora', { ascending: true }),
-    db.from('psicossociais').select('*').order('data', { ascending: false })
+    db.from('psicossociais').select('*').order('data', { ascending: false }),
+    db.from('ghe').select('*')
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
@@ -2156,7 +2222,16 @@ async function carregarDaNuvem() {
       agente:    a.agente,
       resultado: a.resultado,
       conclusao: a.conclusao || '',
-      local:     a.local_avaliacao || ''
+      local:     a.local_avaliacao || '',
+      ghe:       a.ghe_id || ''
+    }))
+  }
+
+  if (!errGhe && gheRows?.length) {
+    state.ghe = gheRows.map(g => ({
+      id:       g.id,
+      contrato: g.contrato_id,
+      nome:     g.nome
     }))
   }
 
