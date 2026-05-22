@@ -150,6 +150,8 @@
   .pill.enviado-c{background:#E8F5E9;color:#2E7D32;font-size:11px}
   .pill.enviado-c::before,.pill.enviado-f::before,.pill.nao-enviado::before{display:none}
   .pill.enviado-f{background:#E3F2FD;color:#1565C0;font-size:11px}
+  .pill.enviado-a{background:#F3E5F5;color:#6A1B9A;font-size:11px}
+  .pill.enviado-a::before{display:none}
   .pill.nao-enviado{background:#F5F5F5;color:#9E9E9E;font-size:11px;border:1px dashed #BDBDBD}
   .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600}
   .pill::before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor;opacity:.85}
@@ -495,6 +497,10 @@
     <div class="envio-row">
       <label><input type="checkbox" id="md-env-financeiro" /> Enviado para o financeiro</label>
       <input type="date" id="md-env-financeiro-data" title="Data de envio ao financeiro" />
+    </div>
+    <div class="envio-row">
+      <label><input type="checkbox" id="md-env-assessoria" /> Enviado para a assessoria médica</label>
+      <input type="date" id="md-env-assessoria-data" title="Data de envio à assessoria médica" />
     </div>
   </div>
 </form></div>
@@ -1031,6 +1037,9 @@ function renderDocs(){
           ${d.envFinanceiro
             ? `<span class="pill enviado-f">✔ Financeiro${d.envFinanceiroData?' '+fmtDate(d.envFinanceiroData):''}</span>`
             : `<span class="pill nao-enviado">✗ Financeiro não enviado</span>`}
+          ${d.envAssessoria
+            ? `<span class="pill enviado-a">✔ Assessoria${d.envAssessoriaData?' '+fmtDate(d.envAssessoriaData):''}</span>`
+            : `<span class="pill nao-enviado">✗ Assessoria não enviada</span>`}
         </div>
       </td>
       <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
@@ -1234,6 +1243,8 @@ function openDoc(id){
   $('#md-env-cliente-data').value = d?.envClienteData || '';
   $('#md-env-financeiro').checked = d?.envFinanceiro || false;
   $('#md-env-financeiro-data').value = d?.envFinanceiroData || '';
+  $('#md-env-assessoria').checked = d?.envAssessoria || false;
+  $('#md-env-assessoria-data').value = d?.envAssessoriaData || '';
   $('#md-delete').style.display = d ? '' : 'none';
   if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
@@ -1557,7 +1568,7 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value};
+    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:$('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     try {
@@ -1574,6 +1585,8 @@ function setupEvents(){
           registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
         if(!docAntigo.envFinanceiro && data.envFinanceiro)
           registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
+        if(!docAntigo.envAssessoria && data.envAssessoria)
+          registrarHistorico(id, 'enviado_assessoria', `Enviado à assessoria médica${data.envAssessoriaData ? ' em ' + fmtDate(data.envAssessoriaData) : ''}`);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
       }
@@ -2095,7 +2108,9 @@ async function salvarDocumentoNuvem(doc) {
     enviado_cliente:   doc.envCliente || false,
     data_envio_cliente:doc.envClienteData || null,
     enviado_financeiro:      doc.envFinanceiro || false,
-    data_envio_financeiro:   doc.envFinanceiroData || null
+    data_envio_financeiro:   doc.envFinanceiroData || null,
+    enviado_assessoria:      doc.envAssessoria || false,
+    data_envio_assessoria:   doc.envAssessoriaData || null
   })
   if (error) throw new Error(error.message)
 }
@@ -2352,7 +2367,9 @@ async function carregarDaNuvem() {
     envCliente:       d.enviado_cliente || false,
     envClienteData:   d.data_envio_cliente || '',
     envFinanceiro:    d.enviado_financeiro || false,
-    envFinanceiroData:d.data_envio_financeiro || ''
+    envFinanceiroData:d.data_envio_financeiro || '',
+    envAssessoria:    d.enviado_assessoria || false,
+    envAssessoriaData:d.data_envio_assessoria || ''
   }))
 
   if (emps?.length) state.empresas = emps.map(e => ({
