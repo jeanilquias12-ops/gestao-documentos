@@ -554,7 +554,7 @@
     <div class="form-grid">
       <div class="field-block full"><label>Nome do material *</label><input id="mi-nome" placeholder="Ex: Tubo de carvão ativado, Solução padrão…" required /></div>
       <div class="field-block"><label>Data de chegada *</label><input id="mi-chegada" type="date" required /></div>
-      <div class="field-block"><label>Validade *</label><input id="mi-validade" type="date" required /></div>
+      <div class="field-block"><label>Validade (dias) *</label><input id="mi-validade" type="number" min="1" placeholder="Ex: 10" required /></div>
       <div class="field-block"><label>Quantidade</label><input id="mi-qtd" placeholder="Ex: 50 tubos, 1 frasco 500ml…" /></div>
     </div>
   </form></div>
@@ -1801,11 +1801,12 @@ function setupEvents(){
 
 /* ================== INIT ================== */
 /* ================== INSUMOS ================== */
-function diasRestantesInsumo(validade){
-  if(!validade) return null;
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const val  = new Date(validade + 'T00:00:00');
-  return Math.round((val - hoje) / 86400000);
+function diasRestantesInsumo(chegada, validadeDias){
+  if(!chegada || !validadeDias) return null;
+  const hoje    = new Date(); hoje.setHours(0,0,0,0);
+  const chegou  = new Date(chegada + 'T00:00:00');
+  const vence   = new Date(chegou.getTime() + validadeDias * 86400000);
+  return Math.round((vence - hoje) / 86400000);
 }
 
 function statusInsumo(dias){
@@ -1822,7 +1823,7 @@ function renderInsumos(){
   if(!tbody) return;
 
   let lista = [...state.insumos];
-  lista.forEach(i => { i._dias = diasRestantesInsumo(i.validade); i._status = statusInsumo(i._dias); });
+  lista.forEach(i => { i._dias = diasRestantesInsumo(i.chegada, i.validade); i._status = statusInsumo(i._dias); });
   if(statusFiltro) lista = lista.filter(i => i._status.key === statusFiltro);
   if(q) lista = lista.filter(i => i.nome.toLowerCase().includes(q));
   lista.sort((a,b) => (a._dias ?? 9999) - (b._dias ?? 9999));
@@ -1843,7 +1844,7 @@ function renderInsumos(){
       <td><b>${i.nome}</b></td>
       <td class="mono">${fmtDate(i.chegada)}</td>
       <td>${i.qtd || '—'}</td>
-      <td class="mono">${fmtDate(i.validade)}</td>
+      <td>${i.validade ? i.validade + ' dias' : '—'}</td>
       <td style="font-weight:600;color:${s.key==='danger'?'var(--danger-fg)':s.key==='warn'?'var(--warn-fg)':'var(--ok-fg)'}">${diasTxt}</td>
       <td><span class="pill ${s.key}">${s.label}</span></td>
       <td><button class="btn sm ghost" onclick="openInsumo('${i.id}')">Editar</button></td>
@@ -1857,7 +1858,7 @@ function openInsumo(id){
   $('#mi-id').value = id || '';
   $('#mi-nome').value = ins?.nome || '';
   $('#mi-chegada').value = ins?.chegada || todayISO();
-  $('#mi-validade').value = ins?.validade || '';
+  $('#mi-validade').value = ins?.validade || ''; // número de dias
   $('#mi-qtd').value = ins?.qtd || '';
   $('#mi-delete').style.display = ins ? '' : 'none';
   openModal('modal-insumo');
@@ -2301,7 +2302,7 @@ async function excluirPsiNuvem(id){
 async function salvarInsumoNuvem(i){
   const { error } = await db.from('insumos').upsert({
     id: i.id, nome: i.nome, data_chegada: i.chegada,
-    data_validade: i.validade, quantidade: i.qtd || ''
+    validade_dias: parseInt(i.validade) || null, quantidade: i.qtd || ''
   });
   if(error) throw new Error(error.message);
 }
@@ -2405,7 +2406,7 @@ async function carregarDaNuvem() {
       id:       i.id,
       nome:     i.nome,
       chegada:  i.data_chegada,
-      validade: i.data_validade,
+      validade: i.validade_dias,
       qtd:      i.quantidade || ''
     }))
   }
