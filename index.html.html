@@ -396,7 +396,7 @@
           <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
           <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
         </div>
-        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="numero">Nº/Versão <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- AVALIAÇÕES -->
@@ -476,7 +476,7 @@
   <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="md-empresa" required></select></div>
     <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 2 anos de validade</option><option value="LTCAT">LTCAT — sem validade fixa</option></select></div>
-    <div class="field-block"><label>Número / Versão</label><input id="md-numero" placeholder="Ex.: PGR-2026-001" /></div>
+    <input type="hidden" id="md-numero" value="" />
     <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required /></div>
     <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
     <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
@@ -1019,7 +1019,6 @@ function renderDocs(){
     return `<tr>
       <td><b>${nomeEmpresa(d.empresa)}</b></td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
-      <td><span class="mono">${d.numero||'—'}</span></td>
       <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.responsavel||''}">${d.responsavel||'—'}</td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
