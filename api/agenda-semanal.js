@@ -151,7 +151,7 @@ module.exports = async function handler(req, res) {
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
   const [psiRes, clientesRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/psicossociais?data=gte.${inicioSemana}&data=lte.${fimSemana}&order=data.asc,hora.asc&select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/psicossociais?data=gte.${inicioSemana}&data=lte.${fimSemana}&order=data.asc,hora.asc&select=id,cliente_id,empresa_livre,data,hora,status,responsavel,observacoes`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers })
   ]);
 
@@ -173,7 +173,7 @@ module.exports = async function handler(req, res) {
   psicossociais.forEach(p => {
     if (!diasMap[p.data]) return;
     diasMap[p.data].avaliacoes.push({
-      empresa:     clienteMap[p.cliente_id] || '—',
+      empresa:     p.empresa_livre || clienteMap[p.cliente_id] || '—',
       hora:        p.hora || '',
       status:      p.status || 'pendente',
       responsavel: p.responsavel || '',
