@@ -1085,7 +1085,7 @@ function renderAvaliacoes(){
             return `<div class="ev-row">
               <span class="mono">${fmtDate(a.data)}</span>
               <span><b>${a.agente}</b></span>
-              <span style="color:var(--ink-muted)">${a.local||'—'}</span>
+              <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
               <span style="display:flex;align-items:center;gap:8px">
                 ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
                 <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
@@ -1269,14 +1269,15 @@ function maAgenteOpts(val=''){
     `<option value="${n}"${val===n?' selected':''}>${n} — ${p}</option>`).join('');
 }
 
-function maAddLinha(agente='', dataLinha='', qty=1){
+function maAddLinha(agente='', dataLinha='', qty=1, envioLab=''){
   const div = document.createElement('div');
   div.className = 'ma-linha';
-  div.style.cssText = 'margin-bottom:8px;padding:10px 12px;background:#f4f6f9;border-radius:8px;border:1px solid #e2e6ea;display:grid;grid-template-columns:1fr 70px 1fr auto;gap:8px;align-items:end';
+  div.style.cssText = 'margin-bottom:8px;padding:10px 12px;background:#f4f6f9;border-radius:8px;border:1px solid #e2e6ea;display:grid;grid-template-columns:1fr 70px 1fr 1fr auto;gap:8px;align-items:end';
   div.innerHTML = `
     <div class="field-block" style="margin:0"><label>Tipo de avaliação *</label><select class="ma-agente" required>${maAgenteOpts(agente)}</select></div>
     <div class="field-block" style="margin:0"><label>Qtd *</label><input class="ma-qty" type="number" min="1" value="${qty}" style="text-align:center" /></div>
     <div class="field-block" style="margin:0"><label>Data *</label><input class="ma-data-linha" type="date" value="${dataLinha}" required /></div>
+    <div class="field-block" style="margin:0"><label>Envio ao laboratório</label><input class="ma-envio-lab" type="date" value="${envioLab}" /></div>
     <button type="button" class="btn ghost sm ma-rm" style="padding:6px 10px;margin-bottom:1px" title="Remover">✕</button>
   `;
   div.querySelector('.ma-rm').onclick = () => {
@@ -1297,7 +1298,7 @@ function openAval(cId, aId){
   $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
   $('#ma-ghe').value = a?.ghe || '';
   $('#ma-linhas').innerHTML = '';
-  maAddLinha(a?.agente || '', a?.data || todayISO());
+  maAddLinha(a?.agente || '', a?.data || todayISO(), 1, a?.envio_lab || '');
   $('#ma-add-linha').style.display = aId ? 'none' : '';
   $('#ma-delete').style.display = a ? '' : 'none';
   openModal('modal-aval');
@@ -1627,16 +1628,17 @@ function setupEvents(){
     const isEdit = !!$('#ma-id').value;
     const linhas = [...$('#ma-linhas').querySelectorAll('.ma-linha')];
     const items = linhas.map(l => ({
-      agente: l.querySelector('.ma-agente').value,
-      data:   l.querySelector('.ma-data-linha').value,
-      qty:    Math.max(1, parseInt(l.querySelector('.ma-qty').value) || 1)
+      agente:    l.querySelector('.ma-agente').value,
+      data:      l.querySelector('.ma-data-linha').value,
+      envio_lab: l.querySelector('.ma-envio-lab').value || '',
+      qty:       Math.max(1, parseInt(l.querySelector('.ma-qty').value) || 1)
     }));
     if(items.some(i => !i.agente)){ toast('Selecione o tipo em todas as avaliações', 'danger'); return; }
     if(items.some(i => !i.data)){ toast('Preencha a data em todas as avaliações', 'danger'); return; }
     try {
       if(isEdit){
         const id = $('#ma-id').value;
-        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', ghe: gheId};
+        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', envio_lab: items[0].envio_lab, ghe: gheId};
         await salvarAvaliacaoNuvem(obj);
         const idx = state.avaliacoes.findIndex(a => a.id === id);
         if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
@@ -1644,7 +1646,7 @@ function setupEvents(){
         let total = 0;
         for(const item of items){
           for(let i = 0; i < item.qty; i++){
-            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', ghe: gheId};
+            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', envio_lab: item.envio_lab, ghe: gheId};
             await salvarAvaliacaoNuvem(obj);
             state.avaliacoes.push(obj);
             total++;
@@ -2027,7 +2029,8 @@ async function salvarAvaliacaoNuvem(a) {
     id: a.id, contrato_id: a.contrato, data: a.data,
     agente: a.agente, resultado: a.resultado,
     conclusao: a.conclusao || '', local_avaliacao: a.local || '',
-    ghe_id: a.ghe || null
+    ghe_id: a.ghe || null,
+    data_envio_lab: a.envio_lab || null
   })
   if (error) throw new Error(error.message)
 }
@@ -2243,7 +2246,8 @@ async function carregarDaNuvem() {
       resultado: a.resultado,
       conclusao: a.conclusao || '',
       local:     a.local_avaliacao || '',
-      ghe:       a.ghe_id || ''
+      ghe:       a.ghe_id || '',
+      envio_lab: a.data_envio_lab || ''
     }))
   }
 
