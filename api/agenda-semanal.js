@@ -125,11 +125,11 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  const notifyEmail = process.env.NOTIFY_EMAIL;
+  const notifyEmail = process.env.NOTIFY_EMAIL_AGENDA || process.env.NOTIFY_EMAIL;
   const apiKey      = process.env.BREVO_API_KEY;
 
   if (!notifyEmail || !apiKey) {
-    return res.status(500).json({ error: 'NOTIFY_EMAIL ou BREVO_API_KEY não configurados' });
+    return res.status(500).json({ error: 'NOTIFY_EMAIL_AGENDA (ou NOTIFY_EMAIL) e BREVO_API_KEY não configurados' });
   }
 
   // Calcular próxima semana (segunda a domingo)
