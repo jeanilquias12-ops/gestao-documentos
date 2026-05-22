@@ -1600,7 +1600,8 @@ function setupEvents(){
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
       }
       const st = statusDoc(data);
-      if(st.key === 'danger' || st.key === 'warn') alertarEmailDoc(data, st);
+      const diasRestDoc = data.validade ? Math.round((new Date(data.validade+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000) : null;
+      if(st.key === 'danger' || (st.key === 'warn' && diasRestDoc !== null && diasRestDoc <= 30)) alertarEmailDoc(data, st);
     } catch(err) {
       toast('Erro ao salvar no servidor: ' + err.message, 'danger');
     }
@@ -1946,8 +1947,6 @@ function initApp(){
   setupEvents();
   renderAll();
   scheduleDesktopNotification();
-  enviarEmailResend(false);
-  alertarEmailARTPendentes();
   registerSW();
 }
 
