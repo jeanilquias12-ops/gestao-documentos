@@ -7,7 +7,62 @@ const fmtDate = iso => {
   return `${d}/${m}/${y}`;
 };
 
-async function sendBrevo(recipients, subject, message, apiKey) {
+function htmlEmail({ titulo, subtitulo, corHeader, blocos, rodape }) {
+  const blocosHtml = blocos.map(b => `
+    <div style="margin-bottom:24px">
+      <div style="background:${b.corFundo};border-left:4px solid ${b.corBorda};border-radius:6px;padding:14px 18px;margin-bottom:10px">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:${b.corTexto};letter-spacing:.04em;text-transform:uppercase">${b.icone} ${b.titulo}</p>
+        <p style="margin:0;font-size:12px;color:${b.corTexto};opacity:.8">${b.subtitulo}</p>
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+        ${b.linhas.map((l, i) => `
+          <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f9f9'}">
+            <td style="padding:10px 14px;border-bottom:1px solid #eeeeee;font-size:13px;color:#333333">${l}</td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0f4f1;font-family:'Segoe UI',Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f1;padding:32px 0">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+
+        <!-- HEADER -->
+        <tr><td style="background:${corHeader};border-radius:12px 12px 0 0;padding:32px 40px;text-align:center">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.12em;text-transform:uppercase">SECONCI Goiás · SST</p>
+          <h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-.02em">${titulo}</h1>
+          <p style="margin:0;font-size:14px;color:rgba(255,255,255,.85)">${subtitulo}</p>
+        </td></tr>
+
+        <!-- BODY -->
+        <tr><td style="background:#ffffff;padding:32px 40px">
+          ${blocosHtml}
+          <p style="margin:28px 0 0;font-size:13px;color:#888888;text-align:center">
+            Acesse o sistema para mais detalhes e ações necessárias.
+          </p>
+          <div style="text-align:center;margin-top:16px">
+            <a href="https://gestao-documentos-theta.vercel.app" style="display:inline-block;background:#1B6B2F;color:#ffffff;text-decoration:none;font-weight:600;font-size:13px;padding:11px 28px;border-radius:8px">Abrir sistema →</a>
+          </div>
+        </td></tr>
+
+        <!-- FOOTER -->
+        <tr><td style="background:#f9f9f9;border-top:1px solid #eeeeee;border-radius:0 0 12px 12px;padding:18px 40px;text-align:center">
+          <p style="margin:0;font-size:11px;color:#aaaaaa">${rodape}</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+async function sendBrevo(recipients, subject, html, apiKey) {
   const r = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
@@ -15,7 +70,7 @@ async function sendBrevo(recipients, subject, message, apiKey) {
       sender: { name: 'SECONCI Goiás', email: 'jeanilquias12@gmail.com' },
       to: recipients.map(e => ({ email: e })),
       subject,
-      textContent: message
+      htmlContent: html
     })
   });
   return r;
@@ -32,11 +87,19 @@ module.exports = async function handler(req, res) {
   }
 
   const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
+  const hoje = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 
   // Alerta imediato disparado ao salvar documento
   if (req.method === 'POST' && req.body && req.body._trigger === 'doc-save') {
-    const { assunto, message } = req.body;
-    const r = await sendBrevo(recipients, assunto, message, apiKey);
+    const { assunto, blocos, corHeader } = req.body;
+    const html = htmlEmail({
+      titulo: assunto.replace(/SECONCI[^—]*—\s*/, ''),
+      subtitulo: hoje,
+      corHeader: corHeader || '#1B6B2F',
+      blocos: blocos || [],
+      rodape: `SECONCI Goiás · Sistema de Gestão SST · ${hoje}`
+    });
+    const r = await sendBrevo(recipients, assunto, html, apiKey);
     const d = await r.json();
     return r.ok ? res.json({ success: true }) : res.status(500).json({ error: d.message || JSON.stringify(d) });
   }
@@ -48,7 +111,6 @@ module.exports = async function handler(req, res) {
 
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
-  // Queries separadas — sem join FK para evitar crash quando relacionamento não está definido
   const [docsRes, clientesRes, contratosRes, avaliRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers }),
@@ -56,33 +118,12 @@ module.exports = async function handler(req, res) {
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
 
-  // Verificar se cada resposta é válida antes de processar
   let docs = [], clientes = [], contratos = [], avals = [];
+  if (docsRes.ok)     { const r = await docsRes.json();      docs      = Array.isArray(r) ? r : []; }
+  if (clientesRes.ok) { const r = await clientesRes.json();  clientes  = Array.isArray(r) ? r : []; }
+  if (contratosRes.ok){ const r = await contratosRes.json(); contratos = Array.isArray(r) ? r : []; }
+  if (avaliRes.ok)    { const r = await avaliRes.json();     avals     = Array.isArray(r) ? r : []; }
 
-  if (docsRes.ok) {
-    const raw = await docsRes.json();
-    docs = Array.isArray(raw) ? raw : [];
-    if (!Array.isArray(raw)) console.error('Erro na query documentos:', JSON.stringify(raw));
-  } else {
-    console.error('Falha HTTP ao buscar documentos:', docsRes.status);
-  }
-
-  if (clientesRes.ok) {
-    const raw = await clientesRes.json();
-    clientes = Array.isArray(raw) ? raw : [];
-  }
-
-  if (contratosRes.ok) {
-    const raw = await contratosRes.json();
-    contratos = Array.isArray(raw) ? raw : [];
-  }
-
-  if (avaliRes.ok) {
-    const raw = await avaliRes.json();
-    avals = Array.isArray(raw) ? raw : [];
-  }
-
-  // Mapa de clientes para lookup por id
   const clienteMap = {};
   clientes.forEach(c => { clienteMap[c.id] = c.nome; });
   const nomeEmpresa = id => clienteMap[id] || '—';
@@ -90,7 +131,6 @@ module.exports = async function handler(req, res) {
   const vencidos = docs.filter(d => d.data_vencimento && d.data_vencimento < today);
   const vencendo = docs.filter(d => d.data_vencimento && d.data_vencimento >= today && d.data_vencimento <= in90);
 
-  // ARTs de LTCAT vencendo em ≤30 dias com avaliações pendentes
   const ltcats = docs.filter(d =>
     d.tipo_documento === 'LTCAT' &&
     d.data_vencimento && d.data_vencimento >= today && d.data_vencimento <= in30
@@ -102,55 +142,59 @@ module.exports = async function handler(req, res) {
     if (!linked) continue;
     const realizadas = avals.filter(a => a.contrato_id === linked.id).length;
     const pendentes  = (linked.qtd || 0) - realizadas;
-    if (pendentes > 0) {
-      artAlerts.push({
-        nome:      nomeEmpresa(ltcat.cliente_id),
-        pendentes,
-        venceART:  ltcat.data_vencimento
-      });
-    }
+    if (pendentes > 0) artAlerts.push({ nome: nomeEmpresa(ltcat.cliente_id), pendentes, venceART: ltcat.data_vencimento });
   }
 
   const ok = !vencidos.length && !vencendo.length && !artAlerts.length;
 
-  let assunto;
+  let assunto, corHeader, blocos;
+
   if (ok) {
-    assunto = 'SECONCI — ✅ Sem pendências hoje';
-  } else if (vencidos.length) {
-    assunto = `SECONCI — 🚨 ${vencidos.length} documento(s) vencido(s)`;
-  } else if (vencendo.length) {
-    assunto = `SECONCI — ⏰ ${vencendo.length} documento(s) vencendo`;
+    assunto   = 'SECONCI — ✅ Sem pendências hoje';
+    corHeader = '#1B6B2F';
+    blocos = [{
+      icone: '✅', titulo: 'Tudo em dia', subtitulo: 'Nenhuma pendência encontrada hoje',
+      corFundo: '#E8F5E9', corBorda: '#4CAF50', corTexto: '#2E7D32',
+      linhas: ['Todos os documentos estão dentro do prazo de validade.']
+    }];
   } else {
-    assunto = `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
+    corHeader = vencidos.length ? '#9B2A1A' : vencendo.length ? '#8A5A00' : '#1B6B2F';
+    assunto   = vencidos.length
+      ? `SECONCI — 🚨 ${vencidos.length} documento(s) vencido(s)`
+      : vencendo.length
+        ? `SECONCI — ⏰ ${vencendo.length} documento(s) vencendo`
+        : `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
+
+    blocos = [];
+
+    if (vencidos.length) blocos.push({
+      icone: '🚨', titulo: `${vencidos.length} documento(s) vencido(s)`, subtitulo: 'Renovação urgente necessária',
+      corFundo: '#FCE6E2', corBorda: '#E53935', corTexto: '#9B2A1A',
+      linhas: vencidos.map(d => `<b>${nomeEmpresa(d.cliente_id)}</b> — ${d.tipo_documento} &nbsp;·&nbsp; Venceu em <b>${fmtDate(d.data_vencimento)}</b>`)
+    });
+
+    if (vencendo.length) blocos.push({
+      icone: '⏰', titulo: `${vencendo.length} documento(s) vencendo`, subtitulo: 'Vencimento nos próximos 90 dias',
+      corFundo: '#FFF6E0', corBorda: '#FFA000', corTexto: '#8A5A00',
+      linhas: vencendo.map(d => `<b>${nomeEmpresa(d.cliente_id)}</b> — ${d.tipo_documento} &nbsp;·&nbsp; Vence em <b>${fmtDate(d.data_vencimento)}</b>`)
+    });
+
+    if (artAlerts.length) blocos.push({
+      icone: '⚠️', titulo: `${artAlerts.length} LTCAT(s) com avaliações pendentes`, subtitulo: 'ART vencendo em até 30 dias',
+      corFundo: '#FFF3E0', corBorda: '#FB8C00', corTexto: '#7B4F00',
+      linhas: artAlerts.map(a => `<b>${a.nome}</b> &nbsp;·&nbsp; ${a.pendentes} avaliação(ões) pendente(s) &nbsp;·&nbsp; ART vence em <b>${fmtDate(a.venceART)}</b>`)
+    });
   }
 
-  let message = `Resumo diário SECONCI — ${fmtDate(today)}\n\n`;
-  if (ok) {
-    message += '✅ Todos os documentos estão em dia.';
-  } else {
-    if (vencidos.length) {
-      message += `🚨 VENCIDOS (${vencidos.length}):\n`;
-      vencidos.forEach(d => {
-        message += `• ${nomeEmpresa(d.cliente_id)} — ${d.tipo_documento} ${d.numero || ''} (venceu ${fmtDate(d.data_vencimento)})\n`;
-      });
-      message += '\n';
-    }
-    if (vencendo.length) {
-      message += `⏰ VENCENDO EM 90 DIAS (${vencendo.length}):\n`;
-      vencendo.forEach(d => {
-        message += `• ${nomeEmpresa(d.cliente_id)} — ${d.tipo_documento} ${d.numero || ''} (vence ${fmtDate(d.data_vencimento)})\n`;
-      });
-      message += '\n';
-    }
-    if (artAlerts.length) {
-      message += `⚠️ AVALIAÇÕES PENDENTES (ART vence em ≤30 dias):\n`;
-      artAlerts.forEach(a => {
-        message += `• ${a.nome} — ${a.pendentes} avaliação(ões) pendente(s) (ART vence ${fmtDate(a.venceART)})\n`;
-      });
-    }
-  }
+  const html = htmlEmail({
+    titulo: ok ? 'Sem pendências hoje' : 'Resumo de Pendências',
+    subtitulo: `Relatório diário · ${hoje}`,
+    corHeader,
+    blocos,
+    rodape: `SECONCI Goiás · Sistema de Gestão SST · ${hoje}`
+  });
 
-  const emailRes = await sendBrevo(recipients, assunto, message, apiKey);
+  const emailRes = await sendBrevo(recipients, assunto, html, apiKey);
   const data = await emailRes.json();
   if (emailRes.ok) {
     return res.status(200).json({ success: true, vencidos: vencidos.length, vencendo: vencendo.length, artAlerts: artAlerts.length });
