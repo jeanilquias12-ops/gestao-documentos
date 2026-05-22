@@ -572,7 +572,16 @@
   <div class="modal-h"><div><h2 id="mp-title">Nova Avaliação Psicossocial</h2><p id="mp-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-psi"><input type="hidden" id="mp-id" />
     <div class="form-grid">
-      <div class="field-block"><label>Empresa *</label><select id="mp-empresa" required><option value="">— Selecione —</option></select></div>
+      <div class="field-block full">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin:0" id="mp-empresa-label">Empresa *</label>
+          <label style="font-size:12px;color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:400">
+            <input type="checkbox" id="mp-empresa-livre-toggle" style="cursor:pointer" /> Empresa não cadastrada
+          </label>
+        </div>
+        <select id="mp-empresa" required><option value="">— Selecione —</option></select>
+        <input id="mp-empresa-livre" type="text" placeholder="Digite o nome da empresa…" style="display:none;width:100%;box-sizing:border-box" />
+      </div>
       <div class="field-block"><label>Status</label><select id="mp-status">
         <option value="pendente">Pendente</option>
         <option value="realizado">Realizado</option>
@@ -924,7 +933,7 @@ function renderDashboard(){
       const cfg = STATUS_PSI[p.status] || {cls:'muted', label:p.status};
       const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
       return `<tr>
-        <td><b>${nomeEmpresa(p.empresa)}</b></td>
+        <td><b>${p.empresaLivre || nomeEmpresa(p.empresa)}</b>${p.empresaLivre ? ' <span style="font-size:10px;color:var(--ink-muted);font-weight:400">(externa)</span>' : ''}</td>
         <td class="tight">${dataFmt}</td>
         <td class="tight">${p.hora || '—'}</td>
         <td>${p.local || '—'}</td>
@@ -1749,16 +1758,28 @@ function setupEvents(){
   setupSort('tbl-empresas','empresas');
   setupSort('tbl-docs','docs');
 
-  // Modal Psicossocial
+  // Modal Psicossocial — toggle empresa livre
+  $('#mp-empresa-livre-toggle').onchange = () => {
+    const livre = $('#mp-empresa-livre-toggle').checked;
+    $('#mp-empresa').style.display       = livre ? 'none' : '';
+    $('#mp-empresa').required            = !livre;
+    $('#mp-empresa-livre').style.display = livre ? '' : 'none';
+    $('#mp-empresa-livre').required      = livre;
+    if(livre) { $('#mp-empresa').value = ''; }
+    else      { $('#mp-empresa-livre').value = ''; }
+  };
+
   $('#mp-status').onchange = () => {
     const s = $('#mp-status').value;
     $('#mp-reagend-section').style.display = (s === 'reagendado' || s === 'cancelado') ? '' : 'none';
   };
 
   $('#mp-save').onclick = async () => {
-    const empresa = $('#mp-empresa').value;
+    const livre   = $('#mp-empresa-livre-toggle').checked;
+    const empresa = livre ? '' : $('#mp-empresa').value;
+    const empresaLivre = livre ? $('#mp-empresa-livre').value.trim() : '';
     const data    = $('#mp-data').value;
-    if(!empresa || !data){ toast('Preencha empresa e data', 'danger'); return; }
+    if((!empresa && !empresaLivre) || !data){ toast('Preencha empresa e data', 'danger'); return; }
     const id     = $('#mp-id').value || 'p'+uid();
     const status = $('#mp-status').value;
     const isEdit = !!$('#mp-id').value;
@@ -1768,7 +1789,7 @@ function setupEvents(){
       historico = [...historico, {dataAnterior: existing.data, horaAnterior: existing.hora||'', novaData: data, novaHora: $('#mp-hora').value, motivo: $('#mp-motivo').value, registradoEm: new Date().toISOString()}];
     }
     const obj = {
-      id, empresa, data,
+      id, empresa, empresaLivre, data,
       hora:         $('#mp-hora').value,
       status,
       responsavel:  $('#mp-responsavel').value,
@@ -2265,6 +2286,13 @@ function openPsi(id){
   const p = id ? (state.psicossociais||[]).find(x => x.id === id) : null;
   $('#mp-id').value        = id || '';
   $('#mp-title').textContent = id ? 'Editar Avaliação Psicossocial' : 'Nova Avaliação Psicossocial';
+  const isLivre = !!(p?.empresaLivre);
+  $('#mp-empresa-livre-toggle').checked  = isLivre;
+  $('#mp-empresa').style.display         = isLivre ? 'none' : '';
+  $('#mp-empresa').required              = !isLivre;
+  $('#mp-empresa-livre').style.display   = isLivre ? '' : 'none';
+  $('#mp-empresa-livre').required        = isLivre;
+  $('#mp-empresa-livre').value           = p?.empresaLivre || '';
   $('#mp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
     [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}"${p?.empresa===e.id?' selected':''}>${e.nome}</option>`).join('');
   $('#mp-data').value          = p?.data          || todayISO();
@@ -2296,7 +2324,8 @@ function openPsi(id){
 async function salvarPsiNuvem(p){
   const { error } = await db.from('psicossociais').upsert({
     id:                       p.id,
-    cliente_id:               p.empresa,
+    cliente_id:               p.empresa || null,
+    empresa_livre:            p.empresaLivre || null,
     data:                     p.data,
     hora:                     p.hora || null,
     status:                   p.status,
@@ -2439,16 +2468,17 @@ async function carregarDaNuvem() {
 
   if (!errPsi && psicossociais?.length) {
     state.psicossociais = psicossociais.map(p => ({
-      id:          p.id,
-      empresa:     p.cliente_id,
-      data:        p.data,
-      hora:        p.hora || '',
-      status:      p.status || 'pendente',
-      responsavel: p.responsavel || '',
-      local:       p.local || '',
-      obs:         p.observacoes || '',
-      motivo:      p.motivo || '',
-      historico:   Array.isArray(p.historico_reagendamentos) ? p.historico_reagendamentos : []
+      id:           p.id,
+      empresa:      p.cliente_id || '',
+      empresaLivre: p.empresa_livre || '',
+      data:         p.data,
+      hora:         p.hora || '',
+      status:       p.status || 'pendente',
+      responsavel:  p.responsavel || '',
+      local:        p.local || '',
+      obs:          p.observacoes || '',
+      motivo:       p.motivo || '',
+      historico:    Array.isArray(p.historico_reagendamentos) ? p.historico_reagendamentos : []
     }))
   }
 
