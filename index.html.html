@@ -1843,10 +1843,11 @@ function diasRestantesInsumo(chegada, validadeDias){
   return Math.round((vence - hoje) / 86400000);
 }
 
-function statusInsumo(dias){
+function statusInsumo(dias, validadeDias){
   if(dias === null) return {key:'ok', label:'—', cls:'ok'};
   if(dias < 0)   return {key:'danger', label:'Vencido',           cls:'danger'};
-  if(dias <= 90) return {key:'warn',   label:'Vencendo',          cls:'warn'};
+  const warnLimite = Math.max(15, Math.ceil((parseInt(validadeDias)||0)/3));
+  if(dias <= warnLimite) return {key:'warn', label:'Vencendo',    cls:'warn'};
   return               {key:'ok',     label:'Válido',             cls:'ok'};
 }
 
@@ -1857,13 +1858,13 @@ function renderInsumos(){
   if(!tbody) return;
 
   let lista = [...state.insumos];
-  lista.forEach(i => { i._dias = diasRestantesInsumo(i.chegada, i.validade); i._status = statusInsumo(i._dias); });
+  lista.forEach(i => { i._dias = diasRestantesInsumo(i.chegada, i.validade); i._status = statusInsumo(i._dias, i.validade); });
   if(statusFiltro) lista = lista.filter(i => i._status.key === statusFiltro);
   if(q) lista = lista.filter(i => i.nome.toLowerCase().includes(q));
   lista.sort((a,b) => (a._dias ?? 9999) - (b._dias ?? 9999));
 
   // badge no nav
-  const vencendo = state.insumos.filter(i => { const d = diasRestantesInsumo(i.validade); return d !== null && d <= 90; });
+  const vencendo = state.insumos.filter(i => { const d = diasRestantesInsumo(i.chegada, i.validade); return d !== null && d <= Math.max(15, Math.ceil((parseInt(i.validade)||0)/3)); });
   const badge = $('#nav-insumos-badge');
   if(badge){ badge.textContent = vencendo.length; badge.style.display = vencendo.length ? '' : 'none'; }
 
@@ -1970,10 +1971,10 @@ function alertarEmailDoc(doc, st){
     + `Documento: ${doc.tipo} ${doc.numero || ''}\n`
     + `Validade: ${fmtDate(doc.validade)}\n`
     + `Status: ${st.label}`;
-  fetch('/api/cron-email', {
+  fetch('/api/send-email', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({_trigger: 'doc-save', assunto, message})
+    body: JSON.stringify({subject: assunto, message})
   }).then(r => r.json()).then(d => {
     if(d.success) toast('📧 Alerta enviado por e-mail', 'ok');
     else toast('Erro e-mail: ' + (d.error || 'verifique Vercel'), 'danger');
@@ -1993,10 +1994,10 @@ function alertarEmailARTPendentes(){
   arts.forEach(({doc, contrato, realizadas, pendentes, diasRestantes}) => {
     message += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''} — ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n${emailDetalheContrato(contrato, realizadas, pendentes)}\n`;
   });
-  fetch('/api/cron-email', {
+  fetch('/api/send-email', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({_trigger: 'doc-save', assunto, message})
+    body: JSON.stringify({subject: assunto, message})
   }).then(r => r.json()).then(d => {
     if(d.success) toast('📧 Alerta de avaliações pendentes enviado', 'ok');
   }).catch(() => {});
@@ -2023,7 +2024,7 @@ function enviarEmailResend(forcado){
   fetch('/api/send-email', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({to: notifyPrefs.email, subject: assunto, message: buildEmailBody()})
+    body: JSON.stringify({subject: assunto, message: buildEmailBody()})
   }).then(r => r.json()).then(data => {
     if(data.success){
       localStorage.setItem('seconci_email_last', todayISO());
@@ -2372,7 +2373,7 @@ async function carregarDaNuvem() {
     db.from('historico_documentos').select('*').order('data_hora', { ascending: true }),
     db.from('psicossociais').select('*').order('data', { ascending: false }),
     db.from('ghe').select('*'),
-    db.from('insumos').select('*').order('data_validade', { ascending: true })
+    db.from('insumos').select('*').order('data_chegada', { ascending: true })
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
