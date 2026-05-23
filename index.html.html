@@ -434,7 +434,7 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewInsumo">+ Novo insumo</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Status</label><select id="f-ins-status"><option value="">Todos</option><option value="ok">Válido</option><option value="warn">Vencendo (≤ 90 dias)</option><option value="danger">Vencido</option></select></div>
+          <div class="field"><label>Status</label><select id="f-ins-status"><option value="">Todos</option><option value="ok">Válido</option><option value="warn">Vencendo</option><option value="danger">Vencido</option></select></div>
           <div class="field" style="flex:1"><label>Busca</label><input id="f-ins-q" placeholder="Nome do material…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-insumos"><thead><tr><th>Material</th><th>Data de chegada</th><th>Quantidade</th><th>Validade</th><th>Dias restantes</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
@@ -1273,7 +1273,7 @@ function updateValidadeAuto(){
   } else {
     $('#md-validade-label').textContent = 'Validade da ART';
     $('#md-validade-hint').textContent = 'ART do LTCAT — prazo 12 meses';
-    $('#md-validade').value = '';
+    // NÃO zera a validade aqui — preserva valor existente ao reabrir LTCAT
   }
 }
 
@@ -1961,6 +1961,10 @@ function emailDeveEnviar(){
 }
 
 function alertarEmailDoc(doc, st){
+  // Anti-spam: 1 alerta por doc por dia
+  const guardKey = 'seconci_alert_doc_' + doc.id;
+  if(localStorage.getItem(guardKey) === todayISO()) return;
+  localStorage.setItem(guardKey, todayISO());
   const empresa = nomeEmpresa(doc.empresa);
   const assunto = st.key === 'danger'
     ? `SECONCI 🚨 Documento vencido — ${empresa}`
@@ -2004,10 +2008,6 @@ function alertarEmailARTPendentes(){
 }
 
 function enviarEmailResend(forcado){
-  if(!notifyPrefs.email){
-    if(forcado) toast('Informe o e-mail do responsável nas preferências', 'danger');
-    return;
-  }
   if(!forcado && !emailDeveEnviar()) return;
   const {venc, venciendo} = getResumoPendencias();
   const arts = alertasART();
@@ -2028,7 +2028,7 @@ function enviarEmailResend(forcado){
   }).then(r => r.json()).then(data => {
     if(data.success){
       localStorage.setItem('seconci_email_last', todayISO());
-      toast('✅ E-mail enviado para ' + notifyPrefs.email, 'ok');
+      toast('✅ E-mail enviado', 'ok');
     } else {
       toast('Erro: ' + (data.error || 'verifique configuração'), 'danger');
     }
