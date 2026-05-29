@@ -415,6 +415,22 @@
       </section>
 
       <!-- PSICOSSOCIAIS -->
+      <style>
+        .psi-cal-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+        .psi-cal-nav{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--green-50)}
+        .psi-cal-titulo{font-weight:700;font-size:14px;color:var(--green-900,#0F4F22);flex:1;text-align:center}
+        .psi-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line)}
+        .psi-cal-hd{background:var(--green-50);text-align:center;font-size:10px;font-weight:700;color:var(--ink-muted);padding:7px 2px;letter-spacing:.05em;text-transform:uppercase}
+        .psi-cal-day{background:#fff;min-height:62px;padding:5px;display:flex;flex-direction:column;gap:2px}
+        .psi-cal-day.tem-aval{cursor:pointer}.psi-cal-day.tem-aval:hover{background:var(--green-50)}
+        .psi-cal-day.fora{background:#fafafa}.psi-cal-day.ativo{background:#e8f5e9}
+        .psi-cal-day.hoje .psi-cal-num{background:var(--green-700,#1B6B2F);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center}
+        .psi-cal-num{font-size:11.5px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;line-height:20px}
+        .psi-cal-day.fora .psi-cal-num{color:#ccc}
+        .psi-cal-badge{font-size:9px;font-weight:600;color:#fff;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35}
+        .psi-cal-mais{font-size:9px;color:var(--ink-muted);padding:1px 4px}
+        @media(max-width:600px){.psi-cal-day{min-height:44px;padding:3px}.psi-cal-badge{font-size:7.5px}}
+      </style>
       <section class="page" id="page-psicossociais">
         <div class="page-h">
           <div><h2>Avaliações Psicossociais</h2><p>Agendamento e controle de avaliações de risco psicossocial por empresa.</p></div>
@@ -424,6 +440,7 @@
           <div class="field"><label>Empresa</label><select id="f-psi-empresa"><option value="">Todas</option></select></div>
           <div class="field"><label>Status</label><select id="f-psi-status"><option value="">Todos</option><option value="pendente">Pendente</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
         </div>
+        <div id="psi-calendario"></div>
         <div id="psi-list" style="display:flex;flex-direction:column;gap:14px"></div>
       </section>
 
@@ -692,6 +709,9 @@ const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
 let state = {empresas:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[]};
+let _psiCalMes = new Date().getMonth();
+let _psiCalAno = new Date().getFullYear();
+let _psiCalFiltroData = null;
 let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
 
@@ -2286,16 +2306,25 @@ function renderPsicossociais(){
   };
 
   let list = (state.psicossociais||[]).filter(p =>
-    (!empFiltro    || p.empresa === empFiltro) &&
-    (!statusFiltro || p.status  === statusFiltro)
+    (!empFiltro         || p.empresa === empFiltro) &&
+    (!statusFiltro      || p.status  === statusFiltro) &&
+    (!_psiCalFiltroData || p.data    === _psiCalFiltroData)
   ).sort((a,b) => (b.data||'').localeCompare(a.data||''));
 
+  renderCalendarioPsi();
+
   const container = $('#psi-list');
+  const labelFiltro = _psiCalFiltroData
+    ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--green-700)">
+        📅 Mostrando: <b>${_psiCalFiltroData.split('-').reverse().join('/')}</b>
+        <button class="btn ghost sm" style="font-size:11px" onclick="psiCalLimpar()">✕ Limpar filtro</button>
+       </div>` : '';
+
   if(!list.length){
-    container.innerHTML = '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial registrada.</div></div>';
+    container.innerHTML = labelFiltro + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial' + (_psiCalFiltroData ? ' nesta data.' : ' registrada.') + '</div></div>';
     return;
   }
-  container.innerHTML = list.map(p => {
+  container.innerHTML = labelFiltro + list.map(p => {
     const cfg = STATUS_CFG[p.status] || {cls:'muted', label:p.status};
     const emp = state.empresas.find(e => e.id === p.empresa);
     const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
@@ -2317,6 +2346,98 @@ function renderPsicossociais(){
     </div>`;
   }).join('');
 }
+
+/* ================== CALENDÁRIO PSICOSSOCIAIS ================== */
+function renderCalendarioPsi(){
+  const el = $('#psi-calendario');
+  if(!el) return;
+
+  const MESES    = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DIAS_SEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const COR_ST   = {pendente:'#FFA000', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
+
+  const hojeISO      = new Date().toISOString().slice(0,10);
+  const primeiroDia  = new Date(_psiCalAno, _psiCalMes, 1);
+  const ultimoDia    = new Date(_psiCalAno, _psiCalMes + 1, 0);
+  const inicioOffset = primeiroDia.getDay();
+
+  // Agrupar avaliações do mês por data
+  const porDia = {};
+  (state.psicossociais||[]).forEach(p => {
+    if(!p.data) return;
+    const [y, m] = p.data.split('-').map(Number);
+    if(y === _psiCalAno && m - 1 === _psiCalMes){
+      if(!porDia[p.data]) porDia[p.data] = [];
+      porDia[p.data].push(p);
+    }
+  });
+
+  // Cabeçalho dias da semana
+  const cabecalho = DIAS_SEM.map(d => `<div class="psi-cal-hd">${d}</div>`).join('');
+
+  // Células
+  const totalCells = Math.ceil((inicioOffset + ultimoDia.getDate()) / 7) * 7;
+  let celulas = '';
+  for(let i = 0; i < totalCells; i++){
+    const diaNum = i - inicioOffset + 1;
+    if(diaNum < 1 || diaNum > ultimoDia.getDate()){
+      celulas += `<div class="psi-cal-day fora"><span class="psi-cal-num">${diaNum < 1 ? '' : ''}</span></div>`;
+      continue;
+    }
+    const isoDate  = `${_psiCalAno}-${String(_psiCalMes+1).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`;
+    const avals    = porDia[isoDate] || [];
+    const isHoje   = isoDate === hojeISO;
+    const isAtivo  = isoDate === _psiCalFiltroData;
+    const temAval  = avals.length > 0;
+    const mostrar  = avals.slice(0, 2);
+    const extra    = avals.length > 2 ? `<div class="psi-cal-mais">+${avals.length - 2} mais</div>` : '';
+
+    const badges = mostrar.map(a => {
+      const nomeEmp = a.empresaLivre || (state.empresas.find(e => e.id === a.empresa)?.nome) || '—';
+      const cor     = COR_ST[a.status] || '#555';
+      const label   = nomeEmp.length > 14 ? nomeEmp.slice(0,13)+'…' : nomeEmp;
+      return `<div class="psi-cal-badge" style="background:${cor}" title="${nomeEmp} · ${a.hora||''} · ${a.status}">${label}</div>`;
+    }).join('');
+
+    const cls = ['psi-cal-day', temAval?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':''].filter(Boolean).join(' ');
+    const click = temAval ? `onclick="psiCalFiltrar('${isoDate}')"` : '';
+    celulas += `<div class="${cls}" ${click}><span class="psi-cal-num">${diaNum}</span>${badges}${extra}</div>`;
+  }
+
+  const btnFiltro = _psiCalFiltroData
+    ? `<button class="btn ghost sm" style="margin-left:auto;font-size:11px" onclick="psiCalLimpar()">✕ ${_psiCalFiltroData.split('-').reverse().join('/')}</button>`
+    : '';
+
+  el.innerHTML = `
+    <div class="psi-cal-wrap">
+      <div class="psi-cal-nav">
+        <button class="btn ghost sm" onclick="psiCalMover(-1)" style="font-size:16px;padding:4px 10px">‹</button>
+        <span class="psi-cal-titulo">${MESES[_psiCalMes]} ${_psiCalAno}</span>
+        <button class="btn ghost sm" onclick="psiCalMover(1)" style="font-size:16px;padding:4px 10px">›</button>
+        ${btnFiltro}
+      </div>
+      <div class="psi-cal-grid">${cabecalho}${celulas}</div>
+    </div>`;
+}
+
+function psiCalMover(delta){
+  _psiCalMes += delta;
+  if(_psiCalMes < 0){ _psiCalMes = 11; _psiCalAno--; }
+  if(_psiCalMes > 11){ _psiCalMes = 0; _psiCalAno++; }
+  _psiCalFiltroData = null;
+  renderCalendarioPsi();
+}
+
+function psiCalFiltrar(data){
+  _psiCalFiltroData = _psiCalFiltroData === data ? null : data;
+  renderPsicossociais();
+}
+
+function psiCalLimpar(){
+  _psiCalFiltroData = null;
+  renderPsicossociais();
+}
+/* ================== FIM CALENDÁRIO ================== */
 
 function openPsi(id){
   const p = id ? (state.psicossociais||[]).find(x => x.id === id) : null;
