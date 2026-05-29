@@ -590,6 +590,7 @@
       </select></div>
       <div class="field-block"><label>Data *</label><input id="mp-data" type="date" required /></div>
       <div class="field-block"><label>Horário</label><input id="mp-hora" type="time" /></div>
+      <div class="field-block full"><label>Local</label><input id="mp-local" placeholder="Local da avaliação" /></div>
       <div class="field-block full"><label>Responsável / Aplicador</label><input id="mp-responsavel" placeholder="Nome do profissional" /></div>
       <div class="field-block full"><label>Observações</label><input id="mp-obs" placeholder="Anotações gerais sobre a avaliação" /></div>
       <div class="field-block full" id="mp-reagend-section" style="display:none">
@@ -1685,6 +1686,37 @@ function setupEvents(){
     }));
     if(items.some(i => !i.agente)){ toast('Selecione o tipo em todas as avaliações', 'danger'); return; }
     if(items.some(i => !i.data)){ toast('Preencha a data em todas as avaliações', 'danger'); return; }
+
+    /* ── VERIFICAÇÃO DE CONFLITOS ── */
+    if(!isEdit){
+      const _editId = $('#ma-id').value;
+      const _avisos = [];
+
+      // 1) Mesmo contrato com avaliação em aberto (sem resultado)
+      const _emAberto = state.avaliacoes.filter(a =>
+        a.contrato === contrato && !a.resultado && a.id !== _editId
+      );
+      if(_emAberto.length > 0){
+        const _datas = [...new Set(_emAberto.map(a => a.data ? a.data.split('-').reverse().join('/') : '—'))].join(', ');
+        _avisos.push(`• ${_emAberto.length} avaliação(ões) em aberto neste contrato sem resultado registrado (${_datas}).`);
+      }
+
+      // 2) Mesma data já utilizada em outra avaliação
+      const _datasNovas = [...new Set(items.map(i => i.data).filter(Boolean))];
+      for(const _d of _datasNovas){
+        const _mesmaData = state.avaliacoes.filter(a => a.data === _d && a.id !== _editId);
+        if(_mesmaData.length > 0){
+          _avisos.push(`• Já existe(m) ${_mesmaData.length} avaliação(ões) registrada(s) na data ${_d.split('-').reverse().join('/')}.`);
+        }
+      }
+
+      if(_avisos.length > 0){
+        const _msg = '⚠️ Possível conflito de agendamento:\n\n' + _avisos.join('\n') + '\n\nDeseja agendar mesmo assim?';
+        if(!confirm(_msg)) return;
+      }
+    }
+    /* ── FIM VERIFICAÇÃO DE CONFLITOS ── */
+
     try {
       if(isEdit){
         const id = $('#ma-id').value;
@@ -1772,6 +1804,7 @@ function setupEvents(){
   $('#mp-status').onchange = () => {
     const s = $('#mp-status').value;
     $('#mp-reagend-section').style.display = (s === 'reagendado' || s === 'cancelado') ? '' : 'none';
+    if(s !== 'reagendado' && s !== 'cancelado') $('#mp-motivo').value = '';
   };
 
   $('#mp-save').onclick = async () => {
@@ -1785,16 +1818,20 @@ function setupEvents(){
     const isEdit = !!$('#mp-id').value;
     const existing = isEdit ? (state.psicossociais.find(p => p.id === id) || {}) : {};
     let historico = existing.historico || [];
-    if(isEdit && (status === 'reagendado') && existing.data && existing.data !== data){
-      historico = [...historico, {dataAnterior: existing.data, horaAnterior: existing.hora||'', novaData: data, novaHora: $('#mp-hora').value, motivo: $('#mp-motivo').value, registradoEm: new Date().toISOString()}];
+    const _horaAtual = $('#mp-hora').value;
+    const _dataOuHoraMudou = existing.data !== data || (existing.hora||'') !== _horaAtual;
+    const _statusMudou = existing.status !== status;
+    if(isEdit && (status === 'reagendado' || status === 'cancelado') && (_dataOuHoraMudou || _statusMudou)){
+      historico = [...historico, {dataAnterior: existing.data, horaAnterior: existing.hora||'', novaData: data, novaHora: _horaAtual, statusAnterior: existing.status||'', motivo: $('#mp-motivo').value, registradoEm: new Date().toISOString()}];
     }
     const obj = {
       id, empresa, empresaLivre, data,
       hora:         $('#mp-hora').value,
       status,
       responsavel:  $('#mp-responsavel').value,
+      local:        $('#mp-local').value,
       obs:          $('#mp-obs').value,
-      motivo:       $('#mp-motivo').value,
+      motivo:       (status === 'reagendado' || status === 'cancelado') ? $('#mp-motivo').value : '',
       historico
     };
     try {
@@ -2298,6 +2335,7 @@ function openPsi(id){
   $('#mp-hora').value          = p?.hora          || '';
   $('#mp-status').value        = p?.status        || 'pendente';
   $('#mp-responsavel').value   = p?.responsavel   || '';
+  $('#mp-local').value         = p?.local         || '';
   $('#mp-obs').value           = p?.obs           || '';
   $('#mp-motivo').value        = p?.motivo        || '';
   const showMotivo = p?.status === 'reagendado' || p?.status === 'cancelado';
@@ -2329,6 +2367,7 @@ async function salvarPsiNuvem(p){
     hora:                     p.hora || null,
     status:                   p.status,
     responsavel:              p.responsavel || '',
+    local:                    p.local || null,
     observacoes:              p.obs || '',
     motivo:                   p.motivo || '',
     historico_reagendamentos: p.historico || []
@@ -2377,9 +2416,13 @@ async function carregarDaNuvem() {
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
   if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
+  if (errPsi)       { console.error('Erro psicossociais:', errPsi.message); toast('Erro ao carregar avaliações psicossociais', 'danger'); }
+  if (errHist)      { console.error('Erro histórico:', errHist.message); toast('Erro ao carregar histórico de documentos', 'danger'); }
+  if (errGhe)       { console.error('Erro GHE:', errGhe.message); toast('Erro ao carregar GHEs da nuvem', 'danger'); }
+  if (errInsumos)   { console.error('Erro insumos:', errInsumos.message); toast('Erro ao carregar insumos da nuvem', 'danger'); }
 
   if (!docs?.length && !emps?.length) {
-    state.docs = []; state.empresas = []; state.contratos = []; state.avaliacoes = []; state.historico = []; state.psicossociais = [];
+    state.docs = []; state.empresas = []; state.contratos = []; state.avaliacoes = []; state.historico = [];
     save(); renderAll(); return;
   }
 
