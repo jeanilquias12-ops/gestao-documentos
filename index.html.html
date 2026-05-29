@@ -1837,6 +1837,37 @@ function setupEvents(){
     const status = $('#mp-status').value;
     const isEdit = !!$('#mp-id').value;
     const existing = isEdit ? (state.psicossociais.find(p => p.id === id) || {}) : {};
+
+    /* ── VERIFICAÇÃO DE CONFLITOS PSICOSSOCIAIS ── */
+    if(!isEdit){
+      const _avisosPsi = [];
+      const _nomeNovo = empresaLivre || (state.empresas.find(e => e.id === empresa)?.nome) || '';
+
+      // 1) Mesma empresa + mesma data
+      const _mesmoDia = (state.psicossociais||[]).filter(p =>
+        p.data === data &&
+        (empresa ? p.empresa === empresa : p.empresaLivre === empresaLivre)
+      );
+      if(_mesmoDia.length > 0){
+        _avisosPsi.push(`• ${_nomeNovo || 'Esta empresa'} já tem ${_mesmoDia.length} avaliação(ões) agendada(s) em ${data.split('-').reverse().join('/')}.`);
+      }
+
+      // 2) Mesma empresa com avaliação em aberto (pendente/reagendado) em qualquer data
+      const _emAbertoPsi = (state.psicossociais||[]).filter(p =>
+        (p.status === 'pendente' || p.status === 'reagendado') &&
+        (empresa ? p.empresa === empresa : p.empresaLivre === empresaLivre)
+      );
+      if(_emAbertoPsi.length > 0 && !_mesmoDia.length){
+        const _datasAbertas = [...new Set(_emAbertoPsi.map(p => p.data ? p.data.split('-').reverse().join('/') : '—'))].join(', ');
+        _avisosPsi.push(`• ${_nomeNovo || 'Esta empresa'} já tem ${_emAbertoPsi.length} avaliação(ões) em aberto (${_datasAbertas}).`);
+      }
+
+      if(_avisosPsi.length > 0){
+        const _msgPsi = '⚠️ Possível conflito de agendamento:\n\n' + _avisosPsi.join('\n') + '\n\nDeseja agendar mesmo assim?';
+        if(!confirm(_msgPsi)) return;
+      }
+    }
+    /* ── FIM VERIFICAÇÃO DE CONFLITOS ── */
     let historico = existing.historico || [];
     const _horaAtual = $('#mp-hora').value;
     const _dataOuHoraMudou = existing.data !== data || (existing.hora||'') !== _horaAtual;
