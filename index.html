@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -726,7 +727,7 @@ function mascararReal(el){ const raw = el.value.replace(/\D/g,'').replace(/^0+/,
 function parseMcValor(){ const raw = ($('#mc-valor').value||'').replace(/\./g,'').replace(',','.'); return parseFloat(raw) || 0; }
 const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
 
-const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰'};
+const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰', enviado_assessoria:'🩺'};
 
 function registrarHistorico(docId, tipo, descricao){
   if(!state.historico) state.historico = [];
@@ -2578,7 +2579,7 @@ async function carregarDaNuvem() {
     save(); renderAll(); return;
   }
 
-  if (docs?.length) state.docs = docs.map(d => ({
+  if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
     empresa:          d.cliente_id,
     tipo:             d.tipo_documento,
@@ -2595,7 +2596,7 @@ async function carregarDaNuvem() {
     envAssessoriaData:d.data_envio_assessoria || ''
   }))
 
-  if (emps?.length) state.empresas = emps.map(e => ({
+  if (!errEmps) state.empresas = (emps||[]).map(e => ({
     id:       e.id,
     nome:     e.nome,
     cnpj:     e.cnpj,
@@ -2606,8 +2607,8 @@ async function carregarDaNuvem() {
     status:   e.status
   }))
 
-  if (!errContratos && contratos?.length) {
-    state.contratos = contratos.map(c => ({
+  if (!errContratos) {
+    state.contratos = (contratos||[]).map(c => ({
       id:      c.id,
       empresa: c.cliente_id,
       doc:     c.doc_id || '',
@@ -2618,8 +2619,8 @@ async function carregarDaNuvem() {
     }))
   }
 
-  if (!errAval && avaliacoes?.length) {
-    state.avaliacoes = avaliacoes.map(a => ({
+  if (!errAval) {
+    state.avaliacoes = (avaliacoes||[]).map(a => ({
       id:        a.id,
       contrato:  a.contrato_id,
       data:      a.data,
@@ -2632,16 +2633,16 @@ async function carregarDaNuvem() {
     }))
   }
 
-  if (!errGhe && gheRows?.length) {
-    state.ghe = gheRows.map(g => ({
+  if (!errGhe) {
+    state.ghe = (gheRows||[]).map(g => ({
       id:       g.id,
       contrato: g.contrato_id,
       nome:     g.nome
     }))
   }
 
-  if (!errInsumos && insumosRows?.length) {
-    state.insumos = insumosRows.map(i => ({
+  if (!errInsumos) {
+    state.insumos = (insumosRows||[]).map(i => ({
       id:       i.id,
       nome:     i.nome,
       chegada:  i.data_chegada,
@@ -2650,8 +2651,8 @@ async function carregarDaNuvem() {
     }))
   }
 
-  if (!errHist && historico?.length) {
-    state.historico = historico.map(h => ({
+  if (!errHist) {
+    state.historico = (historico||[]).map(h => ({
       id:        h.id,
       docId:     h.doc_id,
       tipo:      h.tipo,
@@ -2660,8 +2661,8 @@ async function carregarDaNuvem() {
     }))
   }
 
-  if (!errPsi && psicossociais?.length) {
-    state.psicossociais = psicossociais.map(p => ({
+  if (!errPsi) {
+    state.psicossociais = (psicossociais||[]).map(p => ({
       id:           p.id,
       empresa:      p.cliente_id || '',
       empresaLivre: p.empresa_livre || '',
