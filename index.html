@@ -235,7 +235,7 @@
 
   @media print{
     body{background:#fff}
-    .sidebar,.topbar,.search,#pdfBtn,.navlabel,.logout-btn,.sidebar-foot{display:none!important}
+    .sidebar,.topbar,.search,#pdfBtn,.navlabel,.logout-btn,.sidebar-foot,.no-print{display:none!important}
     .app.authenticated{grid-template-columns:1fr!important}
     .page{display:block!important}
     .page:not(#page-relatorios){display:none!important}
@@ -436,6 +436,11 @@
         .agenda-tab:hover{color:var(--ink);background:var(--green-50)}
         .agenda-tab.active{color:var(--green-700);border-bottom-color:var(--green-700)}
         .ev-prev-pres{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;background:var(--green-100);color:var(--green-900);padding:3px 9px;border-radius:99px}
+        .rel-chk{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500;cursor:pointer;user-select:none}
+        .rel-chk input{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer}
+        .rel-sec{margin-bottom:18px}
+        .rel-sec h3{margin:0 0 2px;font-size:16px}
+        .rel-count{display:inline-block;background:var(--green-700);color:#fff;font-size:13px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:6px}
       </style>
       <section class="page" id="page-agenda">
         <div class="page-h">
@@ -505,16 +510,42 @@
 
       <!-- RELATÓRIOS -->
       <section class="page" id="page-relatorios">
-        <div class="page-h"><div><h2>Relatórios</h2><p>Resumos consolidados e exportação de dados.</p></div></div>
-        <div class="grid-2" style="margin-bottom:18px">
-          <div class="card"><div class="card-h"><div><h3>Documentos por status</h3><p>Distribuição entre válidos, vencendo e vencidos</p></div></div><div class="card-b" id="rel-doc-status"></div></div>
-          <div class="card"><div class="card-h"><div><h3>Avaliações por empresa</h3><p>Top 5 contratos por execução</p></div></div><div class="card-b" id="rel-av-top"></div></div>
+        <div class="page-h"><div><h2>Relatórios</h2><p>Monte o relatório por período e baixe em PDF só o que precisar.</p></div></div>
+
+        <div class="card no-print" style="margin-bottom:18px">
+          <div class="card-h"><div><h3>Montar relatório</h3><p>Escolha o período e marque as seções que vão para o PDF</p></div></div>
+          <div class="card-b">
+            <div class="filters" style="margin-bottom:14px">
+              <div class="field"><label>Data início</label><input type="date" id="rel-ini" /></div>
+              <div class="field"><label>Data fim</label><input type="date" id="rel-fim" /></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:18px">
+              <label class="rel-chk"><input type="checkbox" id="rel-c-docs" checked /> 📄 Documentos atualizados</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-avals" checked /> 📊 Avaliações realizadas</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-psi" /> 🧠 Psicossociais</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-treino" /> 🎓 Treinamentos</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-palestra" /> 🎤 Palestras</label>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn primary" id="rel-gerar">Gerar relatório</button>
+              <button class="btn" id="pdfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar PDF</button>
+            </div>
+          </div>
         </div>
-        <div class="card" style="margin-bottom:18px">
-          <div class="card-h"><div><h3>Documentos por empresa</h3><p>Quantidade de PGRs e LTCATs vinculados</p></div></div>
-          <div class="table-wrap"><table id="rel-empresas"><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Avaliações</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+
+        <div id="rel-dynamic"></div>
+
+        <!-- Resumo geral (somente na tela) -->
+        <div class="no-print">
+          <div class="grid-2" style="margin-bottom:18px">
+            <div class="card"><div class="card-h"><div><h3>Documentos por status</h3><p>Distribuição entre válidos, vencendo e vencidos</p></div></div><div class="card-b" id="rel-doc-status"></div></div>
+            <div class="card"><div class="card-h"><div><h3>Avaliações por empresa</h3><p>Top 5 contratos por execução</p></div></div><div class="card-b" id="rel-av-top"></div></div>
+          </div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="card-h"><div><h3>Documentos por empresa</h3><p>Quantidade de PGRs e LTCATs vinculados</p></div></div>
+            <div class="table-wrap"><table id="rel-empresas"><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Avaliações</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          </div>
         </div>
-        <div class="card"><div class="card-h"><div><h3>Exportar relatório</h3><p>Baixe um PDF completo com todos os dados do relatório</p></div><button class="btn primary" id="pdfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar PDF</button></div></div>
       </section>
     </div>
   </main>
@@ -1001,6 +1032,12 @@ function navigate(route){
   const titles = {dashboard:'Dashboard', empresas:'Empresas', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
+  if(route === 'relatorios'){
+    const ini = $('#rel-ini'), fim = $('#rel-fim');
+    if(ini && !ini.value){ const d = new Date(); ini.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; }
+    if(fim && !fim.value){ fim.value = todayISO(); }
+    montarRelatorio();
+  }
 }
 
 /* ================== RENDER DASHBOARD ================== */
@@ -1328,6 +1365,91 @@ function renderRelatorios(){
     const st = hasVencido ? {k:'danger', l:'Atenção urgente'} : hasVencendo ? {k:'warn', l:'Renovação próxima'} : {k:'ok', l:'OK'};
     return `<tr><td><b>${e.nome}</b></td><td>${pgr}</td><td>${ltcat}</td><td>${avs}</td><td><span class="pill ${st.k}">${st.l}</span></td></tr>`;
   }).join('');
+}
+
+/* ================== RELATÓRIO MONTÁVEL (período + seções) ================== */
+function relNomeEmpresaContrato(contratoId){
+  const c = state.contratos.find(x => x.id === contratoId);
+  return c ? nomeEmpresa(c.empresa) : '—';
+}
+
+function montarRelatorio(){
+  const ini = $('#rel-ini') ? $('#rel-ini').value : '';
+  const fim = $('#rel-fim') ? $('#rel-fim').value : '';
+  const inRange = (d) => { d = (d||'').slice(0,10); return d && (!ini || d >= ini) && (!fim || d <= fim); };
+  const periodoLabel = (ini || fim) ? `${ini ? fmtDate(ini) : '…'} a ${fim ? fmtDate(fim) : '…'}` : 'todo o período';
+
+  let html = `<div class="card rel-sec"><div class="card-b" style="padding:14px 22px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <b style="font-size:16px">Relatório · ${periodoLabel}</b>
+      <span style="color:var(--ink-muted);font-size:12.5px">Gerado em ${fmtDate(todayISO())}</span>
+    </div></div>`;
+
+  // 1) Documentos atualizados no período (via histórico)
+  if($('#rel-c-docs') && $('#rel-c-docs').checked){
+    const evs = (state.historico||[])
+      .filter(h => inRange(h.dataHora))
+      .sort((a,b) => (b.dataHora||'').localeCompare(a.dataHora||''));
+    const linhas = evs.map(h => {
+      const d = state.docs.find(x => x.id === h.docId);
+      const emp = d ? nomeEmpresa(d.empresa) : '—';
+      const doc = d ? `${d.tipo} ${d.numero||''}` : '—';
+      return `<tr><td><b>${emp}</b></td><td>${doc}</td><td>${h.descricao||h.tipo}</td><td class="tight">${fmtDateTime(h.dataHora)}</td></tr>`;
+    }).join('');
+    html += `<div class="card rel-sec">
+      <div class="card-h"><div><h3>📄 Documentos atualizados <span class="rel-count">${evs.length}</span></h3><p>Obras com documento criado/atualizado no período</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa / Obra</th><th>Documento</th><th>Alteração</th><th>Data</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma atualização no período</td></tr>'
+      }</tbody></table></div></div>`;
+  }
+
+  // 2) Avaliações realizadas no período
+  if($('#rel-c-avals') && $('#rel-c-avals').checked){
+    const avs = state.avaliacoes.filter(a => inRange(a.data));
+    const porEmp = {};
+    avs.forEach(a => { const nome = relNomeEmpresaContrato(a.contrato); porEmp[nome] = (porEmp[nome]||0) + 1; });
+    const linhas = Object.entries(porEmp).sort((a,b) => b[1]-a[1])
+      .map(([nome, qtd]) => `<tr><td><b>${nome}</b></td><td>${qtd}</td></tr>`).join('');
+    html += `<div class="card rel-sec">
+      <div class="card-h"><div><h3>📊 Avaliações realizadas <span class="rel-count">${avs.length}</span></h3><p>Quantidade de avaliações feitas no período, por empresa</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa / Obra</th><th>Avaliações realizadas</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="2" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma avaliação no período</td></tr>'
+      }</tbody></table></div></div>`;
+  }
+
+  // 3) Psicossociais no período
+  if($('#rel-c-psi') && $('#rel-c-psi').checked){
+    const ps = (state.psicossociais||[]).filter(p => inRange(p.data)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const linhas = ps.map(p => {
+      const nome = p.empresaLivre || nomeEmpresa(p.empresa);
+      const cfg = {pendente:'Pendente',realizado:'Realizado',reagendado:'Reagendado',cancelado:'Cancelado'}[p.status]||p.status;
+      return `<tr><td><b>${nome}</b></td><td class="tight">${fmtDate(p.data)}${p.hora?' '+p.hora:''}</td><td>${p.responsavel||'—'}</td><td>${cfg}</td></tr>`;
+    }).join('');
+    html += `<div class="card rel-sec">
+      <div class="card-h"><div><h3>🧠 Psicossociais <span class="rel-count">${ps.length}</span></h3><p>Avaliações psicossociais no período</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa / Obra</th><th>Data</th><th>Aplicador</th><th>Status</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma no período</td></tr>'
+      }</tbody></table></div></div>`;
+  }
+
+  // 4) e 5) Treinamentos / Palestras
+  [['rel-c-treino','treinamento','🎓 Treinamentos','Instrutor'],['rel-c-palestra','palestra','🎤 Palestras','Ministrante']].forEach(([chk, tipo, titulo, respLabel]) => {
+    if(!$('#'+chk) || !$('#'+chk).checked) return;
+    const evs = (state.eventos||[]).filter(e => e.tipo === tipo && inRange(e.data)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const linhas = evs.map(e => {
+      const nome = e.empresaLivre || nomeEmpresa(e.empresa);
+      const cfg = (EV_STATUS_CFG[e.status]||{label:e.status}).label;
+      const part = `${e.presentes!=null?e.presentes:'—'} / ${e.previstos!=null?e.previstos:'—'}`;
+      return `<tr><td><b>${nome}</b></td><td>${e.tema||'—'}</td><td class="tight">${fmtDate(e.data)}${e.hora?' '+e.hora:''}</td><td>${e.responsavel||'—'}</td><td class="tight">${part}</td><td>${cfg}</td></tr>`;
+    }).join('');
+    html += `<div class="card rel-sec">
+      <div class="card-h"><div><h3>${titulo} <span class="rel-count">${evs.length}</span></h3><p>Presentes / previstos no período</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa / Obra</th><th>Tema</th><th>Data</th><th>${respLabel}</th><th>Presç/Prev.</th><th>Status</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum no período</td></tr>'
+      }</tbody></table></div></div>`;
+  });
+
+  const cont = $('#rel-dynamic');
+  if(cont) cont.innerHTML = html;
 }
 
 /* ================== ORDENAÇÃO ================== */
@@ -1884,7 +2006,9 @@ function setupEvents(){
   };
 
   // PDF
+  $('#rel-gerar').onclick = () => { montarRelatorio(); toast('✅ Relatório gerado', 'ok'); };
   $('#pdfBtn').onclick = () => {
+    montarRelatorio();
     const titulo = document.title;
     document.title = 'Relatorio-SECONCI-' + todayISO();
     window.print();
