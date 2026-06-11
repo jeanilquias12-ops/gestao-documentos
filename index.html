@@ -1814,7 +1814,7 @@ function setupEvents(){
   // Modal Psicossocial — toggle empresa livre
   $('#mp-empresa-livre-toggle').onchange = () => {
     const livre = $('#mp-empresa-livre-toggle').checked;
-    $('#mp-empresa').style.display       = livre ? 'none' : '';
+    ($('#mp-empresa').closest('.ss-wrap') || $('#mp-empresa')).style.display = livre ? 'none' : '';
     $('#mp-empresa').required            = !livre;
     $('#mp-empresa-livre').style.display = livre ? '' : 'none';
     $('#mp-empresa-livre').required      = livre;
@@ -2477,7 +2477,7 @@ function openPsi(id){
   $('#mp-title').textContent = id ? 'Editar Avaliação Psicossocial' : 'Nova Avaliação Psicossocial';
   const isLivre = !!(p?.empresaLivre);
   $('#mp-empresa-livre-toggle').checked  = isLivre;
-  $('#mp-empresa').style.display         = isLivre ? 'none' : '';
+  ($('#mp-empresa').closest('.ss-wrap') || $('#mp-empresa')).style.display = isLivre ? 'none' : '';
   $('#mp-empresa').required              = !isLivre;
   $('#mp-empresa-livre').style.display   = isLivre ? '' : 'none';
   $('#mp-empresa-livre').required        = isLivre;
@@ -2573,11 +2573,6 @@ async function carregarDaNuvem() {
   if (errHist)      { console.error('Erro histórico:', errHist.message); toast('Erro ao carregar histórico de documentos', 'danger'); }
   if (errGhe)       { console.error('Erro GHE:', errGhe.message); toast('Erro ao carregar GHEs da nuvem', 'danger'); }
   if (errInsumos)   { console.error('Erro insumos:', errInsumos.message); toast('Erro ao carregar insumos da nuvem', 'danger'); }
-
-  if (!docs?.length && !emps?.length) {
-    state.docs = []; state.empresas = []; state.contratos = []; state.avaliacoes = []; state.historico = [];
-    save(); renderAll(); return;
-  }
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
