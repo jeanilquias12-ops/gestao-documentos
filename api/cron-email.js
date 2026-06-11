@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://jpmhnlorbrtjeesknwbl.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy';
+// Usa a chave de serviço (server-side, ignora RLS) se configurada; senão cai na chave pública.
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy';
 
 const fmtDate = iso => {
   if (!iso) return '—';

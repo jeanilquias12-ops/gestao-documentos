@@ -647,32 +647,45 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================== AUTENTICAÇÃO ================== */
-const MASTER_USER = 'admin';
-const MASTER_PASS = 'seconci123';
-const AUTH_KEY = 'seconci_auth_v1';
+/* ================== AUTENTICAÇÃO (Supabase Auth) ================== */
+const ADMIN_USER  = 'admin';
+const ADMIN_EMAIL = 'admin@segaudit.com.br';
 
-function handleLogin(e){
+async function handleLogin(e){
   e.preventDefault();
-  const user = document.getElementById('loginUser').value.trim();
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
   const pass = document.getElementById('loginPass').value;
-  const err = document.getElementById('loginError');
+  const err  = document.getElementById('loginError');
+  const btn  = e.target.querySelector('button[type=submit]');
   err.textContent = '';
-  if(user === MASTER_USER && pass === MASTER_PASS){
-    localStorage.setItem(AUTH_KEY, 'true');
+  // "admin" é mapeado para o e-mail interno de autenticação; também aceita e-mail direto
+  const email = user.includes('@') ? user : (user === ADMIN_USER ? ADMIN_EMAIL : '');
+  if(!email || !pass){
+    err.textContent = '❌ Usuário ou senha incorretos';
+    return false;
+  }
+  if(btn){ btn.disabled = true; btn.textContent = 'Entrando…'; }
+  try {
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    if(error){
+      err.textContent = '❌ Usuário ou senha incorretos';
+      document.getElementById('loginPass').value = '';
+      return false;
+    }
     document.getElementById('loginScreen').classList.remove('show');
     document.getElementById('appContainer').classList.add('authenticated');
     initApp();
     carregarDaNuvem();
-  } else {
-    err.textContent = '❌ Usuário ou senha incorretos';
-    document.getElementById('loginPass').value = '';
+  } catch(ex){
+    err.textContent = '❌ Erro de conexão. Tente novamente.';
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = 'Entrar'; }
   }
   return false;
 }
-function logout(){
+async function logout(){
   if(confirm('Desconectar do sistema?')){
-    localStorage.removeItem(AUTH_KEY);
+    try { await db.auth.signOut(); } catch(e){}
     location.reload();
   }
 }
@@ -2676,13 +2689,16 @@ async function carregarDaNuvem() {
   renderAll()
 }
 
-window.addEventListener('load', () => {
-  if(localStorage.getItem(AUTH_KEY) === 'true'){
-    $('#loginScreen').classList.remove('show');
-    $('#appContainer').classList.add('authenticated');
-    initApp();
-    carregarDaNuvem();
-  }
+window.addEventListener('load', async () => {
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if(session){
+      $('#loginScreen').classList.remove('show');
+      $('#appContainer').classList.add('authenticated');
+      initApp();
+      carregarDaNuvem();
+    }
+  } catch(e){ console.warn('Sessão:', e); }
 });
 
 </script>
