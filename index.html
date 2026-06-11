@@ -55,6 +55,12 @@
   .navitem svg{width:18px;height:18px;flex-shrink:0;opacity:.9}
   .navitem .badge{margin-left:auto;background:rgba(252,230,226,.18);color:#FFD3CB;font-size:11px;padding:2px 7px;border-radius:99px;font-weight:600}
   .navitem.active .badge{background:#fff;color:#9B2A1A}
+  .nav-caret{margin-left:auto;font-size:10px;opacity:.7;transition:transform .18s}
+  .nav-caret.open{transform:rotate(180deg)}
+  .nav-sub{display:none;flex-direction:column;gap:2px;margin:2px 0;padding-left:6px;border-left:1px solid rgba(168,213,181,.18);margin-left:14px}
+  .nav-sub.open{display:flex}
+  .navitem.subitem{font-size:13px;padding:8px 12px 8px 16px;color:#BFE0C8}
+  .navitem.subitem.active{background:rgba(168,213,181,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(168,213,181,.22)}
   .logout-btn{margin-top:8px;padding:9px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(168,213,181,.2);color:#E6F1E9;border-radius:9px;font-size:13px;cursor:pointer;text-align:center;width:100%;transition:background .15s}
   .logout-btn:hover{background:rgba(168,213,181,.18)}
   .sidebar-foot{margin-top:8px;font-size:11px;color:rgba(168,213,181,.5);padding:8px;line-height:1.5}
@@ -305,7 +311,12 @@
     <button class="navitem" data-route="documentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documentos<span class="badge" id="nav-doc-badge">0</span></button>
     <button class="navitem" data-route="avaliacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>Avaliações</button>
     <button class="navitem" data-route="insumos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Insumos<span class="badge" id="nav-insumos-badge" style="display:none">0</span></button>
-    <button class="navitem" data-route="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda</button>
+    <button class="navitem nav-parent" id="agendaParent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda<span class="nav-caret">▾</span></button>
+    <div class="nav-sub" id="agendaSub">
+      <button class="navitem subitem" data-agenda-nav="psicossociais">🧠 Psicossociais</button>
+      <button class="navitem subitem" data-agenda-nav="treinamento">🎓 Treinamentos</button>
+      <button class="navitem subitem" data-agenda-nav="palestra">🎤 Palestras</button>
+    </div>
     <button class="navitem" data-route="relatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Relatórios</button>
 
     <div class="navlabel">Dados</div>
@@ -431,10 +442,6 @@
         .psi-cal-badge{font-size:9px;font-weight:600;color:#fff;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35}
         .psi-cal-mais{font-size:9px;color:var(--ink-muted);padding:1px 4px}
         @media(max-width:600px){.psi-cal-day{min-height:44px;padding:3px}.psi-cal-badge{font-size:7.5px}}
-        .agenda-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-        .agenda-tab{background:transparent;border:none;border-bottom:2px solid transparent;padding:10px 16px;font-size:14px;font-weight:600;color:var(--ink-muted);cursor:pointer;margin-bottom:-1px;border-radius:8px 8px 0 0;transition:all .15s}
-        .agenda-tab:hover{color:var(--ink);background:var(--green-50)}
-        .agenda-tab.active{color:var(--green-700);border-bottom-color:var(--green-700)}
         .ev-prev-pres{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;background:var(--green-100);color:var(--green-900);padding:3px 9px;border-radius:99px}
         .rel-chk{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500;cursor:pointer;user-select:none}
         .rel-chk input{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer}
@@ -444,12 +451,7 @@
       </style>
       <section class="page" id="page-agenda">
         <div class="page-h">
-          <div><h2>Agenda</h2><p>Psicossociais, treinamentos e palestras em um só lugar.</p></div>
-        </div>
-        <div class="agenda-tabs">
-          <button class="agenda-tab active" data-agenda="psicossociais">🧠 Psicossociais</button>
-          <button class="agenda-tab" data-agenda="treinamento">🎓 Treinamentos</button>
-          <button class="agenda-tab" data-agenda="palestra">🎤 Palestras</button>
+          <div><h2>Agenda</h2><p>Escolha a agenda no menu lateral: Psicossociais, Treinamentos ou Palestras.</p></div>
         </div>
 
         <!-- AGENDA: PSICOSSOCIAIS -->
@@ -1032,6 +1034,16 @@ function navigate(route){
   const titles = {dashboard:'Dashboard', empresas:'Empresas', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
+  // Submenu lateral da Agenda
+  const agSub = $('#agendaSub'), agParent = $('#agendaParent');
+  if(route === 'agenda'){
+    if(agSub) agSub.classList.add('open');
+    if(agParent){ agParent.classList.add('active'); const c = agParent.querySelector('.nav-caret'); if(c) c.classList.add('open'); }
+    switchAgenda(_agendaTab);
+  } else {
+    if(agSub) agSub.classList.remove('open');
+    if(agParent){ agParent.classList.remove('active'); const c = agParent.querySelector('.nav-caret'); if(c) c.classList.remove('open'); }
+  }
   if(route === 'relatorios'){
     const ini = $('#rel-ini'), fim = $('#rel-fim');
     if(ini && !ini.value){ const d = new Date(); ini.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; }
@@ -2143,8 +2155,19 @@ function setupEvents(){
   };
 
   // ===== AGENDA =====
-  // Abas internas (Psicossociais / Treinamentos / Palestras)
-  $$('.agenda-tab').forEach(b => b.onclick = () => switchAgenda(b.dataset.agenda));
+  // Menu suspenso lateral da Agenda
+  $('#agendaParent').onclick = () => {
+    const sub = $('#agendaSub');
+    const aberto = sub.classList.contains('open');
+    if(aberto && $('#page-agenda').classList.contains('active')){
+      sub.classList.remove('open');
+      const c = $('#agendaParent').querySelector('.nav-caret'); if(c) c.classList.remove('open');
+      $('#agendaParent').classList.remove('active');
+    } else {
+      openAgenda(_agendaTab);
+    }
+  };
+  $$('.subitem').forEach(b => b.onclick = () => openAgenda(b.dataset.agendaNav));
   // Botões "+ Novo"
   $('#btnNewEvento-treinamento').onclick = () => openEvento('treinamento');
   $('#btnNewEvento-palestra').onclick    = () => openEvento('palestra');
@@ -2860,12 +2883,18 @@ const EV_COR_ST = {agendado:'#FFA000', realizado:'#2E7D32', reagendado:'#757575'
 
 function switchAgenda(tab){
   _agendaTab = tab;
-  $$('.agenda-tab').forEach(b => b.classList.toggle('active', b.dataset.agenda === tab));
+  $$('.subitem').forEach(b => b.classList.toggle('active', b.dataset.agendaNav === tab));
   $$('.agenda-view').forEach(v => v.style.display = 'none');
   const view = $('#agenda-' + tab);
   if(view) view.style.display = '';
   if(tab === 'psicossociais') renderPsicossociais();
   else renderEventos(tab);
+}
+
+// Abre a página Agenda já na agenda escolhida (chamado pelo submenu lateral)
+function openAgenda(tab){
+  if(tab) _agendaTab = tab;
+  navigate('agenda');
 }
 
 function eventosFiltrados(tipo){
