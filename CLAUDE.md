@@ -4,7 +4,7 @@ Este diretório é o projeto **Gestão de Documentos** (controle de PGR, LTCAT e
 
 ## Regras obrigatórias
 - SOMENTE mexer neste projeto. Nunca tocar em outros projetos (segaudit, sitepgr, seconci-sst).
-- O arquivo principal é `index.html.html` — toda a lógica do sistema está nele.
+- O arquivo principal é `index.html` — toda a lógica do sistema está nele.
 - Sempre fazer commit + push para o GitHub após qualquer alteração aprovada.
 - Nunca fazer push sem testar antes (verificar lógica e/ou testar via Supabase MCP).
 

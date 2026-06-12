@@ -896,57 +896,6 @@ function load(){
   try { const p = JSON.parse(localStorage.getItem(NOTIFY_KEY)); if(p) notifyPrefs = {...notifyPrefs, ...p}; } catch(e){}
 }
 
-/* ================== DADOS DE EXEMPLO ================== */
-function seedData(){
-  const t = todayISO();
-  const addDays = (d, n) => { const x = new Date(d+'T00:00:00'); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
-
-  state.empresas = [
-    {id:'e1', nome:'Construtora Aurora LTDA', cnpj:'12.345.678/0001-90', segmento:'Construção civil', endereco:'Av. das Nações, 1500 — Goiânia/GO', contato:'Maria Silva', telefone:'(62) 9 8888-1010', status:'ativa'},
-    {id:'e2', nome:'Indústria Cerrado S/A', cnpj:'23.456.789/0001-12', segmento:'Indústria', endereco:'Rod. BR-153, km 12 — Anápolis/GO', contato:'João Pereira', telefone:'(62) 9 7777-2020', status:'ativa'},
-    {id:'e3', nome:'Transportadora Goiás', cnpj:'34.567.890/0001-34', segmento:'Transporte', endereco:'Av. Independência, 800 — Goiânia/GO', contato:'Carla Mendes', telefone:'(62) 9 6666-3030', status:'ativa'},
-    {id:'e4', nome:'Comercial Verde', cnpj:'45.678.901/0001-56', segmento:'Comércio', endereco:'Rua 7, 234 — Aparecida/GO', contato:'Rafael Lopes', telefone:'(62) 9 5555-4040', status:'ativa'},
-    {id:'e5', nome:'Hospital Vida Plena', cnpj:'56.789.012/0001-78', segmento:'Saúde', endereco:'Av. Anhanguera, 5500 — Goiânia/GO', contato:'Dra. Ana Costa', telefone:'(62) 9 4444-5050', status:'ativa'},
-    {id:'e6', nome:'Construtora Antiga LTDA', cnpj:'67.890.123/0001-90', segmento:'Construção civil', endereco:'Rua Velha, 100 — Goiânia/GO', contato:'Pedro Santos', telefone:'(62) 9 3333-6060', status:'inativa'},
-  ];
-
-  state.docs = [
-    {id:'d1', empresa:'e1', tipo:'PGR', numero:'PGR-2025-001 v2.1', responsavel:'Eng. Carlos Mendes — CREA-GO 12345', emissao:addDays(t,-200), validade:addDays(t,530), obs:'Revisão anual realizada'},
-    {id:'d2', empresa:'e1', tipo:'LTCAT', numero:'LTCAT-2024-005', responsavel:'Dra. Patrícia Lima — CRM 9876', emissao:addDays(t,-400), validade:'', obs:'Sem validade fixa'},
-    {id:'d3', empresa:'e2', tipo:'PGR', numero:'PGR-2024-018', responsavel:'Eng. Roberto Souza — CREA-GO 22189', emissao:addDays(t,-680), validade:addDays(t,50), obs:'Renovação em curso'},
-    {id:'d4', empresa:'e3', tipo:'PGR', numero:'PGR-2023-110', responsavel:'Eng. Carlos Mendes — CREA-GO 12345', emissao:addDays(t,-800), validade:addDays(t,-70), obs:'VENCIDO — renovação urgente'},
-    {id:'d5', empresa:'e4', tipo:'PGR', numero:'PGR-2025-042', responsavel:'Eng. Roberto Souza — CREA-GO 22189', emissao:addDays(t,-90), validade:addDays(t,640), obs:''},
-    {id:'d6', empresa:'e5', tipo:'LTCAT', numero:'LTCAT-2025-002', responsavel:'Dra. Patrícia Lima — CRM 9876', emissao:addDays(t,-120), validade:'', obs:'Hospital — exposição biológica'},
-    {id:'d7', empresa:'e2', tipo:'LTCAT', numero:'LTCAT-2024-012', responsavel:'Dra. Patrícia Lima — CRM 9876', emissao:addDays(t,-300), validade:'', obs:''},
-  ];
-
-  state.contratos = [
-    {id:'c1', empresa:'e1', doc:'d1', qtd:10, desc:'Ruído, calor, poeira'},
-    {id:'c2', empresa:'e2', doc:'d3', qtd:15, desc:'Ruído, vibração, vapores'},
-    {id:'c3', empresa:'e3', doc:'d4', qtd:8, desc:'Vibração, ruído'},
-    {id:'c4', empresa:'e4', doc:'d5', qtd:6, desc:'Iluminação, ruído'},
-    {id:'c5', empresa:'e5', doc:'d6', qtd:12, desc:'Agentes biológicos'},
-  ];
-
-  state.avaliacoes = [
-    {id:'a1', contrato:'c1', data:addDays(t,-150), agente:'Ruído', resultado:'87 dB(A)', conclusao:'fora', local:'Setor de produção'},
-    {id:'a2', contrato:'c1', data:addDays(t,-120), agente:'Calor', resultado:'28 IBUTG', conclusao:'dentro', local:'Pátio'},
-    {id:'a3', contrato:'c1', data:addDays(t,-80), agente:'Poeira respirável', resultado:'2,5 mg/m³', conclusao:'dentro', local:'Almoxarifado'},
-    {id:'a4', contrato:'c1', data:addDays(t,-30), agente:'Ruído', resultado:'82 dB(A)', conclusao:'dentro', local:'Setor administrativo'},
-    {id:'a5', contrato:'c2', data:addDays(t,-200), agente:'Ruído', resultado:'92 dB(A)', conclusao:'fora', local:'Linha de produção A'},
-    {id:'a6', contrato:'c2', data:addDays(t,-180), agente:'Vibração', resultado:'4,2 m/s²', conclusao:'fora', local:'Linha de produção A'},
-    {id:'a7', contrato:'c2', data:addDays(t,-150), agente:'Vapores orgânicos', resultado:'12 ppm', conclusao:'dentro', local:'Setor de pintura'},
-    {id:'a8', contrato:'c2', data:addDays(t,-100), agente:'Ruído', resultado:'88 dB(A)', conclusao:'fora', local:'Linha B'},
-    {id:'a9', contrato:'c2', data:addDays(t,-60), agente:'Calor', resultado:'26 IBUTG', conclusao:'dentro', local:'Linha B'},
-    {id:'a10', contrato:'c3', data:addDays(t,-100), agente:'Vibração', resultado:'5,1 m/s²', conclusao:'fora', local:'Caminhões pesados'},
-    {id:'a11', contrato:'c3', data:addDays(t,-70), agente:'Ruído', resultado:'85 dB(A)', conclusao:'dentro', local:'Garagem'},
-    {id:'a12', contrato:'c4', data:addDays(t,-40), agente:'Iluminação', resultado:'350 lux', conclusao:'dentro', local:'Loja'},
-    {id:'a13', contrato:'c5', data:addDays(t,-90), agente:'Agentes biológicos', resultado:'Exposição confirmada', conclusao:'fora', local:'UTI'},
-    {id:'a14', contrato:'c5', data:addDays(t,-60), agente:'Agentes biológicos', resultado:'Exposição confirmada', conclusao:'fora', local:'Centro cirúrgico'},
-  ];
-  save();
-}
-
 /* ================== UTILITÁRIOS ================== */
 function maskCNPJ(v){
   v = v.replace(/\D/g,'').slice(0,14);
@@ -1524,13 +1473,14 @@ function openDoc(id){
   openModal('modal-doc');
 }
 
+let _tipoMudou = false;
 function updateValidadeAuto(){
   const tipo = $('#md-tipo').value;
   const em = $('#md-emissao').value;
   if(tipo === 'PGR'){
     $('#md-validade-label').textContent = 'Data de validade';
     $('#md-validade-hint').textContent = 'PGR é preenchido automaticamente em +2 anos';
-    if(em && !$('#md-validade').value){
+    if(em && (!$('#md-validade').value || _tipoMudou)){
       const d = new Date(em+'T00:00:00'); d.setFullYear(d.getFullYear()+2);
       $('#md-validade').value = d.toISOString().slice(0,10);
     }
@@ -1833,7 +1783,8 @@ function setupEvents(){
   };
 
   // Doc auto-validade
-  $('#md-tipo').onchange = $('#md-emissao').onchange = updateValidadeAuto;
+  $('#md-tipo').onchange = () => { _tipoMudou = true; updateValidadeAuto(); _tipoMudou = false; };
+  $('#md-emissao').onchange = updateValidadeAuto;
 
   // Salvar doc
   $('#md-save').onclick = async () => {
@@ -2546,8 +2497,8 @@ async function salvarDocumentoNuvem(doc) {
     tipo_documento:  doc.tipo,
     numero:          doc.numero || doc.num || '',
     responsavel:     doc.responsavel || '',
-    data_emissao:    doc.emissao || '',
-    data_vencimento:   doc.validade || doc.venc || '',
+    data_emissao:    doc.emissao || null,
+    data_vencimento:   doc.validade || null,
     observacoes:       doc.obs || '',
     enviado_cliente:   doc.envCliente || false,
     data_envio_cliente:doc.envClienteData || null,
@@ -2645,6 +2596,7 @@ async function excluirGhe(id) {
     // Desvincula avaliações que estavam neste GHE
     state.avaliacoes.forEach(a => { if (a.ghe === id) a.ghe = null; });
     state.ghe = state.ghe.filter(x => x.id !== id);
+    save();
     renderAll();
     toast('GHE excluído', 'danger');
   } catch(err) {
@@ -3116,6 +3068,8 @@ async function carregarDaNuvem() {
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
   if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
+  if (errContratos) { console.error('Erro contratos:', errContratos.message); toast('Erro ao carregar contratos da nuvem', 'danger'); }
+  if (errAval)      { console.error('Erro avaliações:', errAval.message); toast('Erro ao carregar avaliações da nuvem', 'danger'); }
   if (errPsi)       { console.error('Erro psicossociais:', errPsi.message); toast('Erro ao carregar avaliações psicossociais', 'danger'); }
   if (errHist)      { console.error('Erro histórico:', errHist.message); toast('Erro ao carregar histórico de documentos', 'danger'); }
   if (errGhe)       { console.error('Erro GHE:', errGhe.message); toast('Erro ao carregar GHEs da nuvem', 'danger'); }
