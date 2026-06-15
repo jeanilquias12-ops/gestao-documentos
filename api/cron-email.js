@@ -1,6 +1,6 @@
 const SUPABASE_URL = 'https://jpmhnlorbrtjeesknwbl.supabase.co';
 // Usa a chave de serviço (server-side, ignora RLS) se configurada; senão cai na chave pública.
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbWhubG9yYnJ0amVlc2tud2JsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MDgyNTQsImV4cCI6MjA5MzQ4NDI1NH0.wvD6GIoQqnLp95kjVGCNg23aNYQTJeurp2Lic65uoXw';
 
 const fmtDate = iso => {
   if (!iso) return '—';
@@ -119,9 +119,14 @@ module.exports = async function handler(req, res) {
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
 
+  if (!docsRes.ok || !clientesRes.ok) {
+    const errBody = await docsRes.text().catch(() => '');
+    return res.status(500).json({ error: 'Falha ao consultar Supabase', status: docsRes.status, detail: errBody });
+  }
+
   let docs = [], clientes = [], contratos = [], avals = [];
-  if (docsRes.ok)     { const r = await docsRes.json();      docs      = Array.isArray(r) ? r : []; }
-  if (clientesRes.ok) { const r = await clientesRes.json();  clientes  = Array.isArray(r) ? r : []; }
+  { const r = await docsRes.json();      docs      = Array.isArray(r) ? r : []; }
+  { const r = await clientesRes.json();  clientes  = Array.isArray(r) ? r : []; }
   if (contratosRes.ok){ const r = await contratosRes.json(); contratos = Array.isArray(r) ? r : []; }
   if (avaliRes.ok)    { const r = await avaliRes.json();     avals     = Array.isArray(r) ? r : []; }
 
