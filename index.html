@@ -938,8 +938,10 @@ function statusDoc(doc){
 }
 
 function faseDoc(doc){
-  if(doc.retornoAssessoria) return {fase:0, key:'fase-done', label:'✓ Concluído'};
   if(!doc.inicioElaboracao) return null;
+  // Concluído só quando retorno foi registrado DEPOIS do início
+  if(doc.retornoAssessoria && doc.retornoAssessoria >= doc.inicioElaboracao)
+    return {fase:0, key:'fase-done', label:'✓ Concluído'};
   if(doc.envAssessoria && doc.envAssessoriaData){
     const corridos = daysBetween(doc.envAssessoriaData, todayISO());
     const rest = 5 - corridos;
