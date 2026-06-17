@@ -1622,6 +1622,14 @@ function openEmpresa(id){
   openModal('modal-empresa');
 }
 
+function updateElabModal(){
+  const isLtcat = $('#md-tipo').value === 'LTCAT';
+  $('#md-retorno-row').style.display = isLtcat ? 'none' : '';
+  $('#md-elab-desc').textContent = isLtcat
+    ? 'LTCAT: 10 dias para elaboração → Finalizado → Envio ao cliente'
+    : 'PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias';
+}
+
 function openDoc(id){
   const d = id ? state.docs.find(x => x.id === id) : null;
   $('#md-title').textContent = d ? 'Editar documento' : 'Novo documento';
@@ -2003,13 +2011,6 @@ function setupEvents(){
   };
 
   // Doc auto-validade
-  function updateElabModal(){
-    const isLtcat = $('#md-tipo').value === 'LTCAT';
-    $('#md-retorno-row').style.display = isLtcat ? 'none' : '';
-    $('#md-elab-desc').textContent = isLtcat
-      ? 'LTCAT: 10 dias para elaboração → Finalizado → Envio ao cliente'
-      : 'PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias';
-  }
   $('#md-tipo').onchange = () => { _tipoMudou = true; updateValidadeAuto(); updateElabModal(); _tipoMudou = false; };
   $('#md-emissao').onchange = updateValidadeAuto;
   $('#md-elab-finalizada').onchange = function(){
