@@ -590,8 +590,15 @@
     <div class="field-block"><label>Contato (nome)</label><input id="me-contato" /></div>
     <div class="field-block"><label>Telefone / E-mail</label><input id="me-telefone" /></div>
     <div class="field-block"><label>Status</label><select id="me-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
-  </div></form></div>
-  <div class="modal-f"><button class="btn danger" id="me-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="me-save">Salvar empresa</button></div>
+  </div></form>
+  <div id="me-converter-section" style="display:none;margin-top:16px;padding:14px 18px;background:#EDE7F6;border-left:4px solid #7E57C2;border-radius:6px">
+    <p style="margin:0 0 8px;font-weight:600;font-size:13px;color:#4527A0">🔄 Converter este registro em Obra</p>
+    <p style="margin:0 0 10px;font-size:12px;color:#5E35B1">Selecione a empresa-mãe. Todos os documentos e contratos vinculados serão migrados automaticamente.</p>
+    <select id="me-converter-empresa" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:13px"></select>
+    <button class="btn primary" id="me-converter-confirmar" style="margin-top:10px;background:#7E57C2">Confirmar conversão</button>
+  </div>
+  </div>
+  <div class="modal-f"><button class="btn danger" id="me-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" id="me-to-obra" style="display:none;background:#7E57C2;color:#fff">Converter em Obra ↗</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="me-save">Salvar empresa</button></div>
 </div></div>
 
 <!-- MODAL OBRA -->
@@ -1619,6 +1626,8 @@ function openEmpresa(id){
   $('#me-telefone').value = e?.telefone || '';
   $('#me-status').value = e?.status || 'ativa';
   $('#me-delete').style.display = e ? '' : 'none';
+  $('#me-to-obra').style.display = e ? '' : 'none';
+  $('#me-converter-section').style.display = 'none';
   openModal('modal-empresa');
 }
 
@@ -1978,6 +1987,55 @@ function setupEvents(){
       save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
+  };
+
+  // Converter empresa em obra
+  $('#me-to-obra').onclick = () => {
+    const id = $('#me-id').value;
+    const outras = state.empresas.filter(e => e.id !== id);
+    if(!outras.length){ toast('Cadastre ao menos uma empresa-mãe antes de converter', 'danger'); return; }
+    $('#me-converter-empresa').innerHTML = '<option value="">— Selecione a empresa-mãe —</option>' +
+      outras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+    $('#me-converter-section').style.display = '';
+  };
+  $('#me-converter-confirmar').onclick = async () => {
+    const empresaId = $('#me-converter-empresa').value;
+    if(!empresaId){ toast('Selecione a empresa-mãe', 'danger'); return; }
+    const id = $('#me-id').value;
+    const emp = state.empresas.find(e => e.id === id);
+    if(!emp) return;
+    const obraId = 'ob'+uid();
+    const obra = {id:obraId, empresa:empresaId, nome:emp.nome, endereco:emp.endereco||'', contato:emp.contato||'', telefone:emp.telefone||'', status:emp.status||'ativa'};
+    try {
+      await salvarObraNuvem(obra);
+      // Atualizar documentos no Supabase: setar obra_id
+      const docsAfetados = state.docs.filter(d => d.empresa === id);
+      for(const d of docsAfetados){
+        d.obra = obraId;
+        d.empresa = empresaId;
+        await salvarDocumentoNuvem(d);
+      }
+      // Atualizar contratos
+      const ctAfetados = state.contratos.filter(c => c.empresa === id);
+      for(const c of ctAfetados){
+        c.empresa = empresaId;
+        await salvarContratoNuvem(c);
+      }
+      // Atualizar psicossociais
+      const psiAfetados = state.psicossociais.filter(p => p.empresa === id);
+      for(const p of psiAfetados){
+        p.empresa = empresaId;
+        await salvarPsiNuvem(p);
+      }
+      // Excluir a empresa antiga
+      await excluirEmpresaNuvem(id);
+      state.empresas = state.empresas.filter(e => e.id !== id);
+      state.obras.push(obra);
+      save(); closeModal('modal-empresa'); renderAll();
+      toast(`✅ "${emp.nome}" convertido em obra de "${nomeEmpresa(empresaId)}"`, 'ok');
+    } catch(err) {
+      toast('Erro na conversão: ' + err.message, 'danger');
     }
   };
 
