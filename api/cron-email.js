@@ -212,7 +212,7 @@ module.exports = async function handler(req, res) {
     });
 
     if (fase1Atrasadas.length) blocos.push({
-      icone: '📋', titulo: `${fase1Atrasadas.length} elaboração(ões) em atraso — Fase 1`, subtitulo: 'Prazo para envio à assessoria excedido (máx. 10 dias)',
+      icone: '📋', titulo: `${fase1Atrasadas.length} elaboração(ões) em atraso — Segurança do Trabalho`, subtitulo: 'Prazo para envio à assessoria de saúde excedido (máx. 10 dias)',
       corFundo: '#E3F2FD', corBorda: '#1565C0', corTexto: '#0D47A1',
       linhas: fase1Atrasadas.map(d => {
         const dias = diffDays(d.data_inicio_elaboracao, today);
@@ -221,7 +221,7 @@ module.exports = async function handler(req, res) {
     });
 
     if (fase2Atrasadas.length) blocos.push({
-      icone: '🩺', titulo: `${fase2Atrasadas.length} retorno(s) da assessoria em atraso — Fase 2`, subtitulo: 'Prazo para retorno da assessoria excedido (máx. 5 dias)',
+      icone: '🩺', titulo: `${fase2Atrasadas.length} retorno(s) em atraso — Assessoria de Saúde`, subtitulo: 'Prazo para retorno da assessoria de saúde excedido (máx. 5 dias)',
       corFundo: '#F3E5F5', corBorda: '#6A1B9A', corTexto: '#4A148C',
       linhas: fase2Atrasadas.map(d => {
         const dias = diffDays(d.data_envio_assessoria, today);

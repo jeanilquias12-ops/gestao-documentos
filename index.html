@@ -943,17 +943,17 @@ function faseDoc(doc){
   if(doc.envAssessoria && doc.envAssessoriaData){
     const corridos = daysBetween(doc.envAssessoriaData, todayISO());
     const rest = 5 - corridos;
-    if(rest < 0)  return {fase:2, key:'danger', label:`Fase 2 · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
-    if(rest === 0) return {fase:2, key:'danger', label:`Fase 2 · vence hoje ⚠`, dias:corridos};
-    if(rest <= 1)  return {fase:2, key:'warn',   label:`Fase 2 · ${rest}d restante`, dias:corridos};
-    return {fase:2, key:'fase2', label:`Fase 2 · ${rest}d restantes`, dias:corridos};
+    if(rest < 0)  return {fase:2, key:'danger', label:`Assessoria de Saúde · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
+    if(rest === 0) return {fase:2, key:'danger', label:`Assessoria de Saúde · vence hoje ⚠`, dias:corridos};
+    if(rest <= 1)  return {fase:2, key:'warn',   label:`Assessoria de Saúde · ${rest}d restante`, dias:corridos};
+    return {fase:2, key:'fase2', label:`Assessoria de Saúde · ${rest}d restantes`, dias:corridos};
   }
   const corridos = daysBetween(doc.inicioElaboracao, todayISO());
   const rest = 10 - corridos;
-  if(rest < 0)  return {fase:1, key:'danger', label:`Fase 1 · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
-  if(rest === 0) return {fase:1, key:'danger', label:`Fase 1 · vence hoje ⚠`, dias:corridos};
-  if(rest <= 2)  return {fase:1, key:'warn',   label:`Fase 1 · ${rest}d restantes`, dias:corridos};
-  return {fase:1, key:'fase1', label:`Fase 1 · ${rest}d restantes`, dias:corridos};
+  if(rest < 0)  return {fase:1, key:'danger', label:`Seg. do Trabalho · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
+  if(rest === 0) return {fase:1, key:'danger', label:`Seg. do Trabalho · vence hoje ⚠`, dias:corridos};
+  if(rest <= 2)  return {fase:1, key:'warn',   label:`Seg. do Trabalho · ${rest}d restantes`, dias:corridos};
+  return {fase:1, key:'fase1', label:`Seg. do Trabalho · ${rest}d restantes`, dias:corridos};
 }
 
 function toast(msg, kind){
@@ -1120,7 +1120,7 @@ function renderDashboard(){
   if(elaboracoes.length){
     cardElab.style.display = '';
     $('#tbl-elaboracoes tbody').innerHTML = elaboracoes.map(({d, f}) => {
-      const faseTxt = f.fase === 1 ? 'Elaborando → Assessoria' : 'Assessoria → Retorno';
+      const faseTxt = f.fase === 1 ? 'Seg. do Trabalho (10d)' : 'Assessoria de Saúde (5d)';
       return `<tr>
         <td><b>${nomeEmpresa(d.empresa)}</b></td>
         <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
