@@ -946,7 +946,7 @@ function statusDoc(doc){
 
 function faseDoc(doc){
   if(!doc.inicioElaboracao) return null;
-  // Concluído só quando retorno foi registrado DEPOIS do início
+  // Concluído quando marcado retorno recebido OU elaboração finalizada
   if(doc.elaboracaoFinalizada || doc.retornoAssessoriaRecebido)
     return {fase:0, key:'fase-done', label:'✓ Concluído'};
   if(doc.envAssessoria && doc.envAssessoriaData){
@@ -1542,7 +1542,7 @@ function openDoc(id){
   $('#md-inicio-elab').value = d?.inicioElaboracao || '';
   $('#md-retorno-assessoria-check').checked = d?.retornoAssessoriaRecebido || false;
   $('#md-retorno-assessoria').value = d?.retornoAssessoria || '';
-  const finalizado = d?.elaboracaoFinalizada || d?.retornoAssessoriaRecebido || false;
+  const finalizado = d?.elaboracaoFinalizada || false;
   $('#md-elaboracao-finalizada').checked = finalizado;
   $('#md-finalizada-label').textContent = finalizado ? 'Concluído ✓' : 'Não finalizado';
   $('#md-delete').style.display = d ? '' : 'none';
@@ -1895,8 +1895,10 @@ function setupEvents(){
           registrarHistorico(id, 'enviado_assessoria', `Enviado à assessoria médica${data.envAssessoriaData ? ' em ' + fmtDate(data.envAssessoriaData) : ''}`);
         if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
           registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`);
-        if(!docAntigo.retornoAssessoria && data.retornoAssessoria)
-          registrarHistorico(id, 'enviado_assessoria', `Retorno da assessoria registrado em ${fmtDate(data.retornoAssessoria)}`);
+        if(!docAntigo.retornoAssessoriaRecebido && data.retornoAssessoriaRecebido)
+          registrarHistorico(id, 'enviado_assessoria', `Retorno recebido da assessoria${data.retornoAssessoria ? ' em ' + fmtDate(data.retornoAssessoria) : ''}`);
+        if(!docAntigo.elaboracaoFinalizada && data.elaboracaoFinalizada)
+          registrarHistorico(id, 'atualizado', `Elaboração marcada como concluída`);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
       }
