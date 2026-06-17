@@ -153,22 +153,18 @@ module.exports = async function handler(req, res) {
     if (pendentes > 0) artAlerts.push({ nome: nomeEmpresa(ltcat.cliente_id), pendentes, venceART: ltcat.data_vencimento });
   }
 
-  // Ciclo finalizado = retorno recebido OU elaboração marcada como concluída
-  const finalizado = d => d.retorno_assessoria_recebido || d.elaboracao_finalizada;
-
   // Fase 1 atrasada: elaboração iniciada há mais de 10 dias sem enviar à assessoria
   const fase1Atrasadas = docs.filter(d =>
     d.data_inicio_elaboracao &&
-    !d.enviado_assessoria &&
-    !finalizado(d) &&
+    !d.data_envio_assessoria &&
+    !d.data_retorno_assessoria &&
     diffDays(d.data_inicio_elaboracao, today) > 10
   );
 
-  // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno recebido
+  // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno
   const fase2Atrasadas = docs.filter(d =>
-    d.enviado_assessoria &&
     d.data_envio_assessoria &&
-    !finalizado(d) &&
+    !d.data_retorno_assessoria &&
     diffDays(d.data_envio_assessoria, today) > 5
   );
 
