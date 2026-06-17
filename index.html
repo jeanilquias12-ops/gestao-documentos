@@ -421,7 +421,7 @@
           <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
           <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
         </div>
-        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- AVALIAÇÕES -->
@@ -938,8 +938,8 @@ function statusDoc(doc){
 }
 
 function faseDoc(doc){
-  if(!doc.inicioElaboracao) return null;
   if(doc.retornoAssessoria) return {fase:0, key:'fase-done', label:'✓ Concluído'};
+  if(!doc.inicioElaboracao) return null;
   if(doc.envAssessoria && doc.envAssessoriaData){
     const corridos = daysBetween(doc.envAssessoriaData, todayISO());
     const rest = 5 - corridos;
@@ -1228,9 +1228,9 @@ function renderDocs(){
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
       <td><span class="pill ${s.key}">${s.label}</span></td>
+      <td>${(()=>{ const f = faseDoc(d); return f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>'; })()}</td>
       <td style="min-width:130px">
         <div style="display:flex;flex-direction:column;gap:4px">
-          ${(()=>{ const f = faseDoc(d); return f ? `<span class="pill ${f.key}" title="Fase ${f.fase||''} do processo de elaboração">${f.label}</span>` : ''; })()}
           ${d.envCliente
             ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span>`
             : `<span class="pill nao-enviado">✗ Cliente não enviado</span>`}
@@ -1244,7 +1244,7 @@ function renderDocs(){
       </td>
       <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
     </tr>`;
-  }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhum documento encontrado</td></tr>';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhum documento encontrado</td></tr>';
 }
 
 /* ================== RENDER AVALIAÇÕES ================== */
