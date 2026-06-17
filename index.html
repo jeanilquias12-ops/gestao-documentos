@@ -612,18 +612,18 @@
   </div>
   <div class="envio-section">
     <h4>Controle de elaboração (fases)</h4>
-    <p style="margin:0 0 8px;font-size:11.5px;color:var(--ink-muted)">① Início → ② Envio à assessoria (10 dias) → ③ Retorno (5 dias) → Concluído</p>
+    <p style="margin:0 0 8px;font-size:11.5px;color:var(--ink-muted)">Prazo total: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias</p>
     <div class="envio-row">
-      <label style="gap:6px"><span>📋</span> ① Início da elaboração</label>
+      <label style="gap:6px"><span>📋</span> Início da elaboração</label>
       <input type="date" id="md-inicio-elab" title="Data em que a elaboração do documento foi iniciada" />
     </div>
-    <div class="envio-row">
-      <label style="gap:6px"><span>📤</span> ② Enviado à assessoria de saúde</label>
-      <input type="date" id="md-envio-assessoria-elab" title="Data em que foi enviado à assessoria (inicia contagem de 5 dias)" />
+    <div class="envio-row" style="align-items:center">
+      <label style="gap:6px;cursor:pointer"><span>📤</span> <input type="checkbox" id="md-elab-finalizada" /> Elaboração finalizada</label>
+      <span style="font-size:11px;color:var(--ink-muted)" id="md-elab-finalizada-info"></span>
     </div>
-    <div class="envio-row">
-      <label style="gap:6px"><span>🩺</span> ③ Retorno recebido da assessoria</label>
-      <input type="date" id="md-retorno-assessoria" title="Data em que a assessoria devolveu o documento" />
+    <div class="envio-row" style="align-items:center">
+      <label style="gap:6px;cursor:pointer"><span>🩺</span> <input type="checkbox" id="md-retorno-recebido" /> Retorno recebido</label>
+      <span style="font-size:11px;color:var(--ink-muted)" id="md-retorno-recebido-info"></span>
     </div>
   </div>
 </form></div>
@@ -944,9 +944,9 @@ function statusDoc(doc){
 
 function faseDoc(doc){
   if(!doc.inicioElaboracao) return null;
-  if(doc.retornoAssessoria)
+  if(doc.retornoRecebido)
     return {fase:0, key:'fase-done', label:'✓ Concluído'};
-  if(doc.envAssessoriaData){
+  if(doc.elabFinalizada && doc.envAssessoriaData){
     const corridos = daysBetween(doc.envAssessoriaData, todayISO());
     const rest = 5 - corridos;
     if(rest < 0)  return {fase:2, key:'danger', label:`Assessoria de Saúde · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
@@ -1537,8 +1537,10 @@ function openDoc(id){
   $('#md-env-assessoria').checked = d?.envAssessoria || false;
   $('#md-env-assessoria-data').value = d?.envAssessoriaData || '';
   $('#md-inicio-elab').value = d?.inicioElaboracao || '';
-  $('#md-envio-assessoria-elab').value = d?.envAssessoriaData || '';
-  $('#md-retorno-assessoria').value = d?.retornoAssessoria || '';
+  $('#md-elab-finalizada').checked = d?.elabFinalizada || false;
+  $('#md-elab-finalizada-info').textContent = d?.envAssessoriaData ? `Enviado em ${fmtDate(d.envAssessoriaData)}` : '';
+  $('#md-retorno-recebido').checked = d?.retornoRecebido || false;
+  $('#md-retorno-recebido-info').textContent = d?.retornoAssessoria ? `Recebido em ${fmtDate(d.retornoAssessoria)}` : '';
   $('#md-delete').style.display = d ? '' : 'none';
   if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
@@ -1857,9 +1859,31 @@ function setupEvents(){
   // Doc auto-validade
   $('#md-tipo').onchange = () => { _tipoMudou = true; updateValidadeAuto(); _tipoMudou = false; };
   $('#md-emissao').onchange = updateValidadeAuto;
-  $('#md-envio-assessoria-elab').onchange = function(){
-    $('#md-env-assessoria').checked = !!this.value;
-    $('#md-env-assessoria-data').value = this.value;
+  $('#md-elab-finalizada').onchange = function(){
+    if(this.checked){
+      const hoje = todayISO();
+      $('#md-env-assessoria').checked = true;
+      $('#md-env-assessoria-data').value = hoje;
+      $('#md-elab-finalizada-info').textContent = `Enviado em ${fmtDate(hoje)}`;
+    } else {
+      $('#md-env-assessoria').checked = false;
+      $('#md-env-assessoria-data').value = '';
+      $('#md-elab-finalizada-info').textContent = '';
+      $('#md-retorno-recebido').checked = false;
+      $('#md-retorno-recebido-info').textContent = '';
+      $('#md-retorno-recebido-info').dataset.date = '';
+    }
+  };
+  $('#md-retorno-recebido').onchange = function(){
+    if(this.checked){
+      if(!$('#md-elab-finalizada').checked){ this.checked = false; toast('Marque primeiro "Elaboração finalizada"','danger'); return; }
+      const hoje = todayISO();
+      $('#md-retorno-recebido-info').textContent = `Recebido em ${fmtDate(hoje)}`;
+      $('#md-retorno-recebido-info').dataset.date = hoje;
+    } else {
+      $('#md-retorno-recebido-info').textContent = '';
+      $('#md-retorno-recebido-info').dataset.date = '';
+    }
   };
 
   // Salvar doc
@@ -1868,8 +1892,9 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
-    const envAssessoriaElab = $('#md-envio-assessoria-elab').value;
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:!!envAssessoriaElab || $('#md-env-assessoria').checked, envAssessoriaData:envAssessoriaElab || $('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, retornoAssessoria:$('#md-retorno-assessoria').value};
+    const elabFin = $('#md-elab-finalizada').checked;
+    const retRec = $('#md-retorno-recebido').checked;
+    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     try {
@@ -1886,11 +1911,13 @@ function setupEvents(){
           registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
         if(!docAntigo.envFinanceiro && data.envFinanceiro)
           registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
-        if(!docAntigo.envAssessoriaData && data.envAssessoriaData)
-          registrarHistorico(id, 'enviado_assessoria', `Enviado à assessoria de saúde em ${fmtDate(data.envAssessoriaData)}`);
         if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
           registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`);
-        if(!docAntigo.retornoAssessoria && data.retornoAssessoria)
+        if(!docAntigo.elabFinalizada && data.elabFinalizada)
+          registrarHistorico(id, 'enviado_assessoria', `Elaboração finalizada — enviado à assessoria em ${fmtDate(data.envAssessoriaData)}`);
+        if(docAntigo.elabFinalizada && !data.elabFinalizada)
+          registrarHistorico(id, 'atualizado', `Elaboração reaberta (devolvida pela assessoria)`);
+        if(!docAntigo.retornoRecebido && data.retornoRecebido)
           registrarHistorico(id, 'enviado_assessoria', `Retorno recebido da assessoria em ${fmtDate(data.retornoAssessoria)}`);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
@@ -2588,6 +2615,8 @@ async function salvarDocumentoNuvem(doc) {
     enviado_assessoria:      doc.envAssessoria || false,
     data_envio_assessoria:   doc.envAssessoriaData || null,
     data_inicio_elaboracao:  doc.inicioElaboracao || null,
+    elab_finalizada:         doc.elabFinalizada || false,
+    retorno_recebido:        doc.retornoRecebido || false,
     data_retorno_assessoria: doc.retornoAssessoria || null
   })
   if (error) throw new Error(error.message)
@@ -3175,6 +3204,8 @@ async function carregarDaNuvem() {
     envAssessoria:      d.enviado_assessoria || false,
     envAssessoriaData:  d.data_envio_assessoria || '',
     inicioElaboracao:   d.data_inicio_elaboracao || '',
+    elabFinalizada:     d.elab_finalizada || false,
+    retornoRecebido:    d.retorno_recebido || false,
     retornoAssessoria:  d.data_retorno_assessoria || ''
   }))
 

@@ -115,7 +115,7 @@ module.exports = async function handler(req, res) {
   const diffDays = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000);
 
   const [docsRes, clientesRes, contratosRes, avaliRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id,enviado_assessoria,data_envio_assessoria,data_inicio_elaboracao,data_retorno_assessoria,retorno_assessoria_recebido,elaboracao_finalizada`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id,enviado_assessoria,data_envio_assessoria,data_inicio_elaboracao,elab_finalizada,retorno_recebido,data_retorno_assessoria`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,cliente_id`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
@@ -153,18 +153,19 @@ module.exports = async function handler(req, res) {
     if (pendentes > 0) artAlerts.push({ nome: nomeEmpresa(ltcat.cliente_id), pendentes, venceART: ltcat.data_vencimento });
   }
 
-  // Fase 1 atrasada: elaboração iniciada há mais de 10 dias sem enviar à assessoria
+  // Fase 1 atrasada: elaboração iniciada há mais de 10 dias, não finalizada
   const fase1Atrasadas = docs.filter(d =>
     d.data_inicio_elaboracao &&
-    !d.data_envio_assessoria &&
-    !d.data_retorno_assessoria &&
+    !d.elab_finalizada &&
+    !d.retorno_recebido &&
     diffDays(d.data_inicio_elaboracao, today) > 10
   );
 
   // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno
   const fase2Atrasadas = docs.filter(d =>
+    d.elab_finalizada &&
     d.data_envio_assessoria &&
-    !d.data_retorno_assessoria &&
+    !d.retorno_recebido &&
     diffDays(d.data_envio_assessoria, today) > 5
   );
 
