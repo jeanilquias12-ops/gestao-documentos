@@ -584,7 +584,7 @@
   <div class="modal-h"><div><h2 id="md-title">Novo documento</h2><p>PGR ou LTCAT vinculado à empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="md-empresa" required></select></div>
-    <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 2 anos de validade</option><option value="LTCAT">LTCAT — sem validade fixa</option></select></div>
+    <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
     <input type="hidden" id="md-numero" value="" />
     <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required /></div>
     <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
@@ -612,7 +612,12 @@
   </div>
   <div class="envio-section">
     <h4>Controle de elaboração (fases)</h4>
-    <p style="margin:0 0 8px;font-size:11.5px;color:var(--ink-muted)">Prazo total: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias</p>
+    <p style="margin:0 0 8px;font-size:11.5px;color:var(--ink-muted)" id="md-elab-desc">PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias</p>
+    <div class="envio-row">
+      <label style="gap:6px"><span>👤</span> Responsável pela elaboração</label>
+      <input type="text" id="md-resp-elab" list="responsaveis-elab" placeholder="Quem está elaborando" style="flex:1;max-width:260px" />
+      <datalist id="responsaveis-elab"></datalist>
+    </div>
     <div class="envio-row">
       <label style="gap:6px"><span>📋</span> Início da elaboração</label>
       <input type="date" id="md-inicio-elab" title="Data em que a elaboração do documento foi iniciada" />
@@ -621,7 +626,7 @@
       <label style="gap:6px;cursor:pointer"><span>📤</span> <input type="checkbox" id="md-elab-finalizada" /> Elaboração finalizada</label>
       <span style="font-size:11px;color:var(--ink-muted)" id="md-elab-finalizada-info"></span>
     </div>
-    <div class="envio-row" style="align-items:center">
+    <div class="envio-row" style="align-items:center" id="md-retorno-row">
       <label style="gap:6px;cursor:pointer"><span>🩺</span> <input type="checkbox" id="md-retorno-recebido" /> Retorno recebido</label>
       <span style="font-size:11px;color:var(--ink-muted)" id="md-retorno-recebido-info"></span>
     </div>
@@ -944,9 +949,15 @@ function statusDoc(doc){
 
 function faseDoc(doc){
   if(!doc.inicioElaboracao) return null;
-  if(doc.retornoRecebido)
+  const isLtcat = doc.tipo === 'LTCAT';
+  // LTCAT: finalização encerra direto (sem assessoria)
+  if(isLtcat && doc.elabFinalizada)
     return {fase:0, key:'fase-done', label:'✓ Concluído'};
-  if(doc.elabFinalizada && doc.envAssessoriaData){
+  // PGR: retorno recebido encerra
+  if(!isLtcat && doc.retornoRecebido)
+    return {fase:0, key:'fase-done', label:'✓ Concluído'};
+  // PGR Fase 2: elaboração finalizada → aguardando assessoria (5 dias)
+  if(!isLtcat && doc.elabFinalizada && doc.envAssessoriaData){
     const corridos = daysBetween(doc.envAssessoriaData, todayISO());
     const rest = 5 - corridos;
     if(rest < 0)  return {fase:2, key:'danger', label:`Assessoria de Saúde · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
@@ -954,6 +965,7 @@ function faseDoc(doc){
     if(rest <= 1)  return {fase:2, key:'warn',   label:`Assessoria de Saúde · ${rest}d restante`, dias:corridos};
     return {fase:2, key:'fase2', label:`Assessoria de Saúde · ${rest}d restantes`, dias:corridos};
   }
+  // Fase 1: elaboração em andamento (10 dias)
   const corridos = daysBetween(doc.inicioElaboracao, todayISO());
   const rest = 10 - corridos;
   if(rest < 0)  return {fase:1, key:'danger', label:`Seg. do Trabalho · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
@@ -1536,11 +1548,15 @@ function openDoc(id){
   $('#md-env-financeiro-data').value = d?.envFinanceiroData || '';
   $('#md-env-assessoria').checked = d?.envAssessoria || false;
   $('#md-env-assessoria-data').value = d?.envAssessoriaData || '';
+  const resps = [...new Set(state.docs.map(x => x.respElaboracao).filter(Boolean))];
+  $('#responsaveis-elab').innerHTML = resps.map(r => `<option value="${r}">`).join('');
+  $('#md-resp-elab').value = d?.respElaboracao || '';
   $('#md-inicio-elab').value = d?.inicioElaboracao || '';
   $('#md-elab-finalizada').checked = d?.elabFinalizada || false;
   $('#md-elab-finalizada-info').textContent = d?.envAssessoriaData ? `Enviado em ${fmtDate(d.envAssessoriaData)}` : '';
   $('#md-retorno-recebido').checked = d?.retornoRecebido || false;
   $('#md-retorno-recebido-info').textContent = d?.retornoAssessoria ? `Recebido em ${fmtDate(d.retornoAssessoria)}` : '';
+  updateElabModal();
   $('#md-delete').style.display = d ? '' : 'none';
   if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
@@ -1553,15 +1569,14 @@ function updateValidadeAuto(){
   const em = $('#md-emissao').value;
   if(tipo === 'PGR'){
     $('#md-validade-label').textContent = 'Data de validade';
-    $('#md-validade-hint').textContent = 'PGR é preenchido automaticamente em +2 anos';
-    if(em && (!$('#md-validade').value || _tipoMudou)){
-      const d = new Date(em+'T00:00:00'); d.setFullYear(d.getFullYear()+2);
-      $('#md-validade').value = d.toISOString().slice(0,10);
-    }
+    $('#md-validade-hint').textContent = 'PGR — preenchido automaticamente em +1 ano';
   } else {
     $('#md-validade-label').textContent = 'Validade da ART';
-    $('#md-validade-hint').textContent = 'ART do LTCAT — prazo 12 meses';
-    // NÃO zera a validade aqui — preserva valor existente ao reabrir LTCAT
+    $('#md-validade-hint').textContent = 'LTCAT — validade da ART (1 ano)';
+  }
+  if(em && (!$('#md-validade').value || _tipoMudou)){
+    const d = new Date(em+'T00:00:00'); d.setFullYear(d.getFullYear()+1);
+    $('#md-validade').value = d.toISOString().slice(0,10);
   }
 }
 
@@ -1857,7 +1872,14 @@ function setupEvents(){
   };
 
   // Doc auto-validade
-  $('#md-tipo').onchange = () => { _tipoMudou = true; updateValidadeAuto(); _tipoMudou = false; };
+  function updateElabModal(){
+    const isLtcat = $('#md-tipo').value === 'LTCAT';
+    $('#md-retorno-row').style.display = isLtcat ? 'none' : '';
+    $('#md-elab-desc').textContent = isLtcat
+      ? 'LTCAT: 10 dias para elaboração → Finalizado → Envio ao cliente'
+      : 'PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias';
+  }
+  $('#md-tipo').onchange = () => { _tipoMudou = true; updateValidadeAuto(); updateElabModal(); _tipoMudou = false; };
   $('#md-emissao').onchange = updateValidadeAuto;
   $('#md-elab-finalizada').onchange = function(){
     if(this.checked){
@@ -1892,9 +1914,10 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
+    const tipo = $('#md-tipo').value;
     const elabFin = $('#md-elab-finalizada').checked;
-    const retRec = $('#md-retorno-recebido').checked;
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
+    const retRec = tipo === 'LTCAT' ? false : $('#md-retorno-recebido').checked;
+    const data = {id, empresa, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     try {
@@ -2614,10 +2637,11 @@ async function salvarDocumentoNuvem(doc) {
     data_envio_financeiro:   doc.envFinanceiroData || null,
     enviado_assessoria:      doc.envAssessoria || false,
     data_envio_assessoria:   doc.envAssessoriaData || null,
-    data_inicio_elaboracao:  doc.inicioElaboracao || null,
-    elab_finalizada:         doc.elabFinalizada || false,
-    retorno_recebido:        doc.retornoRecebido || false,
-    data_retorno_assessoria: doc.retornoAssessoria || null
+    data_inicio_elaboracao:    doc.inicioElaboracao || null,
+    responsavel_elaboracao:    doc.respElaboracao || '',
+    elab_finalizada:           doc.elabFinalizada || false,
+    retorno_recebido:          doc.retornoRecebido || false,
+    data_retorno_assessoria:   doc.retornoAssessoria || null
   })
   if (error) throw new Error(error.message)
 }
@@ -3204,6 +3228,7 @@ async function carregarDaNuvem() {
     envAssessoria:      d.enviado_assessoria || false,
     envAssessoriaData:  d.data_envio_assessoria || '',
     inicioElaboracao:   d.data_inicio_elaboracao || '',
+    respElaboracao:     d.responsavel_elaboracao || '',
     elabFinalizada:     d.elab_finalizada || false,
     retornoRecebido:    d.retorno_recebido || false,
     retornoAssessoria:  d.data_retorno_assessoria || ''
