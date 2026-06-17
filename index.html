@@ -314,6 +314,7 @@
     <div class="navlabel">Operação</div>
     <button class="navitem active" data-route="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
     <button class="navitem" data-route="empresas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6"/></svg>Empresas</button>
+    <button class="navitem" data-route="obras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/><path d="M9 20v-4h6v4"/><path d="M3 11l9-7 9 7"/></svg>Obras</button>
     <button class="navitem" data-route="documentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documentos<span class="badge" id="nav-doc-badge">0</span></button>
     <button class="navitem" data-route="avaliacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>Avaliações</button>
     <button class="navitem" data-route="insumos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Insumos<span class="badge" id="nav-insumos-badge" style="display:none">0</span></button>
@@ -406,7 +407,21 @@
           <div class="field"><label>Segmento</label><select id="f-empresa-seg"><option value="">Todos</option></select></div>
           <div class="field" style="flex:1"><label>Busca rápida</label><input id="f-empresa-q" placeholder="Nome ou CNPJ…" /></div>
         </div>
-        <div class="card"><div class="table-wrap"><table id="tbl-empresas"><thead><tr><th data-sort="nome">Empresa <span class="sortarrow">↕</span></th><th data-sort="cnpj">CNPJ <span class="sortarrow">↕</span></th><th data-sort="segmento">Segmento <span class="sortarrow">↕</span></th><th data-sort="contato">Contato <span class="sortarrow">↕</span></th><th data-sort="docs">Docs <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th></th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table id="tbl-empresas"><thead><tr><th data-sort="nome">Empresa <span class="sortarrow">↕</span></th><th data-sort="cnpj">CNPJ <span class="sortarrow">↕</span></th><th data-sort="segmento">Segmento <span class="sortarrow">↕</span></th><th data-sort="contato">Contato <span class="sortarrow">↕</span></th><th data-sort="obras">Obras <span class="sortarrow">↕</span></th><th data-sort="docs">Docs <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th></th></tr></thead><tbody></tbody></table></div></div>
+      </section>
+
+      <!-- OBRAS -->
+      <section class="page" id="page-obras">
+        <div class="page-h">
+          <div><h2>Obras</h2><p>Cadastro de obras vinculadas às empresas clientes.</p></div>
+          <div class="page-h-actions"><button class="btn primary" id="btnNewObra">+ Nova obra</button></div>
+        </div>
+        <div class="filters">
+          <div class="field"><label>Empresa</label><select id="f-obra-empresa"><option value="">Todas</option></select></div>
+          <div class="field"><label>Status</label><select id="f-obra-status"><option value="">Todos</option><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+          <div class="field" style="flex:1"><label>Busca rápida</label><input id="f-obra-q" placeholder="Nome da obra…" /></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table id="tbl-obras"><thead><tr><th data-sort="nome">Obra <span class="sortarrow">↕</span></th><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="endereco">Endereço <span class="sortarrow">↕</span></th><th data-sort="contato">Contato <span class="sortarrow">↕</span></th><th data-sort="docs">Docs <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- DOCUMENTOS -->
@@ -579,11 +594,26 @@
   <div class="modal-f"><button class="btn danger" id="me-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="me-save">Salvar empresa</button></div>
 </div></div>
 
+<!-- MODAL OBRA -->
+<div class="modal-bg" id="modal-obra"><div class="modal">
+  <div class="modal-h"><div><h2 id="mo-title">Nova obra</h2><p>Cadastro de obra vinculada a uma empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b"><form id="form-obra"><input type="hidden" id="mo-id" /><div class="form-grid">
+    <div class="field-block full"><label>Empresa *</label><select id="mo-empresa" required></select></div>
+    <div class="field-block full"><label>Nome da obra *</label><input id="mo-nome" required placeholder="Ex: Edifício Residencial Solar" /></div>
+    <div class="field-block full"><label>Endereço</label><input id="mo-endereco" /></div>
+    <div class="field-block"><label>Contato (nome)</label><input id="mo-contato" /></div>
+    <div class="field-block"><label>Telefone / E-mail</label><input id="mo-telefone" /></div>
+    <div class="field-block"><label>Status</label><select id="mo-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+  </div></form></div>
+  <div class="modal-f"><button class="btn danger" id="mo-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mo-save">Salvar obra</button></div>
+</div></div>
+
 <!-- MODAL DOCUMENTO -->
 <div class="modal-bg" id="modal-doc"><div class="modal">
   <div class="modal-h"><div><h2 id="md-title">Novo documento</h2><p>PGR ou LTCAT vinculado à empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="md-empresa" required></select></div>
+    <div class="field-block full"><label>Obra</label><select id="md-obra"><option value="">— Sem obra vinculada —</option></select></div>
     <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
     <input type="hidden" id="md-numero" value="" />
     <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required /></div>
@@ -876,7 +906,7 @@ function recalcTotalContrato(){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[]};
+let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[]};
 let _psiCalMes = new Date().getMonth();
 let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
@@ -982,6 +1012,7 @@ function toast(msg, kind){
 }
 
 function nomeEmpresa(id){ const e = state.empresas.find(x => x.id === id); return e ? e.nome : '—'; }
+function nomeObra(id){ const o = state.obras.find(x => x.id === id); return o ? o.nome : ''; }
 
 function alertasART(){
   const hoje = todayISO();
@@ -1039,7 +1070,7 @@ function navigate(route){
   $$('.navitem').forEach(b => b.classList.remove('active'));
   const navBtn = $$('.navitem').find(b => b.dataset.route === route);
   if(navBtn) navBtn.classList.add('active');
-  const titles = {dashboard:'Dashboard', empresas:'Empresas', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios'};
+  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
   // Submenu lateral da Agenda
@@ -1191,24 +1222,65 @@ function renderEmpresas(){
   const sort = sortState.empresas || {col:'nome', dir:1};
   list.sort((a,b) => {
     let av, bv;
-    if(sort.col === 'docs'){ av = state.docs.filter(d=>d.empresa===a.id).length; bv = state.docs.filter(d=>d.empresa===b.id).length; }
+    if(sort.col === 'obras'){ av = state.obras.filter(o=>o.empresa===a.id).length; bv = state.obras.filter(o=>o.empresa===b.id).length; }
+    else if(sort.col === 'docs'){ av = state.docs.filter(d=>d.empresa===a.id).length; bv = state.docs.filter(d=>d.empresa===b.id).length; }
     else { av = (a[sort.col]||'').toString(); bv = (b[sort.col]||'').toString(); }
     if(av < bv) return -sort.dir; if(av > bv) return sort.dir; return 0;
   });
 
   const tb = $('#tbl-empresas tbody');
   tb.innerHTML = list.length ? list.map(e => {
+    const obras = state.obras.filter(o => o.empresa === e.id).length;
     const docs = state.docs.filter(d => d.empresa === e.id).length;
     return `<tr>
       <td><b>${e.nome}</b></td>
       <td class="tight"><span class="mono">${e.cnpj}</span></td>
       <td>${e.segmento||'—'}</td>
       <td>${e.contato||'—'}<br><small style="color:var(--ink-muted)">${e.telefone||''}</small></td>
+      <td>${obras}</td>
       <td>${docs}</td>
       <td><span class="pill ${e.status==='ativa'?'solid-green':'muted'}">${e.status==='ativa'?'Ativa':'Inativa'}</span></td>
       <td><button class="btn sm" onclick="openEmpresa('${e.id}')">Editar</button></td>
     </tr>`;
-  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhuma empresa encontrada</td></tr>';
+  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhuma empresa encontrada</td></tr>';
+}
+
+/* ================== RENDER OBRAS ================== */
+function renderObras(){
+  const empresaF = $('#f-obra-empresa').value;
+  const statusF = $('#f-obra-status').value;
+  const q = $('#f-obra-q').value.toLowerCase();
+
+  $('#f-obra-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresaF?'selected':''}>${e.nome}</option>`).join('');
+
+  let list = state.obras.filter(o =>
+    (!empresaF || o.empresa === empresaF) &&
+    (!statusF || o.status === statusF) &&
+    (!q || o.nome.toLowerCase().includes(q))
+  );
+
+  const sort = sortState.obras || {col:'nome', dir:1};
+  list.sort((a,b) => {
+    let av, bv;
+    if(sort.col === 'empresa'){ av = nomeEmpresa(a.empresa); bv = nomeEmpresa(b.empresa); }
+    else if(sort.col === 'docs'){ av = state.docs.filter(d=>d.obra===a.id).length; bv = state.docs.filter(d=>d.obra===b.id).length; }
+    else { av = (a[sort.col]||'').toString(); bv = (b[sort.col]||'').toString(); }
+    if(av < bv) return -sort.dir; if(av > bv) return sort.dir; return 0;
+  });
+
+  const tb = $('#tbl-obras tbody');
+  tb.innerHTML = list.length ? list.map(o => {
+    const docs = state.docs.filter(d => d.obra === o.id).length;
+    return `<tr>
+      <td><b>${o.nome}</b></td>
+      <td>${nomeEmpresa(o.empresa)}</td>
+      <td>${o.endereco||'—'}</td>
+      <td>${o.contato||'—'}<br><small style="color:var(--ink-muted)">${o.telefone||''}</small></td>
+      <td>${docs}</td>
+      <td><span class="pill ${o.status==='ativa'?'solid-green':'muted'}">${o.status==='ativa'?'Ativa':'Inativa'}</span></td>
+      <td><button class="btn sm" onclick="openObra('${o.id}')">Editar</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhuma obra encontrada</td></tr>';
 }
 
 /* ================== RENDER DOCUMENTOS ================== */
@@ -1240,7 +1312,7 @@ function renderDocs(){
   tb.innerHTML = list.length ? list.map(d => {
     const s = statusDoc(d);
     return `<tr>
-      <td><b>${nomeEmpresa(d.empresa)}</b></td>
+      <td><b>${nomeEmpresa(d.empresa)}</b>${d.obra ? `<br><small style="color:var(--ink-muted)">${nomeObra(d.obra)}</small>` : ''}</td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.responsavel||''}">${d.responsavel||'—'}</td>
       <td class="tight">${fmtDate(d.emissao)}</td>
@@ -1513,6 +1585,28 @@ function setupSort(tableId, key){
 function openModal(id){ $('#'+id).classList.add('show'); }
 function closeModal(id){ $('#'+id).classList.remove('show'); }
 
+function populateObraSelect(empresaId, selectedObraId){
+  const obras = empresaId ? state.obras.filter(o => o.empresa === empresaId && o.status === 'ativa') : [];
+  $('#md-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
+    obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${o.nome}</option>`).join('');
+}
+
+function openObra(id){
+  const o = id ? state.obras.find(x => x.id === id) : null;
+  $('#mo-title').textContent = o ? 'Editar obra' : 'Nova obra';
+  $('#mo-id').value = o?.id || '';
+  $('#mo-empresa').innerHTML = (o ? '' : '<option value="">— Selecione a empresa —</option>') +
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#mo-empresa').value = o?.empresa || '';
+  $('#mo-nome').value = o?.nome || '';
+  $('#mo-endereco').value = o?.endereco || '';
+  $('#mo-contato').value = o?.contato || '';
+  $('#mo-telefone').value = o?.telefone || '';
+  $('#mo-status').value = o?.status || 'ativa';
+  $('#mo-delete').style.display = o ? '' : 'none';
+  openModal('modal-obra');
+}
+
 function openEmpresa(id){
   const e = id ? state.empresas.find(x => x.id === id) : null;
   $('#me-title').textContent = e ? 'Editar empresa' : 'Nova empresa';
@@ -1535,6 +1629,7 @@ function openDoc(id){
   $('#md-empresa').innerHTML = (d ? '' : '<option value="">— Selecione a empresa —</option>') +
     [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#md-empresa').value = d?.empresa || '';
+  populateObraSelect(d?.empresa || '', d?.obra || '');
   $('#md-tipo').value = d?.tipo || 'PGR';
   $('#md-numero').value = d?.numero || '';
   $('#md-emissao').value = d?.emissao || todayISO();
@@ -1711,9 +1806,11 @@ function setupGlobalSearch(){
     const q = inp.value.toLowerCase().trim();
     if(!q){ res.classList.remove('show'); return; }
     const emp = state.empresas.filter(e => e.nome.toLowerCase().includes(q) || e.cnpj.includes(q)).slice(0,5);
+    const obr = state.obras.filter(o => o.nome.toLowerCase().includes(q)).slice(0,5);
     const docs = state.docs.filter(d => (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q)).slice(0,5);
     let html = '';
     if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${e.nome}</b></span><small>${e.cnpj}</small></div>`).join(''); }
+    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${o.nome}</b></span><small>${nomeEmpresa(o.empresa)}</small></div>`).join(''); }
     if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${d.numero||''} <small>${nomeEmpresa(d.empresa)}</small></span></div>`).join(''); }
     if(!html) html = '<div class="sr-empty">Nenhum resultado</div>';
     res.innerHTML = html;
@@ -1823,16 +1920,21 @@ function setupEvents(){
 
   // Filtros
   ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
+  ['f-obra-empresa','f-obra-status','f-obra-q'].forEach(id => $('#'+id).oninput = renderObras);
   ['f-doc-tipo','f-doc-status','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = renderDocs);
   ['f-av-empresa','f-av-saldo'].forEach(id => $('#'+id).oninput = renderAvaliacoes);
   ['f-psi-empresa','f-psi-status'].forEach(id => $('#'+id).oninput = renderPsicossociais);
 
   // Botões novos
   $('#btnNewEmpresa').onclick = () => openEmpresa();
+  $('#btnNewObra').onclick = () => openObra();
   $('#btnNewDoc').onclick = () => openDoc();
   $('#btnNewDoc2').onclick = () => openDoc();
   $('#btnNewContrato').onclick = () => openContrato();
   $('#btnNewPsi').onclick = () => openPsi();
+
+  // Cascata empresa→obra no modal documento
+  $('#md-empresa').onchange = function(){ populateObraSelect(this.value, ''); };
 
   // Salvar empresa
   $('#me-save').onclick = async () => {
@@ -1866,6 +1968,35 @@ function setupEvents(){
       state.contratos = state.contratos.filter(c => c.empresa !== id);
       state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
       save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
+    } catch(err) {
+      toast('Erro ao excluir no servidor: ' + err.message, 'danger');
+    }
+  };
+
+  // Salvar obra
+  $('#mo-save').onclick = async () => {
+    const empresa = $('#mo-empresa').value;
+    const nome = $('#mo-nome').value.trim();
+    if(!empresa || !nome){ toast('Preencha empresa e nome da obra', 'danger'); return; }
+    const id = $('#mo-id').value || 'ob'+uid();
+    const data = {id, empresa, nome, endereco:$('#mo-endereco').value, contato:$('#mo-contato').value, telefone:$('#mo-telefone').value, status:$('#mo-status').value};
+    try {
+      await salvarObraNuvem(data);
+      const idx = state.obras.findIndex(o => o.id === id);
+      if(idx >= 0) state.obras[idx] = data; else state.obras.push(data);
+      save(); closeModal('modal-obra'); renderAll(); toast('✅ Obra salva', 'ok');
+    } catch(err) {
+      toast('Erro ao salvar no servidor: ' + err.message, 'danger');
+    }
+  };
+  $('#mo-delete').onclick = async () => {
+    if(!confirm('Excluir obra? Documentos vinculados perderão o vínculo com esta obra.')) return;
+    const id = $('#mo-id').value;
+    try {
+      await excluirObraNuvem(id);
+      state.obras = state.obras.filter(o => o.id !== id);
+      state.docs.forEach(d => { if(d.obra === id) d.obra = ''; });
+      save(); closeModal('modal-obra'); renderAll(); toast('Obra excluída', 'danger');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -1917,7 +2048,8 @@ function setupEvents(){
     const tipo = $('#md-tipo').value;
     const elabFin = $('#md-elab-finalizada').checked;
     const retRec = tipo === 'LTCAT' ? false : $('#md-retorno-recebido').checked;
-    const data = {id, empresa, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
+    const obra = $('#md-obra').value;
+    const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     try {
@@ -2135,6 +2267,7 @@ function setupEvents(){
 
   // Sort
   setupSort('tbl-empresas','empresas');
+  setupSort('tbl-obras','obras');
   setupSort('tbl-docs','docs');
 
   // Modal Psicossocial — toggle empresa livre
@@ -2438,6 +2571,7 @@ function setupInsumos(){
 function renderAll(){
   renderDashboard();
   renderEmpresas();
+  renderObras();
   renderDocs();
   renderAvaliacoes();
   renderInsumos();
@@ -2641,8 +2775,27 @@ async function salvarDocumentoNuvem(doc) {
     responsavel_elaboracao:    doc.respElaboracao || '',
     elab_finalizada:           doc.elabFinalizada || false,
     retorno_recebido:          doc.retornoRecebido || false,
-    data_retorno_assessoria:   doc.retornoAssessoria || null
+    data_retorno_assessoria:   doc.retornoAssessoria || null,
+    obra_id:                   doc.obra || null
   })
+  if (error) throw new Error(error.message)
+}
+
+async function salvarObraNuvem(obra) {
+  const { error } = await db.from('obras').upsert({
+    id:         obra.id,
+    empresa_id: obra.empresa,
+    nome:       obra.nome,
+    endereco:   obra.endereco || '',
+    contato:    obra.contato || '',
+    telefone:   obra.telefone || '',
+    status:     obra.status || 'ativa'
+  })
+  if (error) throw new Error(error.message)
+}
+
+async function excluirObraNuvem(id) {
+  const { error } = await db.from('obras').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -3183,6 +3336,7 @@ async function carregarDaNuvem() {
   const [
     { data: docs,           error: errDocs },
     { data: emps,           error: errEmps },
+    { data: obrasRows,      error: errObras },
     { data: contratos,      error: errContratos },
     { data: avaliacoes,     error: errAval },
     { data: historico,      error: errHist },
@@ -3193,6 +3347,7 @@ async function carregarDaNuvem() {
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
+    db.from('obras').select('*'),
     db.from('contratos').select('*'),
     db.from('avaliacoes').select('*'),
     db.from('historico_documentos').select('*').order('data_hora', { ascending: true }),
@@ -3204,6 +3359,7 @@ async function carregarDaNuvem() {
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
   if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
+  if (errObras)     { console.error('Erro obras:', errObras.message); toast('Erro ao carregar obras da nuvem', 'danger'); }
   if (errContratos) { console.error('Erro contratos:', errContratos.message); toast('Erro ao carregar contratos da nuvem', 'danger'); }
   if (errAval)      { console.error('Erro avaliações:', errAval.message); toast('Erro ao carregar avaliações da nuvem', 'danger'); }
   if (errPsi)       { console.error('Erro psicossociais:', errPsi.message); toast('Erro ao carregar avaliações psicossociais', 'danger'); }
@@ -3231,7 +3387,8 @@ async function carregarDaNuvem() {
     respElaboracao:     d.responsavel_elaboracao || '',
     elabFinalizada:     d.elab_finalizada || false,
     retornoRecebido:    d.retorno_recebido || false,
-    retornoAssessoria:  d.data_retorno_assessoria || ''
+    retornoAssessoria:  d.data_retorno_assessoria || '',
+    obra:               d.obra_id || ''
   }))
 
   if (!errEmps) state.empresas = (emps||[]).map(e => ({
@@ -3243,6 +3400,16 @@ async function carregarDaNuvem() {
     contato:  e.contato,
     telefone: e.telefone,
     status:   e.status
+  }))
+
+  if (!errObras) state.obras = (obrasRows||[]).map(o => ({
+    id:       o.id,
+    empresa:  o.empresa_id,
+    nome:     o.nome,
+    endereco: o.endereco,
+    contato:  o.contato,
+    telefone: o.telefone,
+    status:   o.status
   }))
 
   if (!errContratos) {
