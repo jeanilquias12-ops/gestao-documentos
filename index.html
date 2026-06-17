@@ -167,6 +167,12 @@
   .pill.danger{background:var(--danger-bg);color:var(--danger-fg)}
   .pill.muted{background:#EEF2EF;color:var(--ink-soft)}
   .pill.solid-green{background:var(--green-100);color:var(--green-900)}
+  .pill.fase1{background:#E3F2FD;color:#1565C0;font-size:11px}
+  .pill.fase1::before{display:none}
+  .pill.fase2{background:#F3E5F5;color:#4A148C;font-size:11px}
+  .pill.fase2::before{display:none}
+  .pill.fase-done{background:#E8F5E9;color:#1B5E20;font-size:11px}
+  .pill.fase-done::before{display:none}
 
   .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
   .filters .field{display:flex;flex-direction:column;gap:4px}
@@ -376,6 +382,11 @@
         <div class="card" style="margin-top:18px">
           <div class="card-h"><div><h3>Agendamentos psicossociais</h3><p>Próximas avaliações pendentes ou reagendadas</p></div><button class="btn ghost sm" onclick="openAgenda('psicossociais')">Ver todos →</button></div>
           <div id="dash-psi-lista"></div>
+        </div>
+
+        <div class="card" id="card-elaboracoes" style="margin-top:18px;display:none">
+          <div class="card-h"><div><h3>Elaborações em andamento</h3><p>Documentos com processo de elaboração ativo (Fase 1 ou Fase 2)</p></div><button class="btn ghost sm" data-route="documentos">Ver todos →</button></div>
+          <div class="table-wrap"><table id="tbl-elaboracoes"><thead><tr><th>Empresa</th><th>Documento</th><th>Fase</th><th>Dias</th><th>Situação</th></tr></thead><tbody></tbody></table></div>
         </div>
 
         <div class="card" id="card-art-alertas" style="margin-top:18px;display:none">
@@ -597,6 +608,17 @@
     <div class="envio-row">
       <label><input type="checkbox" id="md-env-assessoria" /> Enviado para a assessoria médica</label>
       <input type="date" id="md-env-assessoria-data" title="Data de envio à assessoria médica" />
+    </div>
+  </div>
+  <div class="envio-section">
+    <h4>Controle de elaboração (fases)</h4>
+    <div class="envio-row">
+      <label style="gap:6px"><span>📋</span> Início da elaboração</label>
+      <input type="date" id="md-inicio-elab" title="Data em que a elaboração do documento foi iniciada" />
+    </div>
+    <div class="envio-row">
+      <label style="gap:6px"><span>🩺</span> Retorno da assessoria</label>
+      <input type="date" id="md-retorno-assessoria" title="Data em que a assessoria devolveu/aprovou o documento" />
     </div>
   </div>
 </form></div>
@@ -915,6 +937,21 @@ function statusDoc(doc){
   return {key:'ok', label:`Válido (${d} dias)`};
 }
 
+function faseDoc(doc){
+  if(!doc.inicioElaboracao) return null;
+  if(doc.retornoAssessoria) return {fase:0, key:'fase-done', label:'✓ Concluído'};
+  if(doc.envAssessoria && doc.envAssessoriaData){
+    const dias = daysBetween(doc.envAssessoriaData, todayISO());
+    if(dias > 5) return {fase:2, key:'danger', label:`Fase 2 · ${dias}d ⚠`, dias};
+    if(dias >= 4) return {fase:2, key:'warn', label:`Fase 2 · ${dias}d`, dias};
+    return {fase:2, key:'fase2', label:`Fase 2 · ${dias}d`, dias};
+  }
+  const dias = daysBetween(doc.inicioElaboracao, todayISO());
+  if(dias > 10) return {fase:1, key:'danger', label:`Fase 1 · ${dias}d ⚠`, dias};
+  if(dias >= 8) return {fase:1, key:'warn', label:`Fase 1 · ${dias}d`, dias};
+  return {fase:1, key:'fase1', label:`Fase 1 · ${dias}d`, dias};
+}
+
 function toast(msg, kind){
   const el = $('#toast');
   el.textContent = msg;
@@ -1070,6 +1107,35 @@ function renderDashboard(){
     }).join('') + `</tbody></table></div>`
     : '<p style="color:var(--ink-muted);text-align:center;margin:0;padding:24px">Nenhum agendamento pendente</p>';
 
+  // Elaborações em andamento (Fase 1 e Fase 2)
+  const elaboracoes = state.docs
+    .map(d => ({d, f: faseDoc(d)}))
+    .filter(x => x.f && x.f.fase > 0)
+    .sort((a,b) => (b.f.dias||0) - (a.f.dias||0));
+  const cardElab = $('#card-elaboracoes');
+  if(elaboracoes.length){
+    cardElab.style.display = '';
+    $('#tbl-elaboracoes tbody').innerHTML = elaboracoes.map(({d, f}) => {
+      const faseTxt = f.fase === 1 ? 'Elaborando → Assessoria' : 'Assessoria → Retorno';
+      const prazo = f.fase === 1 ? 10 : 5;
+      const restantes = prazo - (f.dias||0);
+      const situacao = restantes < 0
+        ? `<span class="pill danger">Atrasado ${Math.abs(restantes)}d</span>`
+        : restantes === 0
+          ? `<span class="pill warn">Vence hoje</span>`
+          : `<span class="pill ${f.fase===1?'fase1':'fase2'}">${restantes}d restantes</span>`;
+      return `<tr>
+        <td><b>${nomeEmpresa(d.empresa)}</b></td>
+        <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
+        <td style="font-size:12.5px;color:var(--ink-soft)">${faseTxt}</td>
+        <td><span class="pill ${f.key}">${f.dias||0}d</span></td>
+        <td>${situacao}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    cardElab.style.display = 'none';
+  }
+
   // Avaliações pendentes c/ prazo (ART)
   const arts = alertasART();
   const cardArt = $('#card-art-alertas');
@@ -1168,6 +1234,7 @@ function renderDocs(){
       <td><span class="pill ${s.key}">${s.label}</span></td>
       <td style="min-width:130px">
         <div style="display:flex;flex-direction:column;gap:4px">
+          ${(()=>{ const f = faseDoc(d); return f ? `<span class="pill ${f.key}" title="Fase ${f.fase||''} do processo de elaboração">${f.label}</span>` : ''; })()}
           ${d.envCliente
             ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span>`
             : `<span class="pill nao-enviado">✗ Cliente não enviado</span>`}
@@ -1467,6 +1534,8 @@ function openDoc(id){
   $('#md-env-financeiro-data').value = d?.envFinanceiroData || '';
   $('#md-env-assessoria').checked = d?.envAssessoria || false;
   $('#md-env-assessoria-data').value = d?.envAssessoriaData || '';
+  $('#md-inicio-elab').value = d?.inicioElaboracao || '';
+  $('#md-retorno-assessoria').value = d?.retornoAssessoria || '';
   $('#md-delete').style.display = d ? '' : 'none';
   if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
@@ -1792,7 +1861,7 @@ function setupEvents(){
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
     const id = $('#md-id').value || 'd'+uid();
-    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:$('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value};
+    const data = {id, empresa, tipo:$('#md-tipo').value, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:$('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, retornoAssessoria:$('#md-retorno-assessoria').value};
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     try {
@@ -1811,6 +1880,10 @@ function setupEvents(){
           registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
         if(!docAntigo.envAssessoria && data.envAssessoria)
           registrarHistorico(id, 'enviado_assessoria', `Enviado à assessoria médica${data.envAssessoriaData ? ' em ' + fmtDate(data.envAssessoriaData) : ''}`);
+        if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
+          registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`);
+        if(!docAntigo.retornoAssessoria && data.retornoAssessoria)
+          registrarHistorico(id, 'enviado_assessoria', `Retorno da assessoria registrado em ${fmtDate(data.retornoAssessoria)}`);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
       }
@@ -2505,7 +2578,9 @@ async function salvarDocumentoNuvem(doc) {
     enviado_financeiro:      doc.envFinanceiro || false,
     data_envio_financeiro:   doc.envFinanceiroData || null,
     enviado_assessoria:      doc.envAssessoria || false,
-    data_envio_assessoria:   doc.envAssessoriaData || null
+    data_envio_assessoria:   doc.envAssessoriaData || null,
+    data_inicio_elaboracao:  doc.inicioElaboracao || null,
+    data_retorno_assessoria: doc.retornoAssessoria || null
   })
   if (error) throw new Error(error.message)
 }
@@ -3089,8 +3164,10 @@ async function carregarDaNuvem() {
     envClienteData:   d.data_envio_cliente || '',
     envFinanceiro:    d.enviado_financeiro || false,
     envFinanceiroData:d.data_envio_financeiro || '',
-    envAssessoria:    d.enviado_assessoria || false,
-    envAssessoriaData:d.data_envio_assessoria || ''
+    envAssessoria:      d.enviado_assessoria || false,
+    envAssessoriaData:  d.data_envio_assessoria || '',
+    inicioElaboracao:   d.data_inicio_elaboracao || '',
+    retornoAssessoria:  d.data_retorno_assessoria || ''
   }))
 
   if (!errEmps) state.empresas = (emps||[]).map(e => ({

@@ -112,8 +112,10 @@ module.exports = async function handler(req, res) {
 
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
+  const diffDays = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000);
+
   const [docsRes, clientesRes, contratosRes, avaliRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id,enviado_assessoria,data_envio_assessoria,data_inicio_elaboracao,data_retorno_assessoria`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,cliente_id`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
@@ -151,7 +153,23 @@ module.exports = async function handler(req, res) {
     if (pendentes > 0) artAlerts.push({ nome: nomeEmpresa(ltcat.cliente_id), pendentes, venceART: ltcat.data_vencimento });
   }
 
-  const ok = !vencidos.length && !vencendo.length && !artAlerts.length;
+  // Fase 1 atrasada: elaboração iniciada há mais de 10 dias sem enviar à assessoria
+  const fase1Atrasadas = docs.filter(d =>
+    d.data_inicio_elaboracao &&
+    !d.enviado_assessoria &&
+    !d.data_retorno_assessoria &&
+    diffDays(d.data_inicio_elaboracao, today) > 10
+  );
+
+  // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno
+  const fase2Atrasadas = docs.filter(d =>
+    d.enviado_assessoria &&
+    d.data_envio_assessoria &&
+    !d.data_retorno_assessoria &&
+    diffDays(d.data_envio_assessoria, today) > 5
+  );
+
+  const ok = !vencidos.length && !vencendo.length && !artAlerts.length && !fase1Atrasadas.length && !fase2Atrasadas.length;
 
   let assunto, corHeader, blocos;
 
@@ -164,12 +182,14 @@ module.exports = async function handler(req, res) {
       linhas: ['Todos os documentos estão dentro do prazo de validade.']
     }];
   } else {
-    corHeader = vencidos.length ? '#9B2A1A' : vencendo.length ? '#8A5A00' : '#1B6B2F';
+    corHeader = vencidos.length ? '#9B2A1A' : vencendo.length ? '#8A5A00' : fase1Atrasadas.length || fase2Atrasadas.length ? '#1565C0' : '#1B6B2F';
     assunto   = vencidos.length
       ? `SECONCI — 🚨 ${vencidos.length} documento(s) vencido(s)`
       : vencendo.length
         ? `SECONCI — ⏰ ${vencendo.length} documento(s) vencendo`
-        : `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
+        : fase1Atrasadas.length || fase2Atrasadas.length
+          ? `SECONCI — 📋 Elaboração de documento(s) em atraso`
+          : `SECONCI — ⚠️ ${artAlerts.length} LTCAT(s) com avaliações pendentes`;
 
     blocos = [];
 
@@ -190,6 +210,24 @@ module.exports = async function handler(req, res) {
       corFundo: '#FFF3E0', corBorda: '#FB8C00', corTexto: '#7B4F00',
       linhas: artAlerts.map(a => `<b>${a.nome}</b> &nbsp;·&nbsp; ${a.pendentes} avaliação(ões) pendente(s) &nbsp;·&nbsp; ART vence em <b>${fmtDate(a.venceART)}</b>`)
     });
+
+    if (fase1Atrasadas.length) blocos.push({
+      icone: '📋', titulo: `${fase1Atrasadas.length} elaboração(ões) em atraso — Fase 1`, subtitulo: 'Prazo para envio à assessoria excedido (máx. 10 dias)',
+      corFundo: '#E3F2FD', corBorda: '#1565C0', corTexto: '#0D47A1',
+      linhas: fase1Atrasadas.map(d => {
+        const dias = diffDays(d.data_inicio_elaboracao, today);
+        return `<b>${nomeEmpresa(d.cliente_id)}</b> — ${d.tipo_documento} &nbsp;·&nbsp; Elaboração iniciada há <b>${dias} dias</b> sem envio à assessoria`;
+      })
+    });
+
+    if (fase2Atrasadas.length) blocos.push({
+      icone: '🩺', titulo: `${fase2Atrasadas.length} retorno(s) da assessoria em atraso — Fase 2`, subtitulo: 'Prazo para retorno da assessoria excedido (máx. 5 dias)',
+      corFundo: '#F3E5F5', corBorda: '#6A1B9A', corTexto: '#4A148C',
+      linhas: fase2Atrasadas.map(d => {
+        const dias = diffDays(d.data_envio_assessoria, today);
+        return `<b>${nomeEmpresa(d.cliente_id)}</b> — ${d.tipo_documento} &nbsp;·&nbsp; Enviado à assessoria há <b>${dias} dias</b> sem retorno`;
+      })
+    });
   }
 
   const html = htmlEmail({
@@ -203,7 +241,7 @@ module.exports = async function handler(req, res) {
   const emailRes = await sendBrevo(recipients, assunto, html, apiKey);
   const data = await emailRes.json();
   if (emailRes.ok) {
-    return res.status(200).json({ success: true, vencidos: vencidos.length, vencendo: vencendo.length, artAlerts: artAlerts.length });
+    return res.status(200).json({ success: true, vencidos: vencidos.length, vencendo: vencendo.length, artAlerts: artAlerts.length, fase1Atrasadas: fase1Atrasadas.length, fase2Atrasadas: fase2Atrasadas.length });
   }
   return res.status(500).json({ error: data.message || JSON.stringify(data) });
 };
