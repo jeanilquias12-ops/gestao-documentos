@@ -677,6 +677,7 @@
   <div class="modal-h"><div><h2 id="mc-title">Novo contrato de avaliações</h2><p>Define o saldo contratado para a empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-contrato"><input type="hidden" id="mc-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="mc-empresa" required></select></div>
+    <div class="field-block full"><label>Obra</label><select id="mc-obra"><option value="">— Sem obra vinculada —</option></select></div>
     <div class="field-block"><label>Documento vinculado</label><select id="mc-doc"><option value="">— Sem vínculo —</option></select></div>
     <div class="field-block"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
     <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
@@ -1376,7 +1377,7 @@ function renderAvaliacoes(){
     return `<div class="card">
       <div class="card-h">
         <div>
-          <h3>${nomeEmpresa(c.empresa)}</h3>
+          <h3>${nomeEmpresa(c.empresa)}${c.obra ? ` <small style="font-weight:400;color:var(--ink-muted)">· ${nomeObra(c.obra)}</small>` : ''}</h3>
           <p>${c.desc || ''}${docInfo ? `${c.desc?' · ':''}vinculado a ${docInfo.tipo} ${docInfo.numero||''}` : ''}</p>
           ${c.tipos ? `<p style="margin:4px 0 0;font-size:12px;color:var(--ink-muted)">${TIPOS_AVALIACAO.filter(t=>(c.tipos[t.key]||0)>0).map(t=>`<span style="display:inline-block;background:var(--green-100);border-radius:4px;padding:1px 6px;margin:1px 2px 1px 0">${t.nome.split(' ')[0] === 'Particulado' ? 'Part. Total' : t.nome.split(' ')[0] === 'Varreduras' ? (t.key==='metais'?'Metais':'Vapores') : t.nome.split(' ')[0]}: ${c.tipos[t.key]}</span>`).join('')}</p>` : ''}
         </div>
@@ -1699,13 +1700,20 @@ function openContrato(id){
   $('#mc-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#mc-empresa').value = c?.empresa || state.empresas[0]?.id || '';
 
+  function atualizarObraContrato(selObraId){
+    const empId = $('#mc-empresa').value;
+    const obras = empId ? state.obras.filter(o => o.empresa === empId && o.status === 'ativa') : [];
+    $('#mc-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
+      obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${o.nome}</option>`).join('');
+  }
   function atualizarDocsPorEmpresa(){
     const empId = $('#mc-empresa').value;
     const docsEmpresa = state.docs.filter(d => d.empresa === empId);
     $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + [...docsEmpresa].sort((a,b)=>(`${a.tipo} ${a.numero||''}`).localeCompare(`${b.tipo} ${b.numero||''}`,'pt')).map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''}</option>`).join('');
   }
+  atualizarObraContrato(c?.obra || '');
   atualizarDocsPorEmpresa();
-  $('#mc-empresa').onchange = atualizarDocsPorEmpresa;
+  $('#mc-empresa').onchange = () => { atualizarObraContrato(''); atualizarDocsPorEmpresa(); };
   $('#mc-doc').value = c?.doc || '';
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
@@ -2163,7 +2171,8 @@ function setupEvents(){
     if(!empresa || qtd < 1){ toast('Preencha empresa e ao menos um tipo de avaliação', 'danger'); return; }
     const id = $('#mc-id').value || 'c'+uid();
     const valor = parseMcValor();
-    const data = {id, empresa, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
+    const obra = $('#mc-obra').value;
+    const data = {id, empresa, obra, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
     try {
       await salvarContratoNuvem(data);
       const idx = state.contratos.findIndex(c => c.id === id);
@@ -2885,7 +2894,7 @@ async function salvarEmpresaNuvem(emp) {
 
 async function salvarContratoNuvem(c) {
   const { error } = await db.from('contratos').upsert({
-    id: c.id, cliente_id: c.empresa, doc_id: c.doc || null,
+    id: c.id, cliente_id: c.empresa, obra_id: c.obra || null, doc_id: c.doc || null,
     qtd: c.qtd, descricao: c.desc || '',
     tipos_qtd: JSON.stringify(c.tipos || {}),
     valor: c.valor || 0
@@ -3475,6 +3484,7 @@ async function carregarDaNuvem() {
     state.contratos = (contratos||[]).map(c => ({
       id:      c.id,
       empresa: c.cliente_id,
+      obra:    c.obra_id || '',
       doc:     c.doc_id || '',
       qtd:     c.qtd,
       desc:    c.descricao || '',
