@@ -126,6 +126,8 @@
   .tile.ok .tile-value{color:var(--ok-fg)}
 
   .table-wrap{overflow:auto}
+  details.card summary::-webkit-details-marker{display:none}
+  details.card[open] summary span:first-child{transform:rotate(90deg)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead th{text-align:left;padding:11px 16px;background:var(--green-50);color:var(--ink-soft);font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
   thead th .sortarrow{display:inline-block;margin-left:4px;opacity:.4;font-size:10px}
@@ -325,6 +327,7 @@
       <button class="navitem subitem" data-agenda-nav="palestra">🎤 Palestras</button>
     </div>
     <button class="navitem" data-route="relatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Relatórios</button>
+    <button class="navitem" data-route="indicadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="14" y="6" width="3" height="12"/></svg>Indicadores</button>
 
     <div class="navlabel">Dados</div>
     <button class="navitem" id="notifyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificações</button>
@@ -574,6 +577,83 @@
             <div class="table-wrap"><table id="rel-empresas"><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Avaliações</th><th>Status</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
+      </section>
+
+      <!-- INDICADORES -->
+      <section class="page" id="page-indicadores">
+        <div class="page-h">
+          <div><h2>Indicadores de Desempenho</h2><p>Efetividade e tempo médio de entrega dos documentos elaborados.</p></div>
+          <div class="page-h-actions">
+            <div class="field" style="margin:0"><select id="ind-ano" style="min-width:90px;font-size:13px"></select></div>
+            <div class="field" style="margin:0"><select id="ind-tipo-filtro" style="font-size:13px"><option value="">Todos</option><option value="PGR">PGR</option><option value="LTCAT">LTCAT</option></select></div>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="tiles" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+          <div class="tile accent"><span class="tile-label">Efetividade</span><span class="tile-value" id="ind-kpi-efet">—</span><span class="tile-foot">Meta: ≥ 90%</span></div>
+          <div class="tile" id="ind-tile-media"><span class="tile-label">Média de entrega</span><span class="tile-value" id="ind-kpi-media">—</span><span class="tile-foot">Meta: ≤ 15 dias</span></div>
+          <div class="tile"><span class="tile-label">Entregas no ano</span><span class="tile-value" id="ind-kpi-total">—</span><span class="tile-foot" id="ind-kpi-prazo">— no prazo</span></div>
+          <div class="tile"><span class="tile-label">Período</span><span class="tile-value" id="ind-periodo" style="font-size:28px">—</span><span class="tile-foot">Atualização mensal</span></div>
+        </div>
+
+        <!-- GRÁFICO + SÉRIE lado a lado -->
+        <div class="grid-2" style="margin-bottom:18px;grid-template-columns:1fr 1fr">
+          <div class="card">
+            <div class="card-h"><div><h3>Efetividade mensal</h3><p>% de entregas dentro do prazo de 15 dias</p></div></div>
+            <div class="card-b" style="padding:14px 18px">
+              <canvas id="ind-chart" width="600" height="260" style="max-width:100%"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><div><h3>Tempo médio por fase</h3><p>Dias corridos por etapa do processo</p></div></div>
+            <div class="card-b" style="padding:14px 18px">
+              <canvas id="ind-chart-fases" width="600" height="260" style="max-width:100%"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- SÉRIE HISTÓRICA -->
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-h"><div><h3>Série histórica</h3><p>Dados mensais consolidados</p></div></div>
+          <div class="table-wrap">
+            <table id="tbl-indicadores-serie"><thead>
+              <tr><th style="text-align:left;min-width:180px">Dados</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th></tr>
+            </thead><tbody id="ind-serie-body"></tbody></table>
+          </div>
+        </div>
+
+        <!-- DETALHAMENTO MENSAL -->
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-h">
+            <div><h3>Detalhamento por documento</h3><p>Entregas individuais do mês selecionado</p></div>
+            <div class="field" style="margin:0;min-width:130px"><select id="ind-detalhe-mes" style="font-size:13px"></select></div>
+          </div>
+          <div class="table-wrap">
+            <table id="tbl-indicadores-detalhe"><thead>
+              <tr><th style="text-align:left">Empresa</th><th>Documento</th><th>Tipo</th><th>Início</th><th>Entrega</th><th>Total</th><th>F1</th><th>F2</th><th>Situação</th></tr>
+            </thead><tbody id="ind-detalhe-body"></tbody></table>
+          </div>
+        </div>
+
+        <!-- FICHA TÉCNICA colapsável -->
+        <details class="card" style="margin-bottom:18px">
+          <summary style="padding:14px 22px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink-soft);list-style:none;display:flex;align-items:center;gap:8px"><span style="transition:transform .2s">▸</span> Ficha técnica do indicador</summary>
+          <div class="card-b" style="padding:14px 22px;border-top:1px solid var(--line)">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 20px;font-size:12.5px;color:var(--ink-soft)">
+              <div><strong style="color:var(--ink)">Indicador:</strong> Efetividade de Entrega</div>
+              <div><strong style="color:var(--ink)">Categoria:</strong> Processos</div>
+              <div><strong style="color:var(--ink)">Periodicidade:</strong> Mensal</div>
+              <div><strong style="color:var(--ink)">Fórmula:</strong> Entregues no prazo ÷ Total × 100</div>
+              <div><strong style="color:var(--ink)">Fonte:</strong> Sistema de Gestão</div>
+              <div><strong style="color:var(--ink)">Meta:</strong> ≥ 90% no prazo (15d)</div>
+              <div><strong style="color:var(--ink)">Responsável:</strong> Segurança do Trabalho</div>
+              <div><strong style="color:var(--ink)">Setor:</strong> SECONCI Goiás</div>
+              <div><strong style="color:var(--ink)">Prazo:</strong> 10d elab. + 5d assessoria</div>
+            </div>
+          </div>
+        </details>
+
       </section>
     </div>
   </main>
@@ -1078,7 +1158,7 @@ function navigate(route){
   $$('.navitem').forEach(b => b.classList.remove('active'));
   const navBtn = $$('.navitem').find(b => b.dataset.route === route);
   if(navBtn) navBtn.classList.add('active');
-  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios'};
+  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
   // Submenu lateral da Agenda
@@ -1097,6 +1177,255 @@ function navigate(route){
     if(fim && !fim.value){ fim.value = todayISO(); }
     montarRelatorio();
   }
+  if(route === 'indicadores'){
+    renderIndicadores();
+  }
+}
+
+/* ================== INDICADORES ================== */
+function renderIndicadores(){
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const META_DIAS = 15;
+
+  const tipoFiltro = $('#ind-tipo-filtro')?.value || '';
+  const concluidos = state.docs.filter(d => {
+    if(!d.inicioElaboracao || !d.envClienteData) return false;
+    if(tipoFiltro && d.tipo !== tipoFiltro) return false;
+    return true;
+  });
+
+  const anos = [...new Set(concluidos.map(d => d.envClienteData.substring(0,4)))].sort();
+  if(!anos.length) anos.push(String(new Date().getFullYear()));
+  const selAno = $('#ind-ano');
+  const curVal = selAno.value || String(new Date().getFullYear());
+  selAno.innerHTML = anos.map(a => `<option value="${a}" ${a===curVal?'selected':''}>${a}</option>`).join('');
+  const ano = selAno.value || anos[anos.length-1];
+
+  $('#ind-periodo').textContent = ano;
+
+  const docsAno = concluidos.filter(d => d.envClienteData.substring(0,4) === ano);
+
+  const meses = Array.from({length:12}, (_,i) => {
+    const mm = String(i+1).padStart(2,'0');
+    const docsMes = docsAno.filter(d => d.envClienteData.substring(5,7) === mm);
+    const entregas = docsMes.map(d => {
+      const diasTotal = daysBetween(d.inicioElaboracao, d.envClienteData);
+      let fase1 = diasTotal, fase2 = 0;
+      if(d.tipo === 'PGR' && d.envAssessoriaData){
+        fase1 = daysBetween(d.inicioElaboracao, d.envAssessoriaData);
+        fase2 = daysBetween(d.envAssessoriaData, d.envClienteData);
+      }
+      const noPrazo = diasTotal <= META_DIAS;
+      const empresa = state.empresas.find(e => e.id === d.clienteId);
+      return {doc:d, diasTotal, fase1, fase2, noPrazo, empresa: empresa?.nome || '—'};
+    });
+    const total = entregas.length;
+    const noPrazo = entregas.filter(e => e.noPrazo).length;
+    const efetividade = total > 0 ? (noPrazo / total) : null;
+    const mediaTotal = total > 0 ? entregas.reduce((s,e) => s + e.diasTotal, 0) / total : null;
+    const mediaF1 = total > 0 ? entregas.reduce((s,e) => s + e.fase1, 0) / total : null;
+    const mediaF2 = total > 0 ? entregas.reduce((s,e) => s + e.fase2, 0) / total : null;
+    return {mes:i, total, noPrazo, efetividade, mediaTotal, mediaF1, mediaF2, entregas};
+  });
+
+  const totalAno = meses.reduce((s,m) => s + m.total, 0);
+  const noPrazoAno = meses.reduce((s,m) => s + m.noPrazo, 0);
+  const efetAno = totalAno > 0 ? ((noPrazoAno/totalAno)*100).toFixed(0) : '—';
+  const mediaAno = totalAno > 0 ? (docsAno.reduce((s,d) => s + daysBetween(d.inicioElaboracao, d.envClienteData), 0) / totalAno).toFixed(1) : '—';
+
+  // KPI tiles
+  const efetEl = $('#ind-kpi-efet');
+  efetEl.textContent = efetAno === '—' ? '—' : efetAno + '%';
+  const tileEfet = efetEl.closest('.tile');
+  if(tileEfet) tileEfet.className = 'tile ' + (efetAno === '—' ? '' : Number(efetAno) >= 90 ? 'accent' : Number(efetAno) >= 50 ? 'warn' : 'danger');
+
+  const mediaEl = $('#ind-kpi-media');
+  mediaEl.textContent = mediaAno === '—' ? '—' : mediaAno + 'd';
+  const tileMedia = $('#ind-tile-media');
+  if(tileMedia) tileMedia.className = 'tile ' + (mediaAno === '—' ? '' : Number(mediaAno) <= 15 ? 'ok' : 'warn');
+
+  $('#ind-kpi-total').textContent = totalAno;
+  $('#ind-kpi-prazo').textContent = noPrazoAno + ' no prazo';
+
+  // Série histórica
+  const tbody = $('#ind-serie-body');
+  tbody.innerHTML = `
+    <tr><td>No prazo (≤${META_DIAS}d)</td>${meses.map(m => `<td style="color:var(--green-700);font-weight:600">${m.total>0?m.noPrazo:'—'}</td>`).join('')}</tr>
+    <tr><td>Total entregues</td>${meses.map(m => `<td>${m.total>0?m.total:'—'}</td>`).join('')}</tr>
+    <tr style="background:rgba(46,125,50,.06)"><td style="font-weight:600">Efetividade</td>${meses.map(m => {
+      if(m.efetividade === null) return '<td style="color:var(--ink-muted)">—</td>';
+      const pct = (m.efetividade*100).toFixed(0);
+      const cor = m.efetividade >= 0.9 ? 'var(--green-700)' : m.efetividade >= 0.5 ? '#F57F17' : '#C62828';
+      return `<td style="color:${cor};font-weight:700">${pct}%</td>`;
+    }).join('')}</tr>
+    <tr><td>Meta</td>${meses.map(() => '<td style="color:var(--ink-muted)">90%</td>').join('')}</tr>
+    <tr><td>Média total (dias)</td>${meses.map(m => {
+      if(m.mediaTotal === null) return '<td style="color:var(--ink-muted)">—</td>';
+      const cor = m.mediaTotal <= META_DIAS ? 'var(--green-700)' : '#C62828';
+      return `<td style="color:${cor};font-weight:600">${m.mediaTotal.toFixed(1)}</td>`;
+    }).join('')}</tr>
+    <tr><td>Fase 1 (Elab.)</td>${meses.map(m => `<td>${m.mediaF1!==null?m.mediaF1.toFixed(1):'—'}</td>`).join('')}</tr>
+    <tr><td>Fase 2 (Assess.)</td>${meses.map(m => `<td>${m.mediaF2!==null?m.mediaF2.toFixed(1):'—'}</td>`).join('')}</tr>
+  `;
+
+  renderIndChart(meses, MESES);
+  renderIndChartFases(meses, MESES);
+
+  const selMes = $('#ind-detalhe-mes');
+  const curMes = selMes.value || String(new Date().getMonth());
+  selMes.innerHTML = MESES_FULL.map((n,i) => `<option value="${i}" ${String(i)===curMes?'selected':''}>${n}</option>`).join('');
+  renderIndDetalhe(meses, parseInt(selMes.value));
+
+  selAno.onchange = () => renderIndicadores();
+  $('#ind-tipo-filtro').onchange = () => renderIndicadores();
+  selMes.onchange = () => renderIndDetalhe(meses, parseInt(selMes.value));
+}
+
+function renderIndChart(meses, labels){
+  const canvas = $('#ind-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth - 36;
+  canvas.width = Math.max(W, 500);
+  canvas.height = 260;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const padL = 44, padR = 16, padT = 16, padB = 36;
+  const chartW = canvas.width - padL - padR;
+  const chartH = canvas.height - padT - padB;
+  const gap = chartW / 12;
+  const barW = Math.min(gap * 0.55, 36);
+  const radius = 4;
+
+  ctx.strokeStyle = '#E8E8E8'; ctx.lineWidth = 1;
+  for(let i = 0; i <= 5; i++){
+    const y = padT + chartH - (chartH * i / 5);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
+    ctx.fillStyle = '#AAA'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((i*20)+'%', padL - 6, y + 3);
+  }
+
+  const metaY = padT + chartH - (chartH * 0.9);
+  ctx.strokeStyle = '#EF5350'; ctx.lineWidth = 1; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(padL, metaY); ctx.lineTo(padL + chartW, metaY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#EF5350'; ctx.font = '9px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('Meta 90%', padL + chartW, metaY - 4);
+
+  meses.forEach((m, i) => {
+    const x = padL + gap * i + (gap - barW) / 2;
+    const pct = m.efetividade !== null ? m.efetividade : 0;
+    const h = chartH * pct;
+    const y = padT + chartH - h;
+
+    if(m.total > 0){
+      const color = pct >= 0.9 ? '#43A047' : pct >= 0.5 ? '#FFB300' : '#EF5350';
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + barW - radius, y);
+      ctx.quadraticCurveTo(x + barW, y, x + barW, y + radius);
+      ctx.lineTo(x + barW, padT + chartH);
+      ctx.lineTo(x, padT + chartH);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.fill();
+
+      ctx.fillStyle = '#333'; ctx.font = 'bold 10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText((pct*100).toFixed(0)+'%', x + barW/2, y - 5);
+    }
+
+    ctx.fillStyle = '#777'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x + barW/2, padT + chartH + 16);
+  });
+}
+
+function renderIndChartFases(meses, labels){
+  const canvas = $('#ind-chart-fases');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth - 36;
+  canvas.width = Math.max(W, 500);
+  canvas.height = 260;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const padL = 44, padR = 16, padT = 16, padB = 44;
+  const chartW = canvas.width - padL - padR;
+  const chartH = canvas.height - padT - padB;
+  const gap = chartW / 12;
+  const barW = Math.min(gap * 0.28, 18);
+  const maxDias = Math.max(20, ...meses.filter(m=>m.total>0).map(m=>m.mediaTotal||0));
+
+  ctx.strokeStyle = '#E8E8E8'; ctx.lineWidth = 1;
+  const steps = 4;
+  for(let i = 0; i <= steps; i++){
+    const y = padT + chartH - (chartH * i / steps);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
+    ctx.fillStyle = '#AAA'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxDias * i / steps)+'d', padL - 6, y + 3);
+  }
+
+  meses.forEach((m, i) => {
+    const cx = padL + gap * i + gap / 2;
+    if(m.total > 0){
+      const h1 = (m.mediaF1 / maxDias) * chartH;
+      const h2 = (m.mediaF2 / maxDias) * chartH;
+      const y1 = padT + chartH - h1;
+      const y2 = padT + chartH - h2;
+
+      ctx.fillStyle = '#42A5F5';
+      ctx.beginPath();
+      ctx.moveTo(cx - barW - 1 + 3, y1); ctx.lineTo(cx - 1 - 3, y1); ctx.quadraticCurveTo(cx - 1, y1, cx - 1, y1 + 3);
+      ctx.lineTo(cx - 1, padT + chartH); ctx.lineTo(cx - barW - 1, padT + chartH); ctx.lineTo(cx - barW - 1, y1 + 3);
+      ctx.quadraticCurveTo(cx - barW - 1, y1, cx - barW - 1 + 3, y1); ctx.fill();
+
+      ctx.fillStyle = '#FFA726';
+      ctx.beginPath();
+      ctx.moveTo(cx + 1 + 3, y2); ctx.lineTo(cx + barW + 1 - 3, y2); ctx.quadraticCurveTo(cx + barW + 1, y2, cx + barW + 1, y2 + 3);
+      ctx.lineTo(cx + barW + 1, padT + chartH); ctx.lineTo(cx + 1, padT + chartH); ctx.lineTo(cx + 1, y2 + 3);
+      ctx.quadraticCurveTo(cx + 1, y2, cx + 1 + 3, y2); ctx.fill();
+
+      ctx.fillStyle = '#555'; ctx.font = '9px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
+      if(h1 > 14) ctx.fillText(m.mediaF1.toFixed(0), cx - barW/2 - 1, y1 - 3);
+      if(h2 > 14) ctx.fillText(m.mediaF2.toFixed(0), cx + barW/2 + 1, y2 - 3);
+    }
+    ctx.fillStyle = '#777'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], cx, padT + chartH + 16);
+  });
+
+  const legY = canvas.height - 6;
+  ctx.fillStyle = '#42A5F5'; ctx.fillRect(padL, legY - 8, 10, 10);
+  ctx.fillStyle = '#666'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Fase 1 — Elaboração', padL + 14, legY);
+  ctx.fillStyle = '#FFA726'; ctx.fillRect(padL + 160, legY - 8, 10, 10);
+  ctx.fillStyle = '#666';
+  ctx.fillText('Fase 2 — Assessoria', padL + 174, legY);
+}
+
+function renderIndDetalhe(meses, mesIdx){
+  const m = meses[mesIdx];
+  const tbody = $('#ind-detalhe-body');
+  if(!m || !m.entregas.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--ink-muted)">Nenhuma entrega neste mês</td></tr>';
+    return;
+  }
+  tbody.innerHTML = m.entregas.map(e => {
+    const sit = e.noPrazo
+      ? '<span class="pill ok" style="font-size:11px">No prazo</span>'
+      : `<span class="pill danger" style="font-size:11px">+${e.diasTotal - 15}d</span>`;
+    return `<tr>
+      <td>${e.empresa}</td>
+      <td>${e.doc.nome || e.doc.tipo}</td>
+      <td><span class="pill" style="font-size:11px;background:${e.doc.tipo==='PGR'?'#E3F2FD':'#F3E5F5'};color:${e.doc.tipo==='PGR'?'#1565C0':'#7B1FA2'}">${e.doc.tipo}</span></td>
+      <td>${fmtDate(e.doc.inicioElaboracao)}</td>
+      <td>${fmtDate(e.doc.envClienteData)}</td>
+      <td style="font-weight:600;color:${e.diasTotal<=15?'var(--green-700)':'#C62828'}">${e.diasTotal}d</td>
+      <td>${e.fase1}d</td>
+      <td>${e.fase2 > 0 ? e.fase2+'d' : '—'}</td>
+      <td>${sit}</td>
+    </tr>`;
+  }).join('');
 }
 
 /* ================== RENDER DASHBOARD ================== */
@@ -1178,11 +1507,12 @@ function renderDashboard(){
     cardElab.style.display = '';
     $('#tbl-elaboracoes tbody').innerHTML = elaboracoes.map(({d, f}) => {
       const faseTxt = f.fase === 1 ? 'Seg. do Trabalho (10d)' : 'Assessoria de Saúde (5d)';
+      const atrasoHtml = (d.atrasoFase1 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F1: +${d.atrasoFase1}d</span> ` : '') + (d.atrasoFase2 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>` : '');
       return `<tr>
         <td><b>${nomeEmpresa(d.empresa)}</b></td>
         <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
         <td style="font-size:12.5px;color:var(--ink-soft)">${faseTxt}</td>
-        <td colspan="2"><span class="pill ${f.key}">${f.label}</span></td>
+        <td colspan="2"><span class="pill ${f.key}">${f.label}</span>${atrasoHtml ? '<br>'+atrasoHtml : ''}</td>
       </tr>`;
     }).join('');
   } else {
@@ -1326,7 +1656,10 @@ function renderDocs(){
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
       <td><span class="pill ${s.key}">${s.label}</span></td>
-      <td>${(()=>{ const f = faseDoc(d); return f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>'; })()}</td>
+      <td>${(()=>{ const f = faseDoc(d); let html = f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>';
+        if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
+        if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
+        return html; })()}</td>
       <td style="min-width:130px">
         <div style="display:flex;flex-direction:column;gap:4px">
           ${d.envCliente
@@ -2117,8 +2450,24 @@ function setupEvents(){
     const retRec = tipo === 'LTCAT' ? false : $('#md-retorno-recebido').checked;
     const obra = $('#md-obra').value;
     const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
+    // Calcular atraso persistente nas transições de fase
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
+    data.atrasoFase1 = docAntigo?.atrasoFase1 ?? null;
+    data.atrasoFase2 = docAntigo?.atrasoFase2 ?? null;
+    if(data.inicioElaboracao && data.elabFinalizada && data.envAssessoriaData){
+      const diasF1 = daysBetween(data.inicioElaboracao, data.envAssessoriaData);
+      data.atrasoFase1 = diasF1 > 10 ? diasF1 - 10 : 0;
+    }
+    if(data.inicioElaboracao && data.envClienteData && data.tipo === 'PGR' && data.envAssessoriaData){
+      const diasF2 = daysBetween(data.envAssessoriaData, data.envClienteData);
+      data.atrasoFase2 = diasF2 > 5 ? diasF2 - 5 : 0;
+    }
+    if(data.inicioElaboracao && data.envClienteData && data.tipo === 'LTCAT'){
+      const diasF1 = daysBetween(data.inicioElaboracao, data.envClienteData);
+      data.atrasoFase1 = diasF1 > 10 ? diasF1 - 10 : 0;
+      data.atrasoFase2 = 0;
+    }
     try {
       await salvarDocumentoNuvem(data);
       if(idx >= 0) state.docs[idx] = data; else state.docs.push(data);
@@ -2844,7 +3193,9 @@ async function salvarDocumentoNuvem(doc) {
     elab_finalizada:           doc.elabFinalizada || false,
     retorno_recebido:          doc.retornoRecebido || false,
     data_retorno_assessoria:   doc.retornoAssessoria || null,
-    obra_id:                   doc.obra || null
+    obra_id:                   doc.obra || null,
+    atraso_fase1:              doc.atrasoFase1 ?? null,
+    atraso_fase2:              doc.atrasoFase2 ?? null
   })
   if (error) throw new Error(error.message)
 }
@@ -3456,7 +3807,9 @@ async function carregarDaNuvem() {
     elabFinalizada:     d.elab_finalizada || false,
     retornoRecebido:    d.retorno_recebido || false,
     retornoAssessoria:  d.data_retorno_assessoria || '',
-    obra:               d.obra_id || ''
+    obra:               d.obra_id || '',
+    atrasoFase1:        d.atraso_fase1 ?? null,
+    atrasoFase2:        d.atraso_fase2 ?? null
   }))
 
   if (!errEmps) state.empresas = (emps||[]).map(e => ({
