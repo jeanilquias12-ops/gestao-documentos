@@ -1189,13 +1189,20 @@ function renderIndicadores(){
   const META_DIAS = 15;
 
   const tipoFiltro = $('#ind-tipo-filtro')?.value || '';
+  // Considera concluído pela mesma lógica do faseDoc (não só envClienteData)
+  const isConcluido = d => (d.tipo === 'LTCAT' && d.elabFinalizada) || (d.tipo !== 'LTCAT' && d.retornoRecebido);
+  // Data de entrega: envClienteData preferencial, senão envAssessoriaData (PGR sem data de envio ao cliente)
+  const dataEntrega = d => d.envClienteData || d.envAssessoriaData || null;
+
   const concluidos = state.docs.filter(d => {
-    if(!d.inicioElaboracao || !d.envClienteData) return false;
+    if(!d.inicioElaboracao) return false;
+    if(!isConcluido(d)) return false;
+    if(!dataEntrega(d)) return false;
     if(tipoFiltro && d.tipo !== tipoFiltro) return false;
     return true;
   });
 
-  const anos = [...new Set(concluidos.map(d => d.envClienteData.substring(0,4)))].sort();
+  const anos = [...new Set(concluidos.map(d => dataEntrega(d).substring(0,4)))].sort();
   if(!anos.length) anos.push(String(new Date().getFullYear()));
   const selAno = $('#ind-ano');
   const curVal = selAno.value || String(new Date().getFullYear());
@@ -1204,21 +1211,22 @@ function renderIndicadores(){
 
   $('#ind-periodo').textContent = ano;
 
-  const docsAno = concluidos.filter(d => d.envClienteData.substring(0,4) === ano);
+  const docsAno = concluidos.filter(d => dataEntrega(d).substring(0,4) === ano);
 
   const meses = Array.from({length:12}, (_,i) => {
     const mm = String(i+1).padStart(2,'0');
-    const docsMes = docsAno.filter(d => d.envClienteData.substring(5,7) === mm);
+    const docsMes = docsAno.filter(d => dataEntrega(d).substring(5,7) === mm);
     const entregas = docsMes.map(d => {
-      const diasTotal = daysBetween(d.inicioElaboracao, d.envClienteData);
+      const dtFim = dataEntrega(d);
+      const diasTotal = daysBetween(d.inicioElaboracao, dtFim);
       let fase1 = diasTotal, fase2 = 0;
       if(d.tipo === 'PGR' && d.envAssessoriaData){
         fase1 = daysBetween(d.inicioElaboracao, d.envAssessoriaData);
-        fase2 = daysBetween(d.envAssessoriaData, d.envClienteData);
+        fase2 = d.envClienteData ? daysBetween(d.envAssessoriaData, d.envClienteData) : 0;
       }
       const noPrazo = diasTotal <= META_DIAS;
       const empresa = state.empresas.find(e => e.id === d.clienteId);
-      return {doc:d, diasTotal, fase1, fase2, noPrazo, empresa: empresa?.nome || '—'};
+      return {doc:d, diasTotal, fase1, fase2, noPrazo, dtFim, empresa: empresa?.nome || '—'};
     });
     const total = entregas.length;
     const noPrazo = entregas.filter(e => e.noPrazo).length;
@@ -1232,7 +1240,7 @@ function renderIndicadores(){
   const totalAno = meses.reduce((s,m) => s + m.total, 0);
   const noPrazoAno = meses.reduce((s,m) => s + m.noPrazo, 0);
   const efetAno = totalAno > 0 ? ((noPrazoAno/totalAno)*100).toFixed(0) : '—';
-  const mediaAno = totalAno > 0 ? (docsAno.reduce((s,d) => s + daysBetween(d.inicioElaboracao, d.envClienteData), 0) / totalAno).toFixed(1) : '—';
+  const mediaAno = totalAno > 0 ? (docsAno.reduce((s,d) => s + daysBetween(d.inicioElaboracao, dataEntrega(d)), 0) / totalAno).toFixed(1) : '—';
 
   // KPI tiles
   const efetEl = $('#ind-kpi-efet');
@@ -1487,7 +1495,7 @@ function renderIndDetalhe(meses, mesIdx){
       <td>${e.doc.nome || e.doc.tipo}</td>
       <td><span class="pill" style="font-size:11px;background:${e.doc.tipo==='PGR'?'#E3F2FD':'#F3E5F5'};color:${e.doc.tipo==='PGR'?'#1565C0':'#7B1FA2'}">${e.doc.tipo}</span></td>
       <td>${fmtDate(e.doc.inicioElaboracao)}</td>
-      <td>${fmtDate(e.doc.envClienteData)}</td>
+      <td>${fmtDate(e.dtFim)}</td>
       <td style="font-weight:600;color:${e.diasTotal<=15?'var(--green-700)':'#C62828'}">${e.diasTotal}d</td>
       <td>${e.fase1}d</td>
       <td>${e.fase2 > 0 ? e.fase2+'d' : '—'}</td>
