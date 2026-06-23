@@ -1285,86 +1285,130 @@ function renderIndicadores(){
 function renderIndChart(meses, labels){
   const canvas = $('#ind-chart');
   if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(canvas.parentElement.clientWidth - 36, 500);
+  const H = 280;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
-  const W = canvas.parentElement.clientWidth - 36;
-  canvas.width = Math.max(W, 500);
-  canvas.height = 260;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(dpr, dpr);
 
-  const padL = 44, padR = 16, padT = 16, padB = 36;
-  const chartW = canvas.width - padL - padR;
-  const chartH = canvas.height - padT - padB;
+  const padL = 48, padR = 20, padT = 20, padB = 40;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
   const gap = chartW / 12;
-  const barW = Math.min(gap * 0.55, 36);
-  const radius = 4;
+  const barW = Math.min(gap * 0.6, 38);
+  const r = 5;
 
-  ctx.strokeStyle = '#E8E8E8'; ctx.lineWidth = 1;
+  // Grid lines
   for(let i = 0; i <= 5; i++){
     const y = padT + chartH - (chartH * i / 5);
+    ctx.strokeStyle = 'rgba(0,0,0,.06)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
-    ctx.fillStyle = '#AAA'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText((i*20)+'%', padL - 6, y + 3);
+    ctx.fillStyle = '#888'; ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((i*20)+'%', padL - 8, y + 4);
   }
 
+  // Meta line
   const metaY = padT + chartH - (chartH * 0.9);
-  ctx.strokeStyle = '#EF5350'; ctx.lineWidth = 1; ctx.setLineDash([5,4]);
+  ctx.strokeStyle = '#E53935'; ctx.lineWidth = 2; ctx.setLineDash([8,5]);
   ctx.beginPath(); ctx.moveTo(padL, metaY); ctx.lineTo(padL + chartW, metaY); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = '#EF5350'; ctx.font = '9px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
-  ctx.fillText('Meta 90%', padL + chartW, metaY - 4);
+  ctx.fillStyle = '#E53935'; ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('META 90%', padL + chartW, metaY - 6);
 
+  // Bars with gradients and shadows
   meses.forEach((m, i) => {
     const x = padL + gap * i + (gap - barW) / 2;
     const pct = m.efetividade !== null ? m.efetividade : 0;
-    const h = chartH * pct;
+    const h = Math.max(chartH * pct, 0);
     const y = padT + chartH - h;
 
     if(m.total > 0){
-      const color = pct >= 0.9 ? '#43A047' : pct >= 0.5 ? '#FFB300' : '#EF5350';
-      ctx.fillStyle = color;
+      // Shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.15)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+
+      // Gradient bar
+      const grad = ctx.createLinearGradient(x, y, x, padT + chartH);
+      if(pct >= 0.9){
+        grad.addColorStop(0, '#43A047'); grad.addColorStop(0.5, '#66BB6A'); grad.addColorStop(1, '#2E7D32');
+      } else if(pct >= 0.5){
+        grad.addColorStop(0, '#FFB300'); grad.addColorStop(0.5, '#FFCA28'); grad.addColorStop(1, '#FF8F00');
+      } else {
+        grad.addColorStop(0, '#EF5350'); grad.addColorStop(0.5, '#E57373'); grad.addColorStop(1, '#C62828');
+      }
+      ctx.fillStyle = grad;
+
+      // Rounded top bar
       ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + barW - radius, y);
-      ctx.quadraticCurveTo(x + barW, y, x + barW, y + radius);
-      ctx.lineTo(x + barW, padT + chartH);
-      ctx.lineTo(x, padT + chartH);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.moveTo(x + r, y); ctx.lineTo(x + barW - r, y);
+      ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+      ctx.lineTo(x + barW, padT + chartH); ctx.lineTo(x, padT + chartH);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.fill();
+      ctx.restore();
+
+      // Shine highlight
+      const shine = ctx.createLinearGradient(x, y, x + barW, y);
+      shine.addColorStop(0, 'rgba(255,255,255,.25)'); shine.addColorStop(0.5, 'rgba(255,255,255,.08)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = shine;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.lineTo(x + barW/2, y);
+      ctx.lineTo(x + barW/2, padT + chartH); ctx.lineTo(x, padT + chartH);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
       ctx.fill();
 
-      ctx.fillStyle = '#333'; ctx.font = 'bold 10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText((pct*100).toFixed(0)+'%', x + barW/2, y - 5);
+      // Value label
+      ctx.fillStyle = '#111'; ctx.font = 'bold 12px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText((pct*100).toFixed(0)+'%', x + barW/2, y - 8);
     }
 
-    ctx.fillStyle = '#777'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(labels[i], x + barW/2, padT + chartH + 16);
+    // Month label
+    ctx.fillStyle = m.total > 0 ? '#333' : '#BBB';
+    ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x + barW/2, padT + chartH + 20);
   });
 }
 
 function renderIndChartFases(meses, labels){
   const canvas = $('#ind-chart-fases');
   if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(canvas.parentElement.clientWidth - 36, 500);
+  const H = 280;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
-  const W = canvas.parentElement.clientWidth - 36;
-  canvas.width = Math.max(W, 500);
-  canvas.height = 260;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(dpr, dpr);
 
-  const padL = 44, padR = 16, padT = 16, padB = 44;
-  const chartW = canvas.width - padL - padR;
-  const chartH = canvas.height - padT - padB;
+  const padL = 48, padR = 20, padT = 20, padB = 50;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
   const gap = chartW / 12;
-  const barW = Math.min(gap * 0.28, 18);
+  const barW = Math.min(gap * 0.32, 22);
+  const r = 4;
   const maxDias = Math.max(20, ...meses.filter(m=>m.total>0).map(m=>m.mediaTotal||0));
 
-  ctx.strokeStyle = '#E8E8E8'; ctx.lineWidth = 1;
+  // Grid
   const steps = 4;
   for(let i = 0; i <= steps; i++){
     const y = padT + chartH - (chartH * i / steps);
+    ctx.strokeStyle = 'rgba(0,0,0,.06)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
-    ctx.fillStyle = '#AAA'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText(Math.round(maxDias * i / steps)+'d', padL - 6, y + 3);
+    ctx.fillStyle = '#888'; ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxDias * i / steps)+'d', padL - 8, y + 4);
   }
+
+  // Meta 10d line (Fase 1)
+  const meta10Y = padT + chartH - (10 / maxDias) * chartH;
+  ctx.strokeStyle = '#1565C0'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(padL, meta10Y); ctx.lineTo(padL + chartW, meta10Y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#1565C0'; ctx.font = 'bold 10px system-ui,sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('Limite F1: 10d', padL + chartW, meta10Y - 5);
 
   meses.forEach((m, i) => {
     const cx = padL + gap * i + gap / 2;
@@ -1374,33 +1418,57 @@ function renderIndChartFases(meses, labels){
       const y1 = padT + chartH - h1;
       const y2 = padT + chartH - h2;
 
-      ctx.fillStyle = '#42A5F5';
+      // Fase 1 bar — blue gradient
+      ctx.save();
+      ctx.shadowColor = 'rgba(21,101,192,.2)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+      const g1 = ctx.createLinearGradient(0, y1, 0, padT + chartH);
+      g1.addColorStop(0, '#42A5F5'); g1.addColorStop(0.5, '#1E88E5'); g1.addColorStop(1, '#1565C0');
+      ctx.fillStyle = g1;
       ctx.beginPath();
-      ctx.moveTo(cx - barW - 1 + 3, y1); ctx.lineTo(cx - 1 - 3, y1); ctx.quadraticCurveTo(cx - 1, y1, cx - 1, y1 + 3);
-      ctx.lineTo(cx - 1, padT + chartH); ctx.lineTo(cx - barW - 1, padT + chartH); ctx.lineTo(cx - barW - 1, y1 + 3);
-      ctx.quadraticCurveTo(cx - barW - 1, y1, cx - barW - 1 + 3, y1); ctx.fill();
+      ctx.moveTo(cx - barW - 1 + r, y1); ctx.lineTo(cx - 1 - r, y1); ctx.quadraticCurveTo(cx - 1, y1, cx - 1, y1 + r);
+      ctx.lineTo(cx - 1, padT + chartH); ctx.lineTo(cx - barW - 1, padT + chartH);
+      ctx.lineTo(cx - barW - 1, y1 + r); ctx.quadraticCurveTo(cx - barW - 1, y1, cx - barW - 1 + r, y1);
+      ctx.fill();
+      ctx.restore();
 
-      ctx.fillStyle = '#FFA726';
+      // Fase 2 bar — orange gradient
+      ctx.save();
+      ctx.shadowColor = 'rgba(230,81,0,.2)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+      const g2 = ctx.createLinearGradient(0, y2, 0, padT + chartH);
+      g2.addColorStop(0, '#FFA726'); g2.addColorStop(0.5, '#FB8C00'); g2.addColorStop(1, '#E65100');
+      ctx.fillStyle = g2;
       ctx.beginPath();
-      ctx.moveTo(cx + 1 + 3, y2); ctx.lineTo(cx + barW + 1 - 3, y2); ctx.quadraticCurveTo(cx + barW + 1, y2, cx + barW + 1, y2 + 3);
-      ctx.lineTo(cx + barW + 1, padT + chartH); ctx.lineTo(cx + 1, padT + chartH); ctx.lineTo(cx + 1, y2 + 3);
-      ctx.quadraticCurveTo(cx + 1, y2, cx + 1 + 3, y2); ctx.fill();
+      ctx.moveTo(cx + 1 + r, y2); ctx.lineTo(cx + barW + 1 - r, y2); ctx.quadraticCurveTo(cx + barW + 1, y2, cx + barW + 1, y2 + r);
+      ctx.lineTo(cx + barW + 1, padT + chartH); ctx.lineTo(cx + 1, padT + chartH);
+      ctx.lineTo(cx + 1, y2 + r); ctx.quadraticCurveTo(cx + 1, y2, cx + 1 + r, y2);
+      ctx.fill();
+      ctx.restore();
 
-      ctx.fillStyle = '#555'; ctx.font = '9px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
-      if(h1 > 14) ctx.fillText(m.mediaF1.toFixed(0), cx - barW/2 - 1, y1 - 3);
-      if(h2 > 14) ctx.fillText(m.mediaF2.toFixed(0), cx + barW/2 + 1, y2 - 3);
+      // Value labels
+      ctx.fillStyle = '#1565C0'; ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'center';
+      if(h1 > 16) ctx.fillText(m.mediaF1.toFixed(0)+'d', cx - barW/2 - 1, y1 - 5);
+      ctx.fillStyle = '#E65100';
+      if(h2 > 16) ctx.fillText(m.mediaF2.toFixed(0)+'d', cx + barW/2 + 1, y2 - 5);
     }
-    ctx.fillStyle = '#777'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(labels[i], cx, padT + chartH + 16);
+    ctx.fillStyle = m.total > 0 ? '#333' : '#BBB';
+    ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], cx, padT + chartH + 20);
   });
 
-  const legY = canvas.height - 6;
-  ctx.fillStyle = '#42A5F5'; ctx.fillRect(padL, legY - 8, 10, 10);
-  ctx.fillStyle = '#666'; ctx.font = '10px Inter,system-ui,sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('Fase 1 — Elaboração', padL + 14, legY);
-  ctx.fillStyle = '#FFA726'; ctx.fillRect(padL + 160, legY - 8, 10, 10);
-  ctx.fillStyle = '#666';
-  ctx.fillText('Fase 2 — Assessoria', padL + 174, legY);
+  // Legend
+  const legY = H - 8;
+  const legItems = [
+    {color:'#1E88E5', label:'Fase 1 — Elaboração (10d)'},
+    {color:'#FB8C00', label:'Fase 2 — Assessoria (5d)'}
+  ];
+  let lx = padL;
+  legItems.forEach(item => {
+    ctx.fillStyle = item.color;
+    ctx.beginPath(); ctx.arc(lx + 5, legY - 3, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(item.label, lx + 14, legY);
+    lx += ctx.measureText(item.label).width + 34;
+  });
 }
 
 function renderIndDetalhe(meses, mesIdx){
