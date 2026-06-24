@@ -629,6 +629,7 @@
             <div><h3>Detalhamento por documento</h3><p>Entregas individuais do mês selecionado</p></div>
             <div class="field" style="margin:0;min-width:130px"><select id="ind-detalhe-mes" style="font-size:13px"></select></div>
           </div>
+          <div style="padding:16px 20px 0"><canvas id="ind-chart-docs" style="display:block;width:100%"></canvas></div>
           <div class="table-wrap">
             <table id="tbl-indicadores-detalhe"><thead>
               <tr><th style="text-align:left">Empresa</th><th>Documento</th><th>Tipo</th><th>Início</th><th>Entrega</th><th>Total</th><th>F1</th><th>F2</th><th>Situação</th></tr>
@@ -1479,13 +1480,135 @@ function renderIndChartFases(meses, labels){
   });
 }
 
+function renderIndChartDocs(entregas){
+  const canvas = $('#ind-chart-docs');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const n = entregas.length;
+
+  if(!n){
+    canvas.style.display = 'none';
+    return;
+  }
+  canvas.style.display = 'block';
+
+  const BAR_H = 36, GAP = 10, padL = 180, padR = 100, padT = 16, padB = 16;
+  const W = Math.max(canvas.parentElement.clientWidth - 40, 400);
+  const H = padT + n * (BAR_H + GAP) - GAP + padB;
+
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const META = 15;
+  const maxDias = Math.max(META + 5, ...entregas.map(e => e.diasTotal));
+  const chartW = W - padL - padR;
+
+  // Linha de meta
+  const metaX = padL + (META / maxDias) * chartW;
+  ctx.strokeStyle = '#E53935'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(metaX, padT - 6); ctx.lineTo(metaX, H - padB + 4); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#E53935'; ctx.font = 'bold 10px system-ui,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('15d', metaX, padT - 8 > 6 ? padT - 8 : 6);
+
+  entregas.forEach((e, i) => {
+    const y = padT + i * (BAR_H + GAP);
+    const barLen = (e.diasTotal / maxDias) * chartW;
+    const r = 5;
+
+    // Fundo cinza
+    ctx.fillStyle = 'rgba(0,0,0,.04)';
+    ctx.beginPath();
+    ctx.moveTo(padL + r, y); ctx.lineTo(padL + chartW - r, y);
+    ctx.quadraticCurveTo(padL + chartW, y, padL + chartW, y + r);
+    ctx.lineTo(padL + chartW, y + BAR_H - r);
+    ctx.quadraticCurveTo(padL + chartW, y + BAR_H, padL + chartW - r, y + BAR_H);
+    ctx.lineTo(padL + r, y + BAR_H); ctx.quadraticCurveTo(padL, y + BAR_H, padL, y + BAR_H - r);
+    ctx.lineTo(padL, y + r); ctx.quadraticCurveTo(padL, y, padL + r, y);
+    ctx.fill();
+
+    // Barra colorida
+    ctx.save();
+    ctx.shadowColor = e.noPrazo ? 'rgba(46,125,50,.2)' : 'rgba(198,40,40,.2)';
+    ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+
+    // Fase 1
+    const f1W = (e.fase1 / maxDias) * chartW;
+    const g1 = ctx.createLinearGradient(padL, y, padL, y + BAR_H);
+    g1.addColorStop(0, '#42A5F5'); g1.addColorStop(1, '#1565C0');
+    ctx.fillStyle = g1;
+    const hasF2 = e.fase2 > 0;
+    ctx.beginPath();
+    ctx.moveTo(padL + r, y); ctx.lineTo(padL + f1W - (hasF2 ? 0 : r), y);
+    if(!hasF2){ ctx.quadraticCurveTo(padL + f1W, y, padL + f1W, y + r); }
+    else { ctx.lineTo(padL + f1W, y); }
+    ctx.lineTo(padL + f1W, y + BAR_H);
+    if(!hasF2){ ctx.lineTo(padL + f1W, y + BAR_H - r); ctx.quadraticCurveTo(padL + f1W, y + BAR_H, padL + f1W - 0, y + BAR_H); }
+    ctx.lineTo(padL + r, y + BAR_H); ctx.quadraticCurveTo(padL, y + BAR_H, padL, y + BAR_H - r);
+    ctx.lineTo(padL, y + r); ctx.quadraticCurveTo(padL, y, padL + r, y);
+    ctx.fill();
+
+    // Fase 2
+    if(hasF2){
+      const f2W = (e.fase2 / maxDias) * chartW;
+      const g2 = ctx.createLinearGradient(padL + f1W, y, padL + f1W, y + BAR_H);
+      g2.addColorStop(0, '#FFA726'); g2.addColorStop(1, '#E65100');
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.moveTo(padL + f1W, y); ctx.lineTo(padL + f1W + f2W - r, y);
+      ctx.quadraticCurveTo(padL + f1W + f2W, y, padL + f1W + f2W, y + r);
+      ctx.lineTo(padL + f1W + f2W, y + BAR_H - r);
+      ctx.quadraticCurveTo(padL + f1W + f2W, y + BAR_H, padL + f1W + f2W - r, y + BAR_H);
+      ctx.lineTo(padL + f1W, y + BAR_H); ctx.lineTo(padL + f1W, y);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Linha de separação F1/F2
+    if(hasF2){
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(padL + f1W, y + 4); ctx.lineTo(padL + f1W, y + BAR_H - 4); ctx.stroke();
+    }
+
+    // Label empresa (esquerda)
+    const label = e.empresa.length > 22 ? e.empresa.substring(0,20)+'…' : e.empresa;
+    ctx.fillStyle = '#222'; ctx.font = '600 12px system-ui,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(label, padL - 10, y + BAR_H/2 + 4);
+
+    // Valor dias (direita da barra)
+    const cor = e.noPrazo ? '#2E7D32' : '#C62828';
+    ctx.fillStyle = cor; ctx.font = 'bold 12px system-ui,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(e.diasTotal + 'd', padL + barLen + 8, y + BAR_H/2 + 4);
+
+    // Badge situação
+    const badgeX = padL + barLen + 40;
+    const badgeTxt = e.noPrazo ? '✓' : `+${e.diasTotal - 15}d`;
+    ctx.fillStyle = e.noPrazo ? '#43A047' : '#E53935';
+    ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(badgeTxt, badgeX, y + BAR_H/2 + 4);
+  });
+
+  // Legenda
+  const legY = H - 4;
+  ctx.fillStyle = '#1E88E5'; ctx.beginPath(); ctx.arc(padL + 6, legY - 3, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#555'; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Fase 1', padL + 14, legY);
+  ctx.fillStyle = '#FB8C00'; ctx.beginPath(); ctx.arc(padL + 70, legY - 3, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#555'; ctx.fillText('Fase 2', padL + 78, legY);
+}
+
 function renderIndDetalhe(meses, mesIdx){
   const m = meses[mesIdx];
   const tbody = $('#ind-detalhe-body');
   if(!m || !m.entregas.length){
+    const canvas = $('#ind-chart-docs');
+    if(canvas) { canvas.style.display = 'none'; }
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--ink-muted)">Nenhuma entrega neste mês</td></tr>';
     return;
   }
+  renderIndChartDocs(m.entregas);
   tbody.innerHTML = m.entregas.map(e => {
     const sit = e.noPrazo
       ? '<span class="pill ok" style="font-size:11px">No prazo</span>'
