@@ -605,25 +605,42 @@
           </div>
         </div>
 
-        <!-- KPIs -->
-        <div class="tiles" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-          <div class="tile accent"><span class="tile-label">Efetividade</span><span class="tile-value" id="ind-kpi-efet">—</span><span class="tile-foot">Meta: ≥ 90%</span></div>
-          <div class="tile" id="ind-tile-media"><span class="tile-label">Média de entrega</span><span class="tile-value" id="ind-kpi-media">—</span><span class="tile-foot">Meta: ≤ 15 dias</span></div>
-          <div class="tile"><span class="tile-label">Entregas no ano</span><span class="tile-value" id="ind-kpi-total">—</span><span class="tile-foot" id="ind-kpi-prazo">— no prazo</span></div>
-          <div class="tile"><span class="tile-label">Período</span><span class="tile-value" id="ind-periodo" style="font-size:28px">—</span><span class="tile-foot">Atualização mensal</span></div>
+        <!-- HERO: gauge + KPIs -->
+        <div id="ind-hero" style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px">
+          <div class="card" style="display:flex;align-items:center;justify-content:center;padding:28px 20px">
+            <div id="ind-gauge" style="text-align:center"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+            <div class="card" style="padding:22px 20px;display:flex;flex-direction:column;justify-content:center">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-muted);margin-bottom:6px">Média de entrega</span>
+              <span id="ind-kpi-media" style="font-size:32px;font-weight:700;line-height:1;color:var(--ink-main)">—</span>
+              <span style="font-size:12px;color:var(--ink-soft);margin-top:6px">Meta: ≤ 15 dias</span>
+              <div id="ind-media-bar" style="margin-top:10px;height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden"><div style="height:100%;border-radius:3px;transition:width .5s" id="ind-media-fill"></div></div>
+            </div>
+            <div class="card" style="padding:22px 20px;display:flex;flex-direction:column;justify-content:center">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-muted);margin-bottom:6px">Entregas no ano</span>
+              <div style="display:flex;align-items:baseline;gap:8px"><span id="ind-kpi-total" style="font-size:32px;font-weight:700;line-height:1;color:var(--ink-main)">—</span><span id="ind-kpi-prazo" style="font-size:13px;color:var(--green-700);font-weight:600">—</span></div>
+              <span style="font-size:12px;color:var(--ink-soft);margin-top:6px" id="ind-kpi-fora">—</span>
+            </div>
+            <div class="card" style="padding:22px 20px;display:flex;flex-direction:column;justify-content:center">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-muted);margin-bottom:6px">Período</span>
+              <span id="ind-periodo" style="font-size:32px;font-weight:700;line-height:1;color:var(--ink-main)">—</span>
+              <span style="font-size:12px;color:var(--ink-soft);margin-top:6px">Atualização mensal</span>
+            </div>
+          </div>
         </div>
 
-        <!-- GRÁFICO + SÉRIE lado a lado -->
-        <div class="grid-2" style="margin-bottom:18px;grid-template-columns:1fr 1fr">
+        <!-- GRÁFICOS -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-bottom:18px">
           <div class="card">
             <div class="card-h"><div><h3>Efetividade mensal</h3><p>% de entregas dentro do prazo de 15 dias</p></div></div>
-            <div class="card-b" style="padding:14px 18px">
+            <div class="card-b" style="padding:16px 18px">
               <div id="ind-chart"></div>
             </div>
           </div>
           <div class="card">
             <div class="card-h"><div><h3>Tempo médio por fase</h3><p>Dias corridos por etapa do processo</p></div></div>
-            <div class="card-b" style="padding:14px 18px">
+            <div class="card-b" style="padding:16px 18px">
               <div id="ind-chart-fases"></div>
             </div>
           </div>
@@ -1372,7 +1389,7 @@ function renderIndicadores(){
         fase2 = d.envClienteData ? daysBetween(d.envAssessoriaData, d.envClienteData) : 0;
       }
       const noPrazo = diasTotal <= META_DIAS;
-      const empresa = state.empresas.find(e => e.id === d.clienteId);
+      const empresa = state.empresas.find(e => e.id === d.empresa);
       return {doc:d, diasTotal, fase1, fase2, noPrazo, dtFim, empresa: empresa?.nome || '—'};
     });
     const total = entregas.length;
@@ -1389,19 +1406,40 @@ function renderIndicadores(){
   const efetAno = totalAno > 0 ? ((noPrazoAno/totalAno)*100).toFixed(0) : '—';
   const mediaAno = totalAno > 0 ? (docsAno.reduce((s,d) => s + daysBetween(d.inicioElaboracao, dataEntrega(d)), 0) / totalAno).toFixed(1) : '—';
 
-  // KPI tiles
-  const efetEl = $('#ind-kpi-efet');
-  efetEl.textContent = efetAno === '—' ? '—' : efetAno + '%';
-  const tileEfet = efetEl.closest('.tile');
-  if(tileEfet) tileEfet.className = 'tile ' + (efetAno === '—' ? '' : Number(efetAno) >= 90 ? 'accent' : Number(efetAno) >= 50 ? 'warn' : 'danger');
+  // Gauge circular
+  const gaugeEl = $('#ind-gauge');
+  if(gaugeEl){
+    const pct = efetAno === '—' ? 0 : Number(efetAno);
+    const R = 80, stroke = 12, circ = 2 * Math.PI * R;
+    const dashLen = circ * (pct / 100), gapLen = circ - dashLen;
+    const gaugeColor = pct >= 90 ? '#16a34a' : pct >= 50 ? '#f59e0b' : '#dc2626';
+    const trailColor = '#e5e7eb';
+    gaugeEl.innerHTML = `<svg width="180" height="180" viewBox="0 0 200 200" style="transform:rotate(-90deg)">
+      <circle cx="100" cy="100" r="${R}" fill="none" stroke="${trailColor}" stroke-width="${stroke}"/>
+      <circle cx="100" cy="100" r="${R}" fill="none" stroke="${gaugeColor}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${dashLen} ${gapLen}" style="transition:stroke-dasharray .8s ease"/>
+    </svg>
+    <div style="position:relative;margin-top:-126px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <span style="font-size:36px;font-weight:800;color:${gaugeColor};line-height:1">${efetAno === '—' ? '—' : efetAno+'%'}</span>
+      <span style="font-size:11px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Efetividade</span>
+    </div>
+    <div style="margin-top:8px;font-size:11.5px;color:var(--ink-soft)">Meta: ≥ 90%</div>`;
+  }
 
-  const mediaEl = $('#ind-kpi-media');
-  mediaEl.textContent = mediaAno === '—' ? '—' : mediaAno + 'd';
-  const tileMedia = $('#ind-tile-media');
-  if(tileMedia) tileMedia.className = 'tile ' + (mediaAno === '—' ? '' : Number(mediaAno) <= 15 ? 'ok' : 'warn');
+  // KPI cards
+  const mediaVal = mediaAno === '—' ? '—' : mediaAno + 'd';
+  $('#ind-kpi-media').textContent = mediaVal;
+  const mediaFill = $('#ind-media-fill');
+  if(mediaFill){
+    const mPct = mediaAno === '—' ? 0 : Math.min(Number(mediaAno)/20*100, 100);
+    const mColor = mediaAno !== '—' && Number(mediaAno) <= 15 ? '#16a34a' : '#f59e0b';
+    mediaFill.style.width = mPct + '%';
+    mediaFill.style.background = mColor;
+  }
 
   $('#ind-kpi-total').textContent = totalAno;
   $('#ind-kpi-prazo').textContent = noPrazoAno + ' no prazo';
+  const foraEl = $('#ind-kpi-fora');
+  if(foraEl) foraEl.textContent = (totalAno - noPrazoAno) + ' fora do prazo';
 
   // Série histórica
   const tbody = $('#ind-serie-body');
@@ -1445,43 +1483,41 @@ function svgRoundTopBar(x, y, w, h, r){
 function renderIndChart(meses, labels){
   const el = $('#ind-chart');
   if(!el) return;
-  const W = 600, H = 290, padL = 50, padR = 16, padT = 30, padB = 38;
+  const W = 640, H = 260, padL = 46, padR = 14, padT = 26, padB = 34;
   const chartW = W - padL - padR, chartH = H - padT - padB;
-  const gap = chartW / 12, barW = Math.min(gap * 0.52, 32), r = 5;
+  const gap = chartW / 12, barW = Math.min(gap * 0.6, 36), r = 5;
+  const baseY = padT + chartH;
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
     <defs>
-      <linearGradient id="gbar-ok" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#2E7D32"/></linearGradient>
-      <linearGradient id="gbar-warn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFC107"/><stop offset="100%" stop-color="#F57F17"/></linearGradient>
-      <linearGradient id="gbar-bad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EF5350"/><stop offset="100%" stop-color="#C62828"/></linearGradient>
-      <filter id="bshadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".08"/></filter>
+      <linearGradient id="gbar-ok" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#15803d"/></linearGradient>
+      <linearGradient id="gbar-warn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+      <linearGradient id="gbar-bad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#b91c1c"/></linearGradient>
     </defs>`;
 
-  const baseY = padT + chartH;
   for(let i = 0; i <= 5; i++){
     const y = padT + chartH - (chartH * i / 5);
-    svg += `<line x1="${padL}" y1="${y}" x2="${padL+chartW}" y2="${y}" stroke="#f0f0f0" stroke-width="1"/>`;
-    svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" fill="#9ca3af" font-size="11" font-weight="500">${i*20}%</text>`;
+    svg += `<line x1="${padL}" y1="${y}" x2="${padL+chartW}" y2="${y}" stroke="#f3f4f6" stroke-width="1"/>`;
+    svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" fill="#b0b0b0" font-size="10.5" font-weight="500">${i*20}%</text>`;
   }
 
   const metaY = padT + chartH - chartH * 0.9;
-  svg += `<line x1="${padL}" y1="${metaY}" x2="${padL+chartW}" y2="${metaY}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 4" opacity=".7"/>`;
-  svg += `<text x="${padL+chartW}" y="${metaY-6}" text-anchor="end" fill="#ef4444" font-size="10" font-weight="600">META 90%</text>`;
+  svg += `<line x1="${padL}" y1="${metaY}" x2="${padL+chartW}" y2="${metaY}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 4" opacity=".5"/>`;
+  svg += `<text x="${padL+chartW}" y="${metaY-5}" text-anchor="end" fill="#ef4444" font-size="9.5" font-weight="600" opacity=".8">META 90%</text>`;
 
   meses.forEach((m, i) => {
     const x = padL + gap * i + (gap - barW) / 2;
+    svg += `<rect x="${x}" y="${padT}" width="${barW}" height="${chartH}" rx="4" fill="#f9fafb"/>`;
     const pct = m.efetividade !== null ? m.efetividade : 0;
-    const h = Math.max(chartH * pct, 2);
-    const y = baseY - h;
-    const fill = pct >= 0.9 ? 'url(#gbar-ok)' : pct >= 0.5 ? 'url(#gbar-warn)' : 'url(#gbar-bad)';
-
     if(m.total > 0){
-      svg += `<path d="${svgRoundTopBar(x, y, barW, h, r)}" fill="${fill}" filter="url(#bshadow)"/>`;
-      svg += `<text x="${x+barW/2}" y="${y-6}" text-anchor="middle" fill="#374151" font-size="11" font-weight="700">${(pct*100).toFixed(0)}%</text>`;
+      const h = Math.max(chartH * pct, 3);
+      const y = baseY - h;
+      const fill = pct >= 0.9 ? 'url(#gbar-ok)' : pct >= 0.5 ? 'url(#gbar-warn)' : 'url(#gbar-bad)';
+      svg += `<path d="${svgRoundTopBar(x, y, barW, h, r)}" fill="${fill}"/>`;
+      svg += `<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" fill="#374151" font-size="10.5" font-weight="700">${(pct*100).toFixed(0)}%</text>`;
     }
-    svg += `<text x="${x+barW/2}" y="${baseY+18}" text-anchor="middle" fill="${m.total>0?'#6b7280':'#d1d5db'}" font-size="11" font-weight="600">${labels[i]}</text>`;
+    svg += `<text x="${x+barW/2}" y="${baseY+16}" text-anchor="middle" fill="${m.total>0?'#6b7280':'#d1d5db'}" font-size="10.5" font-weight="600">${labels[i]}</text>`;
   });
-
   svg += '</svg>';
   el.innerHTML = svg;
 }
@@ -1489,46 +1525,45 @@ function renderIndChart(meses, labels){
 function renderIndChartFases(meses, labels){
   const el = $('#ind-chart-fases');
   if(!el) return;
-  const W = 600, H = 310, padL = 50, padR = 16, padT = 30, padB = 52;
+  const W = 520, H = 280, padL = 42, padR = 14, padT = 26, padB = 48;
   const chartW = W - padL - padR, chartH = H - padT - padB;
-  const gap = chartW / 12, barW = Math.min(gap * 0.28, 18), r = 4;
+  const gap = chartW / 12, barW = Math.min(gap * 0.32, 16), r = 4;
   const maxDias = Math.max(20, ...meses.filter(m=>m.total>0).map(m=>m.mediaTotal||0));
   const steps = 4;
   const baseY = padT + chartH;
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
     <defs>
-      <linearGradient id="gf1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#42A5F5"/><stop offset="100%" stop-color="#1565C0"/></linearGradient>
-      <linearGradient id="gf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFA726"/><stop offset="100%" stop-color="#E65100"/></linearGradient>
-      <filter id="fshadow"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity=".08"/></filter>
+      <linearGradient id="gf1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
+      <linearGradient id="gf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#c2410c"/></linearGradient>
     </defs>`;
 
   for(let i = 0; i <= steps; i++){
     const y = padT + chartH - (chartH * i / steps);
-    svg += `<line x1="${padL}" y1="${y}" x2="${padL+chartW}" y2="${y}" stroke="#f0f0f0" stroke-width="1"/>`;
-    svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" fill="#9ca3af" font-size="11" font-weight="500">${Math.round(maxDias*i/steps)}d</text>`;
+    svg += `<line x1="${padL}" y1="${y}" x2="${padL+chartW}" y2="${y}" stroke="#f3f4f6" stroke-width="1"/>`;
+    svg += `<text x="${padL-7}" y="${y+4}" text-anchor="end" fill="#b0b0b0" font-size="10.5" font-weight="500">${Math.round(maxDias*i/steps)}d</text>`;
   }
 
   const meta10Y = padT + chartH - (10/maxDias)*chartH;
-  svg += `<line x1="${padL}" y1="${meta10Y}" x2="${padL+chartW}" y2="${meta10Y}" stroke="#1565C0" stroke-width="1.5" stroke-dasharray="6 4" opacity=".6"/>`;
-  svg += `<text x="${padL+chartW}" y="${meta10Y-5}" text-anchor="end" fill="#1565C0" font-size="10" font-weight="600">Limite F1: 10d</text>`;
+  svg += `<line x1="${padL}" y1="${meta10Y}" x2="${padL+chartW}" y2="${meta10Y}" stroke="#3b82f6" stroke-width="1.2" stroke-dasharray="5 3" opacity=".45"/>`;
+  svg += `<text x="${padL+chartW}" y="${meta10Y-4}" text-anchor="end" fill="#3b82f6" font-size="9.5" font-weight="600" opacity=".7">10d</text>`;
 
   meses.forEach((m, i) => {
     const cx = padL + gap * i + gap / 2;
     if(m.total > 0){
-      const h1 = Math.max((m.mediaF1/maxDias)*chartH, 2), h2 = Math.max((m.mediaF2/maxDias)*chartH, 2);
+      const h1 = Math.max((m.mediaF1/maxDias)*chartH, 3), h2 = Math.max((m.mediaF2/maxDias)*chartH, 3);
       const y1 = baseY - h1, y2 = baseY - h2;
-      svg += `<path d="${svgRoundTopBar(cx-barW-1, y1, barW, h1, r)}" fill="url(#gf1)" filter="url(#fshadow)"/>`;
-      svg += `<path d="${svgRoundTopBar(cx+1, y2, barW, h2, r)}" fill="url(#gf2)" filter="url(#fshadow)"/>`;
-      if(h1>14) svg += `<text x="${cx-barW/2-1}" y="${y1-5}" text-anchor="middle" fill="#1565C0" font-size="10" font-weight="700">${m.mediaF1.toFixed(0)}d</text>`;
-      if(h2>14) svg += `<text x="${cx+barW/2+1}" y="${y2-5}" text-anchor="middle" fill="#E65100" font-size="10" font-weight="700">${m.mediaF2.toFixed(0)}d</text>`;
+      svg += `<path d="${svgRoundTopBar(cx-barW-1, y1, barW, h1, r)}" fill="url(#gf1)"/>`;
+      svg += `<path d="${svgRoundTopBar(cx+1, y2, barW, h2, r)}" fill="url(#gf2)"/>`;
+      if(h1>12) svg += `<text x="${cx-barW/2-1}" y="${y1-4}" text-anchor="middle" fill="#1d4ed8" font-size="9.5" font-weight="700">${m.mediaF1.toFixed(0)}d</text>`;
+      if(h2>12) svg += `<text x="${cx+barW/2+1}" y="${y2-4}" text-anchor="middle" fill="#c2410c" font-size="9.5" font-weight="700">${m.mediaF2.toFixed(0)}d</text>`;
     }
-    svg += `<text x="${cx}" y="${baseY+18}" text-anchor="middle" fill="${m.total>0?'#6b7280':'#d1d5db'}" font-size="11" font-weight="600">${labels[i]}</text>`;
+    svg += `<text x="${cx}" y="${baseY+16}" text-anchor="middle" fill="${m.total>0?'#6b7280':'#d1d5db'}" font-size="10" font-weight="600">${labels[i]}</text>`;
   });
 
-  const legY = H - 12;
-  svg += `<circle cx="${padL+6}" cy="${legY}" r="5" fill="#1E88E5"/><text x="${padL+16}" y="${legY+4}" fill="#6b7280" font-size="11" font-weight="500">Fase 1 — Elaboração (10d)</text>`;
-  svg += `<circle cx="${padL+200}" cy="${legY}" r="5" fill="#FB8C00"/><text x="${padL+210}" y="${legY+4}" fill="#6b7280" font-size="11" font-weight="500">Fase 2 — Assessoria (5d)</text>`;
+  const legY = H - 10;
+  svg += `<rect x="${padL}" y="${legY-8}" width="10" height="10" rx="3" fill="#3b82f6"/><text x="${padL+14}" y="${legY+1}" fill="#6b7280" font-size="10.5" font-weight="500">Elaboração (10d)</text>`;
+  svg += `<rect x="${padL+140}" y="${legY-8}" width="10" height="10" rx="3" fill="#f97316"/><text x="${padL+154}" y="${legY+1}" fill="#6b7280" font-size="10.5" font-weight="500">Assessoria (5d)</text>`;
   svg += '</svg>';
   el.innerHTML = svg;
 }
@@ -1539,49 +1574,41 @@ function renderIndChartDocs(entregas){
   const n = entregas.length;
   if(!n){ el.innerHTML = ''; return; }
 
-  const BAR_H = 30, GAP = 8, padL = 180, padR = 80, padT = 22, padB = 32;
-  const W = 700, H = padT + n*(BAR_H+GAP) - GAP + padB;
+  const BAR_H = 28, GAP = 7, padL = 170, padR = 70, padT = 18, padB = 10;
+  const W = 680, H = padT + n*(BAR_H+GAP) - GAP + padB;
   const META = 15, maxDias = Math.max(META+5, ...entregas.map(e=>e.diasTotal));
   const chartW = W - padL - padR, r = 6;
   const metaX = padL + (META/maxDias)*chartW;
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
     <defs>
-      <linearGradient id="gd-f1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#42A5F5"/><stop offset="100%" stop-color="#1565C0"/></linearGradient>
-      <linearGradient id="gd-f2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FFA726"/><stop offset="100%" stop-color="#E65100"/></linearGradient>
+      <linearGradient id="gd-f1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
+      <linearGradient id="gd-f2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#ea580c"/></linearGradient>
     </defs>`;
 
-  svg += `<line x1="${metaX}" y1="${padT-8}" x2="${metaX}" y2="${H-padB+6}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 4" opacity=".6"/>`;
-  svg += `<text x="${metaX}" y="${padT-10}" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600">15d</text>`;
+  svg += `<line x1="${metaX}" y1="${padT-4}" x2="${metaX}" y2="${H-padB}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5 3" opacity=".4"/>`;
 
   entregas.forEach((e, i) => {
     const y = padT + i*(BAR_H+GAP);
-    const f1W = Math.max((e.fase1/maxDias)*chartW, 2);
+    const f1W = Math.max((e.fase1/maxDias)*chartW, 3);
     const hasF2 = e.fase2 > 0;
-    const totalW = (e.diasTotal/maxDias)*chartW;
-    const label = e.empresa.length > 24 ? e.empresa.substring(0,22)+'…' : e.empresa;
+    const totalW = Math.max((e.diasTotal/maxDias)*chartW, 3);
+    const label = e.empresa.length > 22 ? e.empresa.substring(0,20)+'…' : e.empresa;
 
     svg += `<rect x="${padL}" y="${y}" width="${chartW}" height="${BAR_H}" rx="${r}" fill="#f3f4f6"/>`;
-
     if(hasF2){
-      const f2W = Math.max((e.fase2/maxDias)*chartW, 2);
-      svg += `<rect x="${padL}" y="${y}" width="${f1W+f2W}" height="${BAR_H}" rx="${r}" fill="url(#gd-f2)"/>`;
+      const f2W = Math.max((e.fase2/maxDias)*chartW, 3);
+      svg += `<rect x="${padL}" y="${y}" width="${Math.min(f1W+f2W, chartW)}" height="${BAR_H}" rx="${r}" fill="url(#gd-f2)"/>`;
       svg += `<rect x="${padL}" y="${y}" width="${f1W}" height="${BAR_H}" rx="${r}" fill="url(#gd-f1)"/>`;
-      svg += `<clipPath id="cp${i}"><rect x="${padL+f1W}" y="${y}" width="${f2W}" height="${BAR_H}"/></clipPath>`;
     } else {
-      svg += `<rect x="${padL}" y="${y}" width="${f1W}" height="${BAR_H}" rx="${r}" fill="url(#gd-f1)"/>`;
+      svg += `<rect x="${padL}" y="${y}" width="${Math.min(f1W, chartW)}" height="${BAR_H}" rx="${r}" fill="url(#gd-f1)"/>`;
     }
 
-    svg += `<text x="${padL-10}" y="${y+BAR_H/2+5}" text-anchor="end" fill="#374151" font-size="12" font-weight="600">${label}</text>`;
+    svg += `<text x="${padL-10}" y="${y+BAR_H/2+4}" text-anchor="end" fill="#374151" font-size="11.5" font-weight="600">${label}</text>`;
     const cor = e.noPrazo ? '#16a34a' : '#dc2626';
-    svg += `<text x="${padL+totalW+10}" y="${y+BAR_H/2+5}" fill="${cor}" font-size="12" font-weight="700">${e.diasTotal}d</text>`;
-    const badge = e.noPrazo ? '✓' : '+' + (e.diasTotal-15) + 'd';
-    svg += `<text x="${padL+totalW+42}" y="${y+BAR_H/2+5}" fill="${e.noPrazo?'#16a34a':'#ef4444'}" font-size="11" font-weight="600">${badge}</text>`;
+    svg += `<text x="${padL+totalW+8}" y="${y+BAR_H/2+4}" fill="${cor}" font-size="11.5" font-weight="700">${e.diasTotal}d</text>`;
+    if(!e.noPrazo) svg += `<text x="${padL+totalW+36}" y="${y+BAR_H/2+4}" fill="#ef4444" font-size="10" font-weight="600">+${e.diasTotal-15}</text>`;
   });
-
-  const legY = H - 10;
-  svg += `<circle cx="${padL+6}" cy="${legY}" r="4" fill="#1E88E5"/><text x="${padL+14}" y="${legY+4}" fill="#6b7280" font-size="11">Fase 1</text>`;
-  svg += `<circle cx="${padL+70}" cy="${legY}" r="4" fill="#FB8C00"/><text x="${padL+78}" y="${legY+4}" fill="#6b7280" font-size="11">Fase 2</text>`;
   svg += '</svg>';
   el.innerHTML = svg;
 }
