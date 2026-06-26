@@ -567,21 +567,22 @@
 
       <!-- RELATÓRIOS -->
       <section class="page" id="page-relatorios">
-        <div class="page-h"><div><h2>Relatórios</h2><p>Monte o relatório por período e baixe em PDF só o que precisar.</p></div></div>
+        <div class="page-h"><div><h2>Relatórios</h2><p>Marque as seções, gere e baixe em PDF.</p></div></div>
 
         <div class="card no-print" style="margin-bottom:18px">
-          <div class="card-h"><div><h3>Montar relatório</h3><p>Escolha o período e marque as seções que vão para o PDF</p></div></div>
-          <div class="card-b">
+          <div class="card-b" style="padding:18px 22px">
             <div class="filters" style="margin-bottom:14px">
               <div class="field"><label>Data início</label><input type="date" id="rel-ini" /></div>
               <div class="field"><label>Data fim</label><input type="date" id="rel-fim" /></div>
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:18px">
-              <label class="rel-chk"><input type="checkbox" id="rel-c-docs" checked /> 📄 Documentos atualizados</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-avals" checked /> 📊 Avaliações realizadas</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-psi" /> 🧠 Psicossociais</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-treino" /> 🎓 Treinamentos</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-palestra" /> 🎤 Palestras</label>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px">
+              <label class="rel-chk"><input type="checkbox" id="rel-c-resumo" checked /> Resumo geral</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-docs" checked /> Documentos</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-avals" /> Avaliações</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-panorama" /> Panorama por empresa</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-psi" /> Psicossociais</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-treino" /> Treinamentos</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-palestra" /> Palestras</label>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn primary" id="rel-gerar">Gerar relatório</button>
@@ -591,26 +592,6 @@
         </div>
 
         <div id="rel-dynamic"></div>
-
-        <!-- Resumo geral (somente na tela) -->
-        <div class="no-print">
-          <div class="rel-kpi-grid" id="rel-kpis"></div>
-          <div id="rel-alertas" style="margin-bottom:18px"></div>
-          <div class="grid-2" style="margin-bottom:18px">
-            <div class="card">
-              <div class="card-h"><div><h3>Documentos por status</h3><p>Distribuição visual de validade</p></div></div>
-              <div class="card-b" id="rel-doc-status"></div>
-            </div>
-            <div class="card">
-              <div class="card-h"><div><h3>Avaliações por empresa</h3><p>Top 5 contratos por execução</p></div></div>
-              <div class="card-b" id="rel-av-top"></div>
-            </div>
-          </div>
-          <div class="card" style="margin-bottom:18px">
-            <div class="card-h"><div><h3>Panorama por empresa</h3><p>Documentos, avaliações, fase e situação de cada empresa</p></div></div>
-            <div class="table-wrap"><table id="rel-empresas"><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Avaliações</th><th>Saldo contrato</th><th>Elaboração</th><th>Situação</th></tr></thead><tbody></tbody></table></div>
-          </div>
-        </div>
       </section>
 
       <!-- INDICADORES -->
@@ -2187,123 +2168,7 @@ function renderAvaliacoes(){
 }
 
 /* ================== RENDER RELATÓRIOS ================== */
-function renderRelatorios(){
-  let validos=0, vencendo=0, vencidos=0;
-  let emElab=0, agAssess=0, concluidos=0;
-  state.docs.forEach(d => {
-    const s = statusDoc(d);
-    if(s.key === 'ok') validos++;
-    else if(s.key === 'warn') vencendo++;
-    else if(s.key === 'danger') vencidos++;
-    const f = faseDoc(d);
-    if(f){
-      if(f.key === 'fase-done') concluidos++;
-      else if(f.fase === 2) agAssess++;
-      else if(f.fase === 1) emElab++;
-    }
-  });
-  const totalDocs = state.docs.length;
-  const totalAvals = state.avaliacoes.length;
-  const totalContratos = state.contratos.length;
-  const saldoTotal = state.contratos.reduce((s,c) => {
-    const r = realizadasContrato(c.id);
-    return s + Math.max(0, c.qtd - r);
-  }, 0);
-
-  // KPIs
-  $('#rel-kpis').innerHTML = `
-    <div class="rel-kpi kpi-ok"><span class="kpi-label">Documentos</span><span class="kpi-val">${totalDocs}</span><span class="kpi-sub">${validos} válido${validos!==1?'s':''} · ${vencendo} vencendo · ${vencidos} vencido${vencidos!==1?'s':''}</span></div>
-    <div class="rel-kpi${vencidos>0?' kpi-danger':vencendo>0?' kpi-warn':' kpi-ok'}"><span class="kpi-label">Situação</span><span class="kpi-val">${vencidos>0?'Atenção':vencendo>0?'Alerta':'OK'}</span><span class="kpi-sub">${vencidos>0?vencidos+' vencido'+(vencidos!==1?'s':''):vencendo>0?vencendo+' vencendo':'Todos em dia'}</span></div>
-    <div class="rel-kpi"><span class="kpi-label">Avaliações realizadas</span><span class="kpi-val">${totalAvals}</span><span class="kpi-sub">${totalContratos} contrato${totalContratos!==1?'s':''} · ${saldoTotal} pendente${saldoTotal!==1?'s':''}</span></div>
-    <div class="rel-kpi"><span class="kpi-label">Elaboração</span><span class="kpi-val">${emElab+agAssess}</span><span class="kpi-sub">${emElab} em elaboração · ${agAssess} ag. assessoria</span></div>
-  `;
-
-  // Alertas
-  const alertas = [];
-  state.docs.filter(d => statusDoc(d).key === 'danger').forEach(d => {
-    alertas.push({tipo:'danger', msg:`${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
-  });
-  state.contratos.forEach(c => {
-    const r = realizadasContrato(c.id);
-    if(c.qtd && r >= c.qtd) alertas.push({tipo:'warn', msg:`${nomeEmpresa(c.empresa)} — saldo de avaliações esgotado (${r}/${c.qtd})`});
-  });
-  state.docs.forEach(d => {
-    const f = faseDoc(d);
-    if(f && f.key === 'danger') alertas.push({tipo:'warn', msg:`${nomeEmpresa(d.empresa)} — ${d.tipo}: ${f.label}`});
-  });
-  $('#rel-alertas').innerHTML = alertas.length
-    ? alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.tipo}">${a.tipo==='danger'?'🚨':'⚠'} ${a.msg}</div>`).join('')
-    : '';
-
-  // Donut status
-  const total = validos + vencendo + vencidos || 1;
-  const pctV = validos/total, pctW = vencendo/total;
-  const r=54, cx=64, cy=64, circ = 2*Math.PI*r;
-  const a1 = pctV*circ, a2 = pctW*circ, a3 = circ-a1-a2;
-  $('#rel-doc-status').innerHTML = `<div class="rel-donut-wrap">
-    <svg width="128" height="128" viewBox="0 0 128 128">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="14"/>
-      ${validos?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#22c55e" stroke-width="14" stroke-dasharray="${a1} ${circ-a1}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>`:''}
-      ${vencendo?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="${a2} ${circ-a2}" stroke-dashoffset="${circ/4-a1}" stroke-linecap="round"/>`:''}
-      ${vencidos?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ef4444" stroke-width="14" stroke-dasharray="${a3} ${circ-a3}" stroke-dashoffset="${circ/4-a1-a2}" stroke-linecap="round"/>`:''}
-      <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="22" font-weight="800" fill="var(--ink-main)">${totalDocs}</text>
-      <text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="var(--ink-muted)">documentos</text>
-    </svg>
-    <div class="rel-donut-legend">
-      <div><span class="leg-dot" style="background:#22c55e"></span><b>${validos}</b> Válidos</div>
-      <div><span class="leg-dot" style="background:#f59e0b"></span><b>${vencendo}</b> Vencendo</div>
-      <div><span class="leg-dot" style="background:#ef4444"></span><b>${vencidos}</b> Vencidos</div>
-    </div>
-  </div>`;
-
-  // Top avaliações
-  const top = state.contratos.map(c => ({c, r:realizadasContrato(c.id)})).sort((a,b) => b.r - a.r).slice(0,5);
-  const maxR = top.length ? Math.max(...top.map(t=>t.r),1) : 1;
-  $('#rel-av-top').innerHTML = top.length ? top.map(({c,r}) => {
-    const pct = c.qtd ? Math.min(r/c.qtd*100,100) : 0;
-    const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;align-items:center">
-        <span style="font-weight:600">${nomeEmpresa(c.empresa)}</span>
-        <span style="display:flex;align-items:center;gap:8px"><span class="rel-emp-minibar" style="width:${r/maxR*60}px;background:${cls==='danger'?'#ef4444':cls==='warn'?'#f59e0b':'var(--green-400)'}"></span><b>${r}/${c.qtd}</b></span>
-      </div>
-      <div class="progress"><div class="progress-bar ${cls}" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('') : '<p style="color:var(--ink-muted);margin:0">Nenhum contrato</p>';
-
-  // Tabela panorama por empresa
-  const tb = $('#rel-empresas tbody');
-  tb.innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
-    const pgr = state.docs.filter(d => d.empresa === e.id && d.tipo === 'PGR').length;
-    const ltcat = state.docs.filter(d => d.empresa === e.id && d.tipo === 'LTCAT').length;
-    const contratosE = state.contratos.filter(c => c.empresa === e.id);
-    const avs = contratosE.reduce((s,c) => s + realizadasContrato(c.id), 0);
-    const saldoPend = contratosE.reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
-    const totalContratado = contratosE.reduce((s,c) => s + (c.qtd||0), 0);
-    const pctSaldo = totalContratado ? (saldoPend/totalContratado*100) : -1;
-    const saldoHtml = pctSaldo < 0 ? '<span style="color:var(--ink-muted)">—</span>'
-      : pctSaldo <= 0 ? '<span class="pill danger">Esgotado</span>'
-      : `<span style="font-size:12px">${saldoPend}/${totalContratado}</span> <span class="rel-emp-minibar" style="width:${Math.max(pctSaldo*0.5,4)}px;background:${pctSaldo<=20?'#ef4444':pctSaldo<=40?'#f59e0b':'var(--green-400)'}"></span>`;
-    const docsE = state.docs.filter(d => d.empresa === e.id);
-    const fases = docsE.map(d => faseDoc(d)).filter(Boolean);
-    const elabE = fases.filter(f => f.fase === 1).length;
-    const assessE = fases.filter(f => f.fase === 2).length;
-    const doneE = fases.filter(f => f.key === 'fase-done').length;
-    const faseHtml = (elabE||assessE||doneE) ? `<div style="display:flex;gap:4px;flex-wrap:wrap">${elabE?`<span class="pill fase1" style="font-size:11px">${elabE} elab.</span>`:''}${assessE?`<span class="pill fase2" style="font-size:11px">${assessE} assess.</span>`:''}${doneE?`<span class="pill fase-done" style="font-size:11px">${doneE} concl.</span>`:''}</div>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>';
-    const hasVencido = docsE.some(d => statusDoc(d).key === 'danger');
-    const hasVencendo = docsE.some(d => statusDoc(d).key === 'warn');
-    const st = hasVencido ? {k:'danger', l:'Vencido'} : hasVencendo ? {k:'warn', l:'Vencendo'} : docsE.length ? {k:'ok', l:'OK'} : {k:'muted', l:'Sem docs'};
-    return `<tr>
-      <td><b>${e.nome}</b></td>
-      <td style="text-align:center">${pgr||'<span style="color:var(--ink-muted)">—</span>'}</td>
-      <td style="text-align:center">${ltcat||'<span style="color:var(--ink-muted)">—</span>'}</td>
-      <td style="text-align:center">${avs||'<span style="color:var(--ink-muted)">—</span>'}</td>
-      <td>${saldoHtml}</td>
-      <td>${faseHtml}</td>
-      <td><span class="pill ${st.k}">${st.l}</span></td>
-    </tr>`;
-  }).join('');
-}
+function renderRelatorios(){ montarRelatorio(); }
 
 /* ================== RELATÓRIO MONTÁVEL (período + seções) ================== */
 function relNomeEmpresaContrato(contratoId){
@@ -2316,19 +2181,53 @@ function montarRelatorio(){
   const fim = $('#rel-fim') ? $('#rel-fim').value : '';
   const inRange = (d) => { d = (d||'').slice(0,10); return d && (!ini || d >= ini) && (!fim || d <= fim); };
   const periodoLabel = (ini || fim) ? `${ini ? fmtDate(ini) : '…'} a ${fim ? fmtDate(fim) : '…'}` : 'todo o período';
+  const chk = id => $('#'+id) && $('#'+id).checked;
 
   let html = `<div class="card rel-sec" style="background:var(--green-700);border:none"><div class="card-b" style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div><b style="font-size:18px;color:#fff">Relatório de Atividades</b><br><span style="color:rgba(255,255,255,.7);font-size:13px">${periodoLabel}</span></div>
       <span style="color:rgba(255,255,255,.6);font-size:12px">SECONCI Goiás · SST · Gerado em ${fmtDate(todayISO())}</span>
     </div></div>`;
 
-  // 1) Documentos — situação atual de todos os docs com atividade no período
-  if($('#rel-c-docs') && $('#rel-c-docs').checked){
-    const evs = (state.historico||[]).filter(h => inRange(h.dataHora));
-    const docIds = [...new Set(evs.map(h=>h.docId).filter(Boolean))];
-    const docsAtivos = docIds.map(id => state.docs.find(x=>x.id===id)).filter(Boolean);
-    const allDocs = docsAtivos.length ? docsAtivos : state.docs;
-    const sorted = [...allDocs].sort((a,b) => nomeEmpresa(a.empresa).localeCompare(nomeEmpresa(b.empresa),'pt'));
+  // Resumo geral
+  if(chk('rel-c-resumo')){
+    let validos=0, vencendo=0, vencidos=0, emElab=0, agAssess=0;
+    state.docs.forEach(d => {
+      const s = statusDoc(d);
+      if(s.key === 'ok') validos++; else if(s.key === 'warn') vencendo++; else if(s.key === 'danger') vencidos++;
+      const f = faseDoc(d);
+      if(f){ if(f.fase === 1) emElab++; else if(f.fase === 2) agAssess++; }
+    });
+    const totalAvals = state.avaliacoes.length;
+    const saldoPend = state.contratos.reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
+
+    html += `<div class="rel-kpi-grid">
+      <div class="rel-kpi kpi-ok"><span class="kpi-label">Documentos</span><span class="kpi-val">${state.docs.length}</span><span class="kpi-sub">${validos} válido${validos!==1?'s':''} · ${vencendo} vencendo · ${vencidos} vencido${vencidos!==1?'s':''}</span></div>
+      <div class="rel-kpi${vencidos>0?' kpi-danger':vencendo>0?' kpi-warn':' kpi-ok'}"><span class="kpi-label">Situação</span><span class="kpi-val">${vencidos>0?'Atenção':vencendo>0?'Alerta':'OK'}</span><span class="kpi-sub">${vencidos>0?vencidos+' doc'+(vencidos!==1?'s':'')+' vencido'+(vencidos!==1?'s':''):vencendo>0?vencendo+' vencendo':'Todos em dia'}</span></div>
+      <div class="rel-kpi"><span class="kpi-label">Avaliações</span><span class="kpi-val">${totalAvals}</span><span class="kpi-sub">${saldoPend} pendente${saldoPend!==1?'s':''} no saldo</span></div>
+      <div class="rel-kpi"><span class="kpi-label">Em elaboração</span><span class="kpi-val">${emElab+agAssess}</span><span class="kpi-sub">${emElab} seg. trabalho · ${agAssess} assessoria</span></div>
+    </div>`;
+
+    // Alertas
+    const alertas = [];
+    state.docs.filter(d => statusDoc(d).key === 'danger').forEach(d => {
+      alertas.push({t:'danger', m:`${nomeEmpresa(d.empresa)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
+    });
+    state.contratos.forEach(c => {
+      const r = realizadasContrato(c.id);
+      if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${nomeEmpresa(c.empresa)} — saldo esgotado (${r}/${c.qtd})`});
+    });
+    state.docs.forEach(d => {
+      const f = faseDoc(d);
+      if(f && f.key === 'danger') alertas.push({t:'warn', m:`${nomeEmpresa(d.empresa)} — ${d.tipo}: ${f.label}`});
+    });
+    if(alertas.length){
+      html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}</div>`;
+    }
+  }
+
+  // Documentos
+  if(chk('rel-c-docs')){
+    const sorted = [...state.docs].sort((a,b) => nomeEmpresa(a.empresa).localeCompare(nomeEmpresa(b.empresa),'pt'));
     const nPgr = sorted.filter(d=>d.tipo==='PGR').length, nLtcat = sorted.filter(d=>d.tipo==='LTCAT').length;
     const linhas = sorted.map(d => {
       const s = statusDoc(d);
@@ -2337,49 +2236,65 @@ function montarRelatorio(){
       const entrega = d.envCliente && d.envFinanceiro ? '<span class="pill ok" style="font-size:11px">Completo</span>'
         : d.envCliente ? '<span class="pill enviado-c" style="font-size:11px">Ag. financeiro</span>'
         : '<span class="pill muted" style="font-size:11px">Pendente</span>';
-      return `<tr>
-        <td><b>${nomeEmpresa(d.empresa)}</b></td>
-        <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td>
-        <td class="tight">${fmtDate(d.emissao)}</td>
-        <td class="tight">${fmtDate(d.validade)}</td>
-        <td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td>
-        <td>${fHtml}</td>
-        <td>${entrega}</td>
-      </tr>`;
+      return `<tr><td><b>${nomeEmpresa(d.empresa)}</b></td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT${docsAtivos.length ? ' · com atividade no período' : ''}</p></div></div>
+      <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Tipo</th><th>Emissão</th><th>Validade</th><th>Status</th><th>Elaboração</th><th>Entrega</th></tr></thead><tbody>${
-        linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum documento encontrado</td></tr>'
+        linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum documento</td></tr>'
       }</tbody></table></div></div>`;
   }
 
-  // 2) Avaliações realizadas no período
-  if($('#rel-c-avals') && $('#rel-c-avals').checked){
+  // Avaliações
+  if(chk('rel-c-avals')){
     const avs = state.avaliacoes.filter(a => inRange(a.data));
     const porEmp = {};
-    const porTipo = {};
-    avs.forEach(a => {
-      const nome = relNomeEmpresaContrato(a.contrato);
-      porEmp[nome] = (porEmp[nome]||0) + 1;
-      porTipo[a.agente] = (porTipo[a.agente]||0) + 1;
-    });
+    avs.forEach(a => { const nome = relNomeEmpresaContrato(a.contrato); porEmp[nome] = (porEmp[nome]||0) + 1; });
     const maxQtd = Math.max(...Object.values(porEmp), 1);
     const linhas = Object.entries(porEmp).sort((a,b) => b[1]-a[1])
       .map(([nome, qtd]) => `<tr><td><b>${nome}</b></td><td style="text-align:center"><span class="rel-emp-minibar" style="width:${qtd/maxQtd*50}px"></span> <b>${qtd}</b></td></tr>`).join('');
-    const tiposSummary = Object.entries(porTipo).sort((a,b)=>b[1]-a[1]).map(([t,q])=>`${t.split(' ')[0]}: ${q}`).join(' · ');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Avaliações realizadas <span class="rel-count">${avs.length}</span></h3><p>${Object.keys(porEmp).length} empresa${Object.keys(porEmp).length!==1?'s':''} · ${tiposSummary||'—'}</p></div></div>
+      <div class="card-h"><div><h3>Avaliações no período <span class="rel-count">${avs.length}</span></h3><p>${Object.keys(porEmp).length} empresa${Object.keys(porEmp).length!==1?'s':''}</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th style="text-align:center">Quantidade</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="2" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma avaliação no período</td></tr>'
       }</tbody></table></div></div>`;
   }
 
-  // 3) Psicossociais no período
-  if($('#rel-c-psi') && $('#rel-c-psi').checked){
+  // Panorama por empresa
+  if(chk('rel-c-panorama')){
+    const linhas = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
+      const pgr = state.docs.filter(d => d.empresa === e.id && d.tipo === 'PGR').length;
+      const ltcat = state.docs.filter(d => d.empresa === e.id && d.tipo === 'LTCAT').length;
+      if(!pgr && !ltcat) return '';
+      const contratosE = state.contratos.filter(c => c.empresa === e.id);
+      const avs = contratosE.reduce((s,c) => s + realizadasContrato(c.id), 0);
+      const saldoPend = contratosE.reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
+      const totalContratado = contratosE.reduce((s,c) => s + (c.qtd||0), 0);
+      const saldoHtml = !totalContratado ? '<span style="color:var(--ink-muted)">—</span>'
+        : saldoPend <= 0 ? '<span class="pill danger" style="font-size:11px">Esgotado</span>'
+        : `<span style="font-size:12px">${saldoPend}/${totalContratado}</span>`;
+      const docsE = state.docs.filter(d => d.empresa === e.id);
+      const fases = docsE.map(d => faseDoc(d)).filter(Boolean);
+      const elabE = fases.filter(f => f.fase === 1).length;
+      const assessE = fases.filter(f => f.fase === 2).length;
+      const doneE = fases.filter(f => f.key === 'fase-done').length;
+      const faseHtml = (elabE||assessE||doneE) ? `${elabE?`<span class="pill fase1" style="font-size:11px">${elabE} elab.</span> `:''}${assessE?`<span class="pill fase2" style="font-size:11px">${assessE} assess.</span> `:''}${doneE?`<span class="pill fase-done" style="font-size:11px">${doneE} concl.</span>`:''}` : '—';
+      const hasVencido = docsE.some(d => statusDoc(d).key === 'danger');
+      const hasVencendo = docsE.some(d => statusDoc(d).key === 'warn');
+      const st = hasVencido ? {k:'danger',l:'Vencido'} : hasVencendo ? {k:'warn',l:'Vencendo'} : {k:'ok',l:'OK'};
+      return `<tr><td><b>${e.nome}</b></td><td style="text-align:center">${pgr}</td><td style="text-align:center">${ltcat}</td><td style="text-align:center">${avs||'—'}</td><td>${saldoHtml}</td><td>${faseHtml}</td><td><span class="pill ${st.k}" style="font-size:11px">${st.l}</span></td></tr>`;
+    }).filter(Boolean).join('');
+    html += `<div class="card rel-sec">
+      <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${state.empresas.length}</span></h3><p>Documentos, avaliações e situação de cada empresa</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Aval.</th><th>Saldo</th><th>Elaboração</th><th>Situação</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma empresa</td></tr>'
+      }</tbody></table></div></div>`;
+  }
+
+  // Psicossociais
+  if(chk('rel-c-psi')){
     const ps = (state.psicossociais||[]).filter(p => inRange(p.data)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
     const realizados = ps.filter(p => p.status === 'realizado').length;
-    const pendentes = ps.filter(p => p.status === 'pendente').length;
     const linhas = ps.map(p => {
       const nome = p.empresaLivre || nomeEmpresa(p.empresa);
       const stMap = {pendente:{l:'Pendente',k:'warn'},realizado:{l:'Realizado',k:'ok'},reagendado:{l:'Reagendado',k:'muted'},cancelado:{l:'Cancelado',k:'danger'}};
@@ -2387,18 +2302,17 @@ function montarRelatorio(){
       return `<tr><td><b>${nome}</b></td><td class="tight">${fmtDate(p.data)}${p.hora?' '+p.hora:''}</td><td>${p.responsavel||'—'}</td><td><span class="pill ${st.k}">${st.l}</span></td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Psicossociais <span class="rel-count">${ps.length}</span></h3><p>${realizados} realizada${realizados!==1?'s':''} · ${pendentes} pendente${pendentes!==1?'s':''}</p></div></div>
+      <div class="card-h"><div><h3>Psicossociais <span class="rel-count">${ps.length}</span></h3><p>${realizados} realizada${realizados!==1?'s':''}</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Data</th><th>Aplicador</th><th>Status</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma no período</td></tr>'
       }</tbody></table></div></div>`;
   }
 
-  // 4) e 5) Treinamentos / Palestras
-  [['rel-c-treino','treinamento','Treinamentos','Instrutor'],['rel-c-palestra','palestra','Palestras','Ministrante']].forEach(([chk, tipo, titulo, respLabel]) => {
-    if(!$('#'+chk) || !$('#'+chk).checked) return;
+  // Treinamentos / Palestras
+  [['rel-c-treino','treinamento','Treinamentos','Instrutor'],['rel-c-palestra','palestra','Palestras','Ministrante']].forEach(([id, tipo, titulo, respLabel]) => {
+    if(!chk(id)) return;
     const evs = (state.eventos||[]).filter(e => e.tipo === tipo && inRange(e.data)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
     const totalPresentes = evs.reduce((s,e) => s + (e.presentes||0), 0);
-    const realizados = evs.filter(e => e.status === 'realizado').length;
     const linhas = evs.map(e => {
       const nome = e.empresaLivre || nomeEmpresa(e.empresa);
       const stCfg = EV_STATUS_CFG[e.status]||{cls:'muted',label:e.status};
@@ -2406,7 +2320,7 @@ function montarRelatorio(){
       return `<tr><td><b>${nome}</b></td><td>${e.tema||'—'}</td><td class="tight">${fmtDate(e.data)}${e.hora?' '+e.hora:''}</td><td>${e.responsavel||'—'}</td><td class="tight">${part}</td><td><span class="pill ${stCfg.cls}">${stCfg.label}</span></td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>${titulo} <span class="rel-count">${evs.length}</span></h3><p>${realizados} realizado${realizados!==1?'s':''} · ${totalPresentes} participante${totalPresentes!==1?'s':''}</p></div></div>
+      <div class="card-h"><div><h3>${titulo} <span class="rel-count">${evs.length}</span></h3><p>${totalPresentes} participante${totalPresentes!==1?'s':''}</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Tema</th><th>Data</th><th>${respLabel}</th><th>Pres./Prev.</th><th>Status</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum no período</td></tr>'
       }</tbody></table></div></div>`;
