@@ -760,8 +760,7 @@
   <div class="modal-b"><form id="form-contrato"><input type="hidden" id="mc-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="mc-empresa" required></select></div>
     <div class="field-block full"><label>Obra</label><select id="mc-obra"><option value="">— Sem obra vinculada —</option></select></div>
-    <div class="field-block"><label>Documento vinculado</label><select id="mc-doc"><option value="">— Sem vínculo —</option></select></div>
-    <div class="field-block"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
+    <div class="field-block full"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
     <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
       <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação <span style="font-weight:400;color:var(--ink-muted)">(valor unitário fixo por tabela)</span></label>
       <div class="tipos-grid">
@@ -2359,15 +2358,8 @@ function openContrato(id){
     $('#mc-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
       obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${o.nome}</option>`).join('');
   }
-  function atualizarDocsPorEmpresa(){
-    const empId = $('#mc-empresa').value;
-    const docsEmpresa = state.docs.filter(d => d.empresa === empId);
-    $('#mc-doc').innerHTML = '<option value="">— Sem vínculo —</option>' + [...docsEmpresa].sort((a,b)=>(`${a.tipo} ${a.numero||''}`).localeCompare(`${b.tipo} ${b.numero||''}`,'pt')).map(d => `<option value="${d.id}">${d.tipo} ${d.numero||''}</option>`).join('');
-  }
   atualizarObraContrato(c?.obra || '');
-  atualizarDocsPorEmpresa();
-  $('#mc-empresa').onchange = () => { atualizarObraContrato(''); atualizarDocsPorEmpresa(); };
-  $('#mc-doc').value = c?.doc || '';
+  $('#mc-empresa').onchange = () => { atualizarObraContrato(''); };
   const tipos = c?.tipos || {};
   TIPOS_AVALIACAO.forEach(t => { $('#'+t.id).value = tipos[t.key] || 0; });
   $('#mc-valor').value = c?.valor ? Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
@@ -2841,7 +2833,7 @@ function setupEvents(){
     const id = $('#mc-id').value || 'c'+uid();
     const valor = parseMcValor();
     const obra = $('#mc-obra').value;
-    const data = {id, empresa, obra, doc:$('#mc-doc').value, qtd, tipos, valor, desc:$('#mc-desc').value};
+    const data = {id, empresa, obra, doc:'', qtd, tipos, valor, desc:$('#mc-desc').value};
     try {
       await salvarContratoNuvem(data);
       const idx = state.contratos.findIndex(c => c.id === id);
