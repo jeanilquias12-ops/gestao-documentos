@@ -2322,23 +2322,35 @@ function montarRelatorio(){
       <span style="color:rgba(255,255,255,.6);font-size:12px">SECONCI Goiás · SST · Gerado em ${fmtDate(todayISO())}</span>
     </div></div>`;
 
-  // 1) Documentos atualizados no período
+  // 1) Documentos — situação atual de todos os docs com atividade no período
   if($('#rel-c-docs') && $('#rel-c-docs').checked){
-    const evs = (state.historico||[])
-      .filter(h => inRange(h.dataHora))
-      .sort((a,b) => (b.dataHora||'').localeCompare(a.dataHora||''));
-    const tiposSet = new Set(evs.map(h => { const d = state.docs.find(x=>x.id===h.docId); return d?d.tipo:null; }).filter(Boolean));
-    const empresasSet = new Set(evs.map(h => { const d = state.docs.find(x=>x.id===h.docId); return d?d.empresa:null; }).filter(Boolean));
-    const linhas = evs.map(h => {
-      const d = state.docs.find(x => x.id === h.docId);
-      const emp = d ? nomeEmpresa(d.empresa) : '—';
-      const doc = d ? `<span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span> ${d.numero||''}` : '—';
-      return `<tr><td><b>${emp}</b></td><td>${doc}</td><td>${h.descricao||h.tipo}</td><td class="tight">${fmtDateTime(h.dataHora)}</td></tr>`;
+    const evs = (state.historico||[]).filter(h => inRange(h.dataHora));
+    const docIds = [...new Set(evs.map(h=>h.docId).filter(Boolean))];
+    const docsAtivos = docIds.map(id => state.docs.find(x=>x.id===id)).filter(Boolean);
+    const allDocs = docsAtivos.length ? docsAtivos : state.docs;
+    const sorted = [...allDocs].sort((a,b) => nomeEmpresa(a.empresa).localeCompare(nomeEmpresa(b.empresa),'pt'));
+    const nPgr = sorted.filter(d=>d.tipo==='PGR').length, nLtcat = sorted.filter(d=>d.tipo==='LTCAT').length;
+    const linhas = sorted.map(d => {
+      const s = statusDoc(d);
+      const f = faseDoc(d);
+      const fHtml = f ? `<span class="pill ${f.key}" style="font-size:11px">${f.label}</span>` : '<span style="color:var(--ink-muted)">—</span>';
+      const entrega = d.envCliente && d.envFinanceiro ? '<span class="pill ok" style="font-size:11px">Completo</span>'
+        : d.envCliente ? '<span class="pill enviado-c" style="font-size:11px">Ag. financeiro</span>'
+        : '<span class="pill muted" style="font-size:11px">Pendente</span>';
+      return `<tr>
+        <td><b>${nomeEmpresa(d.empresa)}</b></td>
+        <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td>
+        <td class="tight">${fmtDate(d.emissao)}</td>
+        <td class="tight">${fmtDate(d.validade)}</td>
+        <td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td>
+        <td>${fHtml}</td>
+        <td>${entrega}</td>
+      </tr>`;
     }).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Documentos atualizados <span class="rel-count">${evs.length}</span></h3><p>${empresasSet.size} empresa${empresasSet.size!==1?'s':''} · ${tiposSet.size} tipo${tiposSet.size!==1?'s':''}</p></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Documento</th><th>Alteração</th><th>Data</th></tr></thead><tbody>${
-        linhas || '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma atualização no período</td></tr>'
+      <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT${docsAtivos.length ? ' · com atividade no período' : ''}</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Tipo</th><th>Emissão</th><th>Validade</th><th>Status</th><th>Elaboração</th><th>Entrega</th></tr></thead><tbody>${
+        linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum documento encontrado</td></tr>'
       }</tbody></table></div></div>`;
   }
 
@@ -2401,7 +2413,7 @@ function montarRelatorio(){
   });
 
   const cont = $('#rel-dynamic');
-  if(cont) cont.innerHTML = html;
+  if(cont){ cont.innerHTML = html; cont.scrollIntoView({behavior:'smooth', block:'start'}); }
 }
 
 /* ================== ORDENAÇÃO ================== */
