@@ -156,6 +156,13 @@
   .envio-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer;flex-shrink:0}
   .envio-row input[type=date]{padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:#fff;color:var(--ink-main)}
   .envio-row .envio-check{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ok-fg);font-weight:600;background:var(--ok-bg);padding:2px 7px;border-radius:99px;margin-left:auto}
+  .fluxo-section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .fluxo-step{display:flex;gap:14px;padding-bottom:16px;position:relative}
+  .fluxo-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;bottom:0;width:2px;background:var(--line)}
+  .fluxo-num{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;z-index:1;position:relative}
+  .fluxo-body{flex:1}
+  .fluxo-title{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-top:3px}
+  .fluxo-prazo{font-size:11px;font-weight:400;color:var(--ink-muted);text-transform:none;letter-spacing:0}
   .pill.enviado-c{background:#E8F5E9;color:#2E7D32;font-size:11px}
   .pill.enviado-c::before,.pill.enviado-f::before,.pill.nao-enviado::before{display:none}
   .pill.enviado-f{background:#E3F2FD;color:#1565C0;font-size:11px}
@@ -714,40 +721,51 @@
     <h4>Histórico de alterações</h4>
     <div class="hist-lista" id="md-hist-lista"></div>
   </div>
-  <div class="envio-section">
-    <h4>Controle de envio</h4>
-    <div class="envio-row">
-      <label><input type="checkbox" id="md-env-cliente" /> Enviado para o cliente</label>
-      <input type="date" id="md-env-cliente-data" title="Data de envio ao cliente" />
+  <input type="checkbox" id="md-env-assessoria" style="display:none" />
+  <div class="fluxo-section">
+    <div class="fluxo-step">
+      <div class="fluxo-num">1</div>
+      <div class="fluxo-body">
+        <div class="fluxo-title" id="md-step1-title">Seg. do Trabalho <span class="fluxo-prazo">· 10 dias</span></div>
+        <div class="envio-row">
+          <label style="min-width:90px">Responsável</label>
+          <input type="text" id="md-resp-elab" list="responsaveis-elab" placeholder="Quem está elaborando" style="flex:1" />
+          <datalist id="responsaveis-elab"></datalist>
+        </div>
+        <div class="envio-row">
+          <label style="min-width:90px">Início</label>
+          <input type="date" id="md-inicio-elab" />
+        </div>
+        <div class="envio-row" style="align-items:center">
+          <label style="gap:6px;cursor:pointer;flex:1"><input type="checkbox" id="md-elab-finalizada" /> <span id="md-elab-fin-text">Finalizado e enviado à Assessoria de Saúde</span></label>
+          <input type="date" id="md-env-assessoria-data" />
+          <span style="font-size:11px;color:var(--ink-muted)" id="md-elab-finalizada-info"></span>
+        </div>
+      </div>
     </div>
-    <div class="envio-row">
-      <label><input type="checkbox" id="md-env-financeiro" /> Enviado para o financeiro</label>
-      <input type="date" id="md-env-financeiro-data" title="Data de envio ao financeiro" />
+    <div class="fluxo-step" id="md-step2">
+      <div class="fluxo-num">2</div>
+      <div class="fluxo-body">
+        <div class="fluxo-title">Assessoria de Saúde <span class="fluxo-prazo">· 5 dias</span></div>
+        <div class="envio-row" style="align-items:center" id="md-retorno-row">
+          <label style="gap:6px;cursor:pointer;flex:1"><input type="checkbox" id="md-retorno-recebido" /> Retorno recebido da assessoria</label>
+          <span style="font-size:11px;color:var(--ink-muted)" id="md-retorno-recebido-info"></span>
+        </div>
+      </div>
     </div>
-    <div class="envio-row">
-      <label><input type="checkbox" id="md-env-assessoria" /> Enviado para a assessoria médica</label>
-      <input type="date" id="md-env-assessoria-data" title="Data de envio à assessoria médica" />
-    </div>
-  </div>
-  <div class="envio-section">
-    <h4>Controle de elaboração (fases)</h4>
-    <p style="margin:0 0 8px;font-size:11.5px;color:var(--ink-muted)" id="md-elab-desc">PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias</p>
-    <div class="envio-row">
-      <label style="gap:6px"><span>👤</span> Responsável pela elaboração</label>
-      <input type="text" id="md-resp-elab" list="responsaveis-elab" placeholder="Quem está elaborando" style="flex:1;max-width:260px" />
-      <datalist id="responsaveis-elab"></datalist>
-    </div>
-    <div class="envio-row">
-      <label style="gap:6px"><span>📋</span> Início da elaboração</label>
-      <input type="date" id="md-inicio-elab" title="Data em que a elaboração do documento foi iniciada" />
-    </div>
-    <div class="envio-row" style="align-items:center">
-      <label style="gap:6px;cursor:pointer"><span>📤</span> <input type="checkbox" id="md-elab-finalizada" /> Elaboração finalizada</label>
-      <span style="font-size:11px;color:var(--ink-muted)" id="md-elab-finalizada-info"></span>
-    </div>
-    <div class="envio-row" style="align-items:center" id="md-retorno-row">
-      <label style="gap:6px;cursor:pointer"><span>🩺</span> <input type="checkbox" id="md-retorno-recebido" /> Retorno recebido</label>
-      <span style="font-size:11px;color:var(--ink-muted)" id="md-retorno-recebido-info"></span>
+    <div class="fluxo-step" style="padding-bottom:0">
+      <div class="fluxo-num" id="md-step3-num">3</div>
+      <div class="fluxo-body">
+        <div class="fluxo-title">Entrega</div>
+        <div class="envio-row">
+          <label><input type="checkbox" id="md-env-cliente" /> Enviado ao cliente</label>
+          <input type="date" id="md-env-cliente-data" />
+        </div>
+        <div class="envio-row">
+          <label><input type="checkbox" id="md-env-financeiro" /> Enviado ao financeiro</label>
+          <input type="date" id="md-env-financeiro-data" />
+        </div>
+      </div>
     </div>
   </div>
 </form></div>
@@ -2286,10 +2304,16 @@ function openEmpresa(id){
 
 function updateElabModal(){
   const isLtcat = $('#md-tipo').value === 'LTCAT';
-  $('#md-retorno-row').style.display = isLtcat ? 'none' : '';
-  $('#md-elab-desc').textContent = isLtcat
-    ? 'LTCAT: 10 dias para elaboração → Finalizado → Envio ao cliente'
-    : 'PGR: 10 dias (sua parte) + 5 dias (assessoria) = 15 dias';
+  $('#md-step2').style.display = isLtcat ? 'none' : '';
+  $('#md-step3-num').textContent = isLtcat ? '2' : '3';
+  $('#md-step1-title').innerHTML = isLtcat
+    ? 'Elaboração <span class="fluxo-prazo">· 10 dias</span>'
+    : 'Seg. do Trabalho <span class="fluxo-prazo">· 10 dias</span>';
+  $('#md-elab-fin-text').textContent = isLtcat
+    ? 'Elaboração finalizada'
+    : 'Finalizado e enviado à Assessoria de Saúde';
+  $('#md-env-assessoria-data').style.display = isLtcat ? 'none' : '';
+  $('#md-elab-finalizada-info').style.display = isLtcat ? 'none' : '';
 }
 
 function openDoc(id){
