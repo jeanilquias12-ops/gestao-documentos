@@ -444,10 +444,11 @@
         <div class="filters">
           <div class="field"><label>Tipo</label><select id="f-doc-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="LTCAT">LTCAT</option></select></div>
           <div class="field"><label>Status</label><select id="f-doc-status"><option value="">Todos</option><option value="valido">Válido</option><option value="vencendo">Vencendo</option><option value="vencido">Vencido</option></select></div>
+          <div class="field"><label>Fase</label><select id="f-doc-fase"><option value="">Todas</option><option value="elab">Em elaboração</option><option value="assessoria">Ag. assessoria</option><option value="concluido">Concluído</option></select></div>
           <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
           <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
         </div>
-        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="responsavel">Responsável <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Envios</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Entrega</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- AVALIAÇÕES -->
@@ -1962,6 +1963,7 @@ function renderObras(){
 function renderDocs(){
   const tipo = $('#f-doc-tipo').value;
   const status = $('#f-doc-status').value;
+  const fase = $('#f-doc-fase').value;
   const empresa = $('#f-doc-empresa').value;
   const q = $('#f-doc-q').value.toLowerCase();
 
@@ -1970,6 +1972,12 @@ function renderDocs(){
   let list = state.docs.filter(d => {
     const s = statusDoc(d);
     const sk = s.key === 'ok' ? 'valido' : s.key === 'warn' ? 'vencendo' : s.key === 'danger' ? 'vencido' : '';
+    if(fase){
+      const f = faseDoc(d);
+      if(fase === 'elab'      && !(f && f.fase === 1)) return false;
+      if(fase === 'assessoria'&& !(f && f.fase === 2)) return false;
+      if(fase === 'concluido' && !(f && f.key === 'fase-done')) return false;
+    }
     return (!tipo || d.tipo === tipo) && (!status || sk === status) && (!empresa || d.empresa === empresa) &&
       (!q || (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q) || nomeEmpresa(d.empresa).toLowerCase().includes(q));
   });
@@ -1986,10 +1994,16 @@ function renderDocs(){
   const tb = $('#tbl-docs tbody');
   tb.innerHTML = list.length ? list.map(d => {
     const s = statusDoc(d);
+    const entregaHtml = (() => {
+      const c = d.envCliente, f = d.envFinanceiro;
+      if(c && f) return `<span class="pill ok">✔ Completo</span>`;
+      if(c && !f) return `<div style="display:flex;flex-direction:column;gap:3px"><span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span><span class="pill muted" style="font-size:11px">Ag. financeiro</span></div>`;
+      if(!c && f) return `<div style="display:flex;flex-direction:column;gap:3px"><span class="pill enviado-f">✔ Financeiro</span><span class="pill muted" style="font-size:11px">Ag. envio cliente</span></div>`;
+      return `<span class="pill muted" style="color:var(--ink-muted)">— Pendente</span>`;
+    })();
     return `<tr>
       <td><b>${nomeEmpresa(d.empresa)}</b>${d.obra ? `<br><small style="color:var(--ink-muted)">${nomeObra(d.obra)}</small>` : ''}</td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
-      <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.responsavel||''}">${d.responsavel||'—'}</td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
       <td><span class="pill ${s.key}">${s.label}</span></td>
@@ -1997,19 +2011,7 @@ function renderDocs(){
         if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
         if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
         return html; })()}</td>
-      <td style="min-width:130px">
-        <div style="display:flex;flex-direction:column;gap:4px">
-          ${d.envCliente
-            ? `<span class="pill enviado-c">✔ Cliente${d.envClienteData?' '+fmtDate(d.envClienteData):''}</span>`
-            : `<span class="pill nao-enviado">✗ Cliente não enviado</span>`}
-          ${d.envFinanceiro
-            ? `<span class="pill enviado-f">✔ Financeiro${d.envFinanceiroData?' '+fmtDate(d.envFinanceiroData):''}</span>`
-            : `<span class="pill nao-enviado">✗ Financeiro não enviado</span>`}
-          ${d.envAssessoria
-            ? `<span class="pill enviado-a">✔ Assessoria${d.envAssessoriaData?' '+fmtDate(d.envAssessoriaData):''}</span>`
-            : `<span class="pill nao-enviado">✗ Assessoria não enviada</span>`}
-        </div>
-      </td>
+      <td>${entregaHtml}</td>
       <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhum documento encontrado</td></tr>';
@@ -2652,7 +2654,7 @@ function setupEvents(){
   // Filtros
   ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
   ['f-obra-empresa','f-obra-status','f-obra-q'].forEach(id => $('#'+id).oninput = renderObras);
-  ['f-doc-tipo','f-doc-status','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = renderDocs);
+  ['f-doc-tipo','f-doc-status','f-doc-fase','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = renderDocs);
   ['f-av-empresa','f-av-saldo'].forEach(id => $('#'+id).oninput = renderAvaliacoes);
   ['f-psi-empresa','f-psi-status'].forEach(id => $('#'+id).oninput = renderPsicossociais);
 
