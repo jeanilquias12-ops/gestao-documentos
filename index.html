@@ -186,6 +186,7 @@
   .modal-bg.show{display:flex}
   .modal{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:680px;max-height:88vh;overflow:auto;animation:slideup .18s ease-out}
   @keyframes slideup{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   .modal-h{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
   .modal-h h2{margin:0;font-size:17px;font-weight:600}
   .modal-h p{margin:2px 0 0;font-size:12.5px;color:var(--ink-muted)}
@@ -755,7 +756,7 @@
 
 <!-- MODAL CONTRATO -->
 <div class="modal-bg" id="modal-contrato"><div class="modal">
-  <div class="modal-h"><div><h2 id="mc-title">Novo contrato de avaliações</h2><p>Define o saldo contratado para a empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-h"><div><h2 id="mc-title">Novo contrato de avaliações</h2><p>Define o saldo contratado para a empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mc-import-btn" onclick="document.getElementById('mc-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mc-pdf-input" accept=".pdf" style="display:none" onchange="importarContratoPDF(this.files[0])"><button class="btn ghost sm" data-close>✕</button></div></div>
   <div class="modal-b"><form id="form-contrato"><input type="hidden" id="mc-id" /><div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="mc-empresa" required></select></div>
     <div class="field-block full"><label>Obra</label><select id="mc-obra"><option value="">— Sem obra vinculada —</option></select></div>
@@ -989,6 +990,126 @@ function recalcTotalContrato(){
   $('#mc-valor-unit').value = valorSugerido > 0
     ? 'Sugerido: ' + fmtReal(valorSugerido)
     : '';
+}
+
+/* ================== IMPORTAR CONTRATO PDF ================== */
+async function importarContratoPDF(file){
+  if(!file) return;
+  const btn = $('#mc-import-btn');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>Lendo...';
+  btn.disabled = true;
+
+  try {
+    // Carrega PDF.js do CDN se ainda não estiver disponível
+    if(!window.pdfjsLib){
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+
+    const ab = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({data: ab}).promise;
+
+    // Extrai texto de todas as páginas
+    let fullText = '';
+    for(let i = 1; i <= pdf.numPages; i++){
+      const pg = await pdf.getPage(i);
+      const tc = await pg.getTextContent();
+      fullText += tc.items.map(it => it.str).join(' ') + '\n';
+    }
+
+    // ── Parsear dados ──
+    const resultado = {};
+
+    // Empresa: CONTRATANTE: <nome>
+    const mEmp = fullText.match(/CONTRATANTE\s*:\s*([^\n\r]+?)(?=\s*CNPJ|\s*CPF|\s*Inscri)/i);
+    if(mEmp) resultado.empresa = mEmp[1].trim();
+
+    // CNPJ
+    const mCnpj = fullText.match(/CNPJ[^:]*:\s*([\d.\-\/]+)/i);
+    if(mCnpj) resultado.cnpj = mCnpj[1].trim().replace(/[^\d]/g,'');
+
+    // Valor total (Previsão total R$ XX.XXX,XX)
+    const mValor = fullText.match(/Previs[aã]o total\s+R\$\s*([\d.,]+)/i);
+    if(mValor) resultado.valorTotal = mValor[1].trim();
+
+    // Quantidades dos serviços — busca padrão: "Nome Serviço  <QTD>  R$"
+    const svcPatterns = [
+      { id:'mc-ruido',      rx:/Dosimetri[ao][s]?\s+de\s+Ru[ií]do\s+(\d+)/i },
+      { id:'mc-poeira',     rx:/Particulado\s+Total[^\d]*(\d+)\s+R\$/i },
+      { id:'mc-vibracoes',  rx:/Vibra[cç][aã]o\s+(\d+)/i },
+      { id:'mc-btxe',       rx:/BTXE\s+(\d+)/i },
+      { id:'mc-vapores',    rx:/[Vv]arredura[s]?\s+de\s+[Vv]apores?\s+[Oo]rg[aâ]nic[oa]s?\s+(\d+)/i },
+      { id:'mc-cloro',      rx:/Cloro\s+[Gg]asoso\s+(\d+)/i },
+      { id:'mc-poeira-veg', rx:/Poeira\s+[Vv]egetal\s+(\d+)/i },
+      { id:'mc-metais',     rx:/[Vv]arredura[s]?\s+de\s+[Mm]etais\s*\([^)]*\)\s*(\d+)\s+R\$/i },
+    ];
+
+    svcPatterns.forEach(p => {
+      const m = fullText.match(p.rx);
+      if(m) resultado[p.id] = parseInt(m[1]);
+    });
+
+    // ── Preencher campos ──
+    let preenchidos = [], naoEncontrados = [];
+
+    // Empresa: tenta match por CNPJ primeiro, depois por nome parcial
+    if(resultado.cnpj || resultado.empresa){
+      const emp = state.empresas.find(e =>
+        (resultado.cnpj && (e.cnpj||'').replace(/[^\d]/g,'') === resultado.cnpj) ||
+        (resultado.empresa && e.nome && e.nome.toLowerCase().includes(resultado.empresa.substring(0,15).toLowerCase()))
+      );
+      if(emp){
+        $('#mc-empresa').value = emp.id;
+        // Dispara evento para atualizar dependentes (obras, docs)
+        $('#mc-empresa').dispatchEvent(new Event('change'));
+        preenchidos.push('Empresa: ' + emp.nome);
+      } else {
+        naoEncontrados.push('Empresa "' + (resultado.empresa||resultado.cnpj) + '" não cadastrada');
+      }
+    }
+
+    // Quantidades
+    svcPatterns.forEach(p => {
+      const qty = resultado[p.id];
+      if(qty !== undefined){
+        const el = $('#'+p.id);
+        if(el){ el.value = qty; preenchidos.push(el.closest('.tipo-row')?.querySelector('span')?.firstChild?.textContent?.trim() + ': ' + qty); }
+      }
+    });
+
+    // Valor total
+    if(resultado.valorTotal){
+      $('#mc-valor').value = resultado.valorTotal;
+      mascararReal($('#mc-valor'));
+      preenchidos.push('Valor total: R$ ' + resultado.valorTotal);
+    }
+
+    recalcTotalContrato();
+
+    // ── Feedback ──
+    if(preenchidos.length){
+      toast('✓ PDF importado — ' + preenchidos.length + ' campo(s) preenchido(s)' + (naoEncontrados.length ? ' · ' + naoEncontrados[0] : ''), 'ok');
+    } else {
+      toast('Nenhum dado reconhecido. Verifique se é um contrato SECONCI padrão.', 'danger');
+    }
+
+  } catch(e){
+    toast('Erro ao ler o PDF: ' + (e.message||e), 'danger');
+    console.error('[importarContratoPDF]', e);
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+    // Limpa o input para permitir re-upload do mesmo arquivo
+    const inp = $('#mc-pdf-input');
+    if(inp) inp.value = '';
+  }
 }
 
 /* ================== ESTADO ================== */
