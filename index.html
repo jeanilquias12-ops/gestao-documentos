@@ -333,6 +333,7 @@
       <button class="navitem subitem" data-agenda-nav="psicossociais">🧠 Psicossociais</button>
       <button class="navitem subitem" data-agenda-nav="treinamento">🎓 Treinamentos</button>
       <button class="navitem subitem" data-agenda-nav="palestra">🎤 Palestras</button>
+      <button class="navitem subitem" data-agenda-nav="auditoria">🔍 Auditorias</button>
     </div>
     <button class="navitem" data-route="relatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Relatórios</button>
     <button class="navitem" data-route="indicadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="14" y="6" width="3" height="12"/></svg>Indicadores</button>
@@ -535,6 +536,21 @@
           </div>
           <div id="evcal-treinamento"></div>
           <div id="evlist-treinamento" style="display:flex;flex-direction:column;gap:14px"></div>
+        </div>
+
+        <!-- AGENDA: AUDITORIAS -->
+        <div class="agenda-view" id="agenda-auditoria" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+            <div><h3 style="margin:0;font-size:18px;font-weight:600">Auditorias</h3><p style="margin:3px 0 0;font-size:13px;color:var(--ink-soft)">Agendamento e controle de auditorias de obras.</p></div>
+            <div class="page-h-actions"><button class="btn primary" id="btnNewEvento-auditoria">+ Nova auditoria</button></div>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-b" style="padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+              <div class="field"><label>Status</label><select id="f-ev-auditoria-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            </div>
+          </div>
+          <div id="evcal-auditoria"></div>
+          <div id="evlist-auditoria" style="display:flex;flex-direction:column;gap:14px"></div>
         </div>
 
         <!-- AGENDA: PALESTRAS -->
@@ -898,7 +914,7 @@
   <div class="modal-f"><button class="btn danger" id="mp-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mp-save">Salvar</button></div>
 </div></div>
 
-<!-- MODAL EVENTO (treinamento / palestra) -->
+<!-- MODAL EVENTO (treinamento / palestra / auditoria) -->
 <div class="modal-bg" id="modal-evento"><div class="modal">
   <div class="modal-h"><div><h2 id="mev-title">Novo evento</h2><p id="mev-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-evento"><input type="hidden" id="mev-id" /><input type="hidden" id="mev-tipo" />
@@ -918,7 +934,7 @@
       <div class="field-block"><label>Horário</label><input id="mev-hora" type="time" /></div>
       <div class="field-block full" id="mev-local-block"><label>Local</label><input id="mev-local" placeholder="Local do evento" /></div>
       <div class="field-block full"><label id="mev-resp-label">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
-      <div class="field-block"><label>Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
+      <div class="field-block" id="mev-previstos-block"><label>Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
       <div class="field-block" id="mev-presentes-block"><label>Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
       <div class="field-block"><label>Status</label><select id="mev-status">
         <option value="agendado">Agendado</option>
@@ -1165,7 +1181,8 @@ let _psiCalFiltroData = null;
 let _agendaTab = 'psicossociais';
 const _evCal = {
   treinamento: {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null},
-  palestra:    {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null}
+  palestra:    {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null},
+  auditoria:   {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null}
 };
 let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
@@ -2528,7 +2545,42 @@ function buildEmailBody(){
   if(venc.length){ body += `🚨 ${venc.length} DOCUMENTO(S) VENCIDO(S):\n`; venc.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (venceu em ${fmtDate(d.validade)})\n`; }); body += '\n'; }
   if(venciendo.length){ body += `⏰ ${venciendo.length} DOCUMENTO(S) VENCENDO:\n`; venciendo.forEach(d => { body += `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (vence ${fmtDate(d.validade)})\n`; }); body += '\n'; }
   if(arts.length){ body += `📋 AVALIAÇÕES PENDENTES C/ PRAZO (ART):\n`; arts.forEach(({doc, contrato, realizadas, pendentes, diasRestantes}) => { body += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''} — ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n${emailDetalheContrato(contrato, realizadas, pendentes)}\n`; }); body += '\n'; }
-  if(!venc.length && !venciendo.length && !arts.length) body += '✅ Sem pendências no momento.';
+  if(!venc.length && !venciendo.length && !arts.length) body += '✅ Sem pendências no momento.\n';
+  // Agenda da próxima semana
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const em7 = new Date(hoje); em7.setDate(hoje.getDate() + 7);
+  const toISO = d => d.toISOString().slice(0,10);
+  const proxEventos = (state.eventos||[]).filter(ev => {
+    if(!ev.data || ev.status === 'cancelado') return false;
+    const d = new Date(ev.data + 'T00:00:00');
+    return d >= hoje && d <= em7;
+  }).sort((a,b) => a.data.localeCompare(b.data));
+  const tipoLabels = {treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria'};
+  if(proxEventos.length){
+    body += `\n📅 AGENDA DOS PRÓXIMOS 7 DIAS:\n`;
+    proxEventos.forEach(ev => {
+      const empresa = ev.empresaLivre || nomeEmpresa(ev.empresa);
+      const data = fmtDate(ev.data);
+      const hora = ev.hora ? ` às ${ev.hora}` : '';
+      const tipo = tipoLabels[ev.tipo] || ev.tipo;
+      const tema = ev.tema ? ` — ${ev.tema}` : '';
+      body += `• [${tipo}] ${data}${hora} — ${empresa}${tema}\n`;
+    });
+  }
+  // Psicossociais da próxima semana
+  const proxPsico = (state.psicossociais||[]).filter(p => {
+    if(!p.data_prevista) return false;
+    const d = new Date(p.data_prevista + 'T00:00:00');
+    return d >= hoje && d <= em7;
+  }).sort((a,b) => a.data_prevista.localeCompare(b.data_prevista));
+  if(proxPsico.length){
+    if(!proxEventos.length) body += `\n📅 AGENDA DOS PRÓXIMOS 7 DIAS:\n`;
+    proxPsico.forEach(p => {
+      const data = fmtDate(p.data_prevista);
+      const obra = p.obra || nomeEmpresa(p.empresa) || '—';
+      body += `• [Psicossocial] ${data} — ${obra}\n`;
+    });
+  }
   return body;
 }
 
@@ -3179,9 +3231,11 @@ function setupEvents(){
   // Botões "+ Novo"
   $('#btnNewEvento-treinamento').onclick = () => openEvento('treinamento');
   $('#btnNewEvento-palestra').onclick    = () => openEvento('palestra');
+  $('#btnNewEvento-auditoria').onclick   = () => openEvento('auditoria');
   // Filtros dos eventos
   ['f-ev-treinamento-empresa','f-ev-treinamento-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('treinamento'); });
   ['f-ev-palestra-empresa','f-ev-palestra-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('palestra'); });
+  ['f-ev-auditoria-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('auditoria'); });
 
   // Modal evento — toggle empresa livre
   $('#mev-empresa-livre-toggle').onchange = () => {
@@ -3371,6 +3425,7 @@ function renderAll(){
   renderPsicossociais();
   renderEventos('treinamento');
   renderEventos('palestra');
+  renderEventos('auditoria');
   renderRelatorios();
   renderNotifyBanner();
 }
@@ -3906,8 +3961,9 @@ async function excluirPsiNuvem(id){
 
 /* ================== AGENDA: EVENTOS (treinamento / palestra) ================== */
 const EV_LABELS = {
-  treinamento: {titulo:'treinamento', resp:'Instrutor',   novo:'Novo treinamento', editar:'Editar treinamento'},
-  palestra:    {titulo:'palestra',    resp:'Ministrante',  novo:'Nova palestra',    editar:'Editar palestra'}
+  treinamento: {titulo:'treinamento', resp:'Instrutor',            novo:'Novo treinamento', editar:'Editar treinamento'},
+  palestra:    {titulo:'palestra',    resp:'Ministrante',           novo:'Nova palestra',    editar:'Editar palestra'},
+  auditoria:   {titulo:'auditoria',   resp:'Auditor responsável',   novo:'Nova auditoria',   editar:'Editar auditoria'}
 };
 const EV_STATUS_CFG = {
   agendado:  {cls:'warn',   label:'Agendado'},
@@ -4053,9 +4109,16 @@ function openEvento(tipo,id){
   $('#mev-tipo').value = tipo;
   $('#mev-id').value = id || '';
   $('#mev-title').textContent = id ? EV_LABELS[tipo].editar : EV_LABELS[tipo].novo;
-  $('#mev-sub').textContent = tipo==='treinamento' ? 'Dados do treinamento' : 'Dados da palestra';
+  const subTexts = {treinamento:'Dados do treinamento', palestra:'Dados da palestra', auditoria:'Dados da auditoria'};
+  $('#mev-sub').textContent = subTexts[tipo] || 'Dados do evento';
   $('#mev-resp-label').textContent = EV_LABELS[tipo].resp;
+  $('#mev-tema-label').textContent = tipo==='auditoria' ? 'Nome da obra *' : 'Tema / Título';
+  $('#mev-tema').placeholder = tipo==='auditoria' ? 'Nome da obra auditada' : 'Assunto do treinamento/palestra';
+  $('#mev-tema').required = tipo==='auditoria';
   $('#mev-local-block').style.display = tipo==='palestra' ? '' : 'none';
+  const showParticipantes = tipo !== 'auditoria';
+  $('#mev-previstos-block').style.display = showParticipantes ? '' : 'none';
+  $('#mev-presentes-block').style.display = showParticipantes ? '' : 'none';
   const isLivre = !!(e?.empresaLivre);
   $('#mev-empresa-livre-toggle').checked = isLivre;
   ($('#mev-empresa').closest('.ss-wrap') || $('#mev-empresa')).style.display = isLivre ? 'none' : '';
