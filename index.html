@@ -599,6 +599,7 @@
               <label class="rel-chk"><input type="checkbox" id="rel-c-psi" /> Psicossociais</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-treino" /> Treinamentos</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-palestra" /> Palestras</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-ltcat" /> Avaliação LTCAT</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-indicadores" /> Indicadores</label>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2211,6 +2212,162 @@ function montarRelatorio(){
         linhas || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum no período</td></tr>'
       }</tbody></table></div></div>`;
   });
+
+  // Avaliação LTCAT (layout fiel ao modelo de relatório gerencial usado fora do sistema)
+  if(chk('rel-c-ltcat')){
+    // Tabela de preço de venda (já usada na modal de avaliação) e custo de laboratório por tipo de ensaio
+    const LTCAT_PRECOS = {
+      'Dosimetria de Ruído':                        {venda:120,  custo:0},
+      'Particulado Total - Poeiras e Sílicas':       {venda:380,  custo:140},
+      'Vibrações':                                   {venda:300,  custo:0},
+      'BTXE':                                         {venda:600,  custo:0},
+      'Varreduras de Vapores Orgânicos':             {venda:1000, custo:315},
+      'Cloro Gasoso':                                 {venda:600,  custo:135},
+      'Poeira Vegetal':                               {venda:200,  custo:0},
+      'Varreduras de Metais (10 Metais)':            {venda:800,  custo:350}
+    };
+    const precoTipo = (tipo) => LTCAT_PRECOS[tipo] || {venda:0, custo:0};
+
+    const ltcatDocIds = new Set(state.docs.filter(d => d.tipo === 'LTCAT').map(d => d.id));
+    const contratosLtcat = state.contratos.filter(c => ltcatDocIds.has(c.doc));
+    const contratosLtcatIds = new Set(contratosLtcat.map(c => c.id));
+    const avsLtcat = state.avaliacoes.filter(a => contratosLtcatIds.has(a.contrato) && inRange(a.data))
+      .sort((a,b) => (a.data||'').localeCompare(b.data||''));
+
+    const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const labelMes = (mm) => { const [y,m] = mm.split('-'); return MESES_NOME[Number(m)-1]+' '+y; };
+    const slugMes = (mm) => mm.replace('-','');
+
+    // Agrupar por mês
+    const mesesMap = {};
+    avsLtcat.forEach(a => {
+      const mm = (a.data||'').slice(0,7);
+      if(!mm) return;
+      if(!mesesMap[mm]) mesesMap[mm] = [];
+      mesesMap[mm].push(a);
+    });
+    const mesesKeys = Object.keys(mesesMap).sort();
+
+    // Totais globais
+    let fatTotal = 0, custoTotal = 0;
+    avsLtcat.forEach(a => { const p = precoTipo(a.agente); fatTotal += p.venda; custoTotal += p.custo; });
+    const margemTotal = fatTotal - custoTotal;
+    const margemTotalPct = fatTotal > 0 ? (margemTotal/fatTotal*100) : 0;
+
+    // Gráfico de evolução mensal do faturamento (barras, estilo do modelo)
+    let ltcatChart = '';
+    if(mesesKeys.length){
+      const fatPorMes = mesesKeys.map(mm => mesesMap[mm].reduce((s,a)=>s+precoTipo(a.agente).venda,0));
+      const chW = 900, chH = 260, chPadL = 60, chPadR = 20, chPadT = 24, chPadB = 40;
+      const chChartW = chW-chPadL-chPadR, chChartH = chH-chPadT-chPadB;
+      const chGap = chChartW/mesesKeys.length, chBarW = Math.min(chGap*0.5, 46);
+      const maxFat = Math.max(...fatPorMes, 1);
+      ltcatChart = `<svg viewBox="0 0 ${chW} ${chH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${chW}px;height:auto;font-family:'Segoe UI',sans-serif">
+        <defs><linearGradient id="rg-ltcat" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5dade2"/><stop offset="100%" stop-color="#2980b9"/></linearGradient></defs>`;
+      for(let i=0;i<=4;i++){
+        const y = chPadT + chChartH - (chChartH*i/4);
+        const val = maxFat*i/4;
+        ltcatChart += `<line x1="${chPadL}" y1="${y}" x2="${chPadL+chChartW}" y2="${y}" stroke="#ecf0f1"/>`;
+        ltcatChart += `<text x="${chPadL-8}" y="${y+4}" text-anchor="end" fill="#7f8c8d" font-size="11">${fmtReal(val)}</text>`;
+      }
+      mesesKeys.forEach((mm,i) => {
+        const fat = fatPorMes[i];
+        const x = chPadL + chGap*i + (chGap-chBarW)/2;
+        const h = maxFat>0 ? (chChartH*fat/maxFat) : 0;
+        const y = chPadT + chChartH - h;
+        ltcatChart += `<rect x="${x}" y="${y}" width="${chBarW}" height="${h}" rx="3" fill="url(#rg-ltcat)"/>`;
+        ltcatChart += `<text x="${x+chBarW/2}" y="${y-6}" text-anchor="middle" fill="#2c3e50" font-size="11" font-weight="700">${fmtReal(fat)}</text>`;
+        ltcatChart += `<text x="${x+chBarW/2}" y="${chPadT+chChartH+20}" text-anchor="middle" fill="#7f8c8d" font-size="11" font-weight="600">${labelMes(mm).slice(0,3)}/${mm.slice(2,4)}</text>`;
+      });
+      ltcatChart += '</svg>';
+    }
+
+    // Sumário / índice de meses
+    const sumarioHtml = mesesKeys.length ? `<div class="ltcat-toc">
+      ${mesesKeys.map(mm => `<a href="#ltcat-${slugMes(mm)}">${labelMes(mm)}</a>`).join('')}
+    </div>` : '';
+
+    // Seções por mês
+    const secoesMes = mesesKeys.map(mm => {
+      const avsMes = mesesMap[mm];
+      const porEmpresa = {};
+      let fatMes = 0, custoMes = 0;
+      avsMes.forEach(a => {
+        const c = state.contratos.find(x=>x.id===a.contrato);
+        const nomeE = c ? nomeEmpresa(c.empresa) : '—';
+        const p = precoTipo(a.agente);
+        if(!porEmpresa[nomeE]) porEmpresa[nomeE] = {qtd:0, fat:0, custo:0, tipos:{}};
+        porEmpresa[nomeE].qtd++;
+        porEmpresa[nomeE].fat += p.venda;
+        porEmpresa[nomeE].custo += p.custo;
+        fatMes += p.venda; custoMes += p.custo;
+        const tipo = a.agente || 'Não informado';
+        porEmpresa[nomeE].tipos[tipo] = (porEmpresa[nomeE].tipos[tipo]||0) + 1;
+      });
+      const margemMes = fatMes - custoMes;
+      const margemMesPct = fatMes > 0 ? (margemMes/fatMes*100) : 0;
+      const empresasOrdenadas = Object.entries(porEmpresa).sort((a,b) => b[1].fat - a[1].fat);
+      const linhasEmpresa = empresasOrdenadas.map(([nome, info]) => {
+        const margemEmp = info.fat - info.custo;
+        const detalheTipos = Object.entries(info.tipos).map(([t,q]) => `<li>${t}: ${q}</li>`).join('');
+        return `<tr><td>${nome}</td><td>${info.qtd}</td><td>${fmtReal(info.fat)}</td><td>${fmtReal(info.custo)}</td><td>${fmtReal(margemEmp)}</td></tr>
+          <tr class="detalhe-row"><td colspan="5"><strong>${nome} — Detalhamento de Ensaios:</strong><ul>${detalheTipos}</ul></td></tr>`;
+      }).join('');
+      return `<section class="ltcat-mes-section" id="ltcat-${slugMes(mm)}">
+        <h2>${labelMes(mm)}</h2>
+        <div class="ltcat-kpi-container">
+          <div class="ltcat-kpi-card"><h3>Faturamento Bruto</h3><p>${fmtReal(fatMes)}</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsMes.length}</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab</h3><p>${fmtReal(custoMes)}</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtReal(margemMes)} (${margemMesPct.toFixed(1)}%)</p></div>
+        </div>
+        <table class="ltcat-table">
+          <thead><tr><th>Empresa</th><th>Qtd. Ensaios</th><th>Faturamento (R$)</th><th>Custo Lab (R$)</th><th>Margem (R$)</th></tr></thead>
+          <tbody>${linhasEmpresa}</tbody>
+          <tfoot><tr><td>TOTAL</td><td>${avsMes.length}</td><td>${fmtReal(fatMes)}</td><td>${fmtReal(custoMes)}</td><td>${fmtReal(margemMes)}</td></tr></tfoot>
+        </table>
+      </section>`;
+    }).join('');
+
+    const periodoLtcatLabel = mesesKeys.length ? `${labelMes(mesesKeys[0])} a ${labelMes(mesesKeys[mesesKeys.length-1])}` : periodoLabel;
+
+    html += `<style>
+      .ltcat-report{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f4f7f6;color:#333;padding:30px;border-radius:8px;margin-bottom:18px}
+      .ltcat-report h1{color:#2c3e50;border-bottom:2px solid #ecf0f1;padding-bottom:10px;font-size:22px;margin:0 0 6px}
+      .ltcat-report h2{color:#2c3e50;border-bottom:2px solid #ecf0f1;padding-bottom:8px;font-size:18px;margin:0 0 14px}
+      .ltcat-report>p{margin:2px 0}
+      .ltcat-kpi-container{display:flex;justify-content:space-between;margin:20px 0;flex-wrap:wrap;gap:15px}
+      .ltcat-kpi-card{background:#fff;border-left:5px solid #3498db;padding:16px 20px;border-radius:4px;flex:1;min-width:150px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+      .ltcat-kpi-card h3{margin:0;font-size:12.5px;color:#7f8c8d;text-transform:uppercase}
+      .ltcat-kpi-card p{margin:8px 0 0;font-size:20px;font-weight:bold;color:#2c3e50}
+      .ltcat-table{width:100%;border-collapse:collapse;margin-top:16px;background:#fff}
+      .ltcat-table th,.ltcat-table td{padding:10px 14px;text-align:left;border-bottom:1px solid #ddd;font-size:13px}
+      .ltcat-table th{background:#2c3e50;color:#fff}
+      .ltcat-table tr:nth-child(even){background:#f2f2f2}
+      .ltcat-table tr.detalhe-row{background:#eaf2f8!important}
+      .ltcat-table tr.detalhe-row td{padding:10px 20px;font-size:12.5px}
+      .ltcat-table tr.detalhe-row ul{margin:6px 0 0 18px;padding:0}
+      .ltcat-table tr.detalhe-row li{margin-bottom:2px}
+      .ltcat-table tfoot td{font-weight:bold;background:#dfe6e9}
+      .ltcat-toc{background:#fff;padding:14px 18px;border-radius:6px;margin:20px 0;border:1px solid #ecf0f1}
+      .ltcat-toc a{color:#2c3e50;text-decoration:none;margin-right:12px;font-weight:bold;display:inline-block;margin-bottom:6px;font-size:13px}
+      .ltcat-mes-section{margin-bottom:36px;padding-top:16px;border-top:3px solid #3498db}
+      @media(max-width:700px){.ltcat-kpi-container{flex-direction:column}}
+    </style>
+    <div class="ltcat-report">
+      <h1>Relatório Gerencial de Avaliações Ambientais (LTCAT)</h1>
+      <p><strong>Período:</strong> ${periodoLtcatLabel}</p>
+      <div class="ltcat-kpi-container">
+        <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtReal(fatTotal)}</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsLtcat.length}</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab Total</h3><p>${fmtReal(custoTotal)}</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtReal(margemTotal)} (${margemTotalPct.toFixed(1)}%)</p></div>
+      </div>
+      ${mesesKeys.length ? `<h2>Evolução Mensal do Faturamento</h2>${ltcatChart}` : ''}
+      ${mesesKeys.length ? `<h2>Navegação Rápida por Mês</h2>${sumarioHtml}` : ''}
+      ${secoesMes || '<p style="text-align:center;color:#7f8c8d;padding:24px">Nenhuma avaliação LTCAT no período</p>'}
+    </div>`;
+  }
 
   // Indicadores
   if(chk('rel-c-indicadores')){
