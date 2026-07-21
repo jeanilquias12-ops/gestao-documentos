@@ -991,6 +991,31 @@
   <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="cfg-ensaios-save">Salvar</button></div>
 </div></div>
 
+<!-- MODAL DEVOLUÇÃO (assessoria registra retorno) -->
+<div class="modal-bg" id="modal-devolucao"><div class="modal" style="max-width:460px">
+  <div class="modal-h"><div><h2>Registrar devolução</h2><p>Confirme que o documento foi devolvido ao setor</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <input type="hidden" id="dev-id" />
+    <div id="dev-info" style="background:var(--green-50);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.5"></div>
+    <div class="field-block"><label>Data da devolução</label><input type="date" id="dev-data" /></div>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="dev-save">Confirmar devolução</button></div>
+</div></div>
+
+<style>
+  /* Modo ASSESSORIA: só documentos + registrar devolução */
+  body.papel-assessoria [data-route]:not([data-route="documentos"]),
+  body.papel-assessoria #agendaParent,
+  body.papel-assessoria #agendaSub,
+  body.papel-assessoria #configEnsaiosBtn,
+  body.papel-assessoria #notifyBtn,
+  body.papel-assessoria .sidebar .navlabel,
+  body.papel-assessoria #btnNewDoc,
+  body.papel-assessoria #btnNewDoc2,
+  body.papel-assessoria #notifyBanner,
+  body.papel-assessoria .topbar .search { display: none !important; }
+</style>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1019,10 +1044,13 @@ async function handleLogin(e){
       document.getElementById('loginPass').value = '';
       return false;
     }
+    PAPEL = await carregarPapel();
+    aplicarPermissoes();
     document.getElementById('loginScreen').classList.remove('show');
     document.getElementById('appContainer').classList.add('authenticated');
     initApp();
-    carregarDaNuvem();
+    await carregarDaNuvem();
+    if(PAPEL === 'assessoria') navigate('documentos');
   } catch(ex){
     err.textContent = '❌ Erro de conexão. Tente novamente.';
   } finally {
@@ -1035,6 +1063,58 @@ async function logout(){
     try { await db.auth.signOut(); } catch(e){}
     location.reload();
   }
+}
+
+/* ================== PAPEL / PERMISSÕES ================== */
+// 'admin' = acesso total | 'assessoria' = só documentos + registrar devolução
+let PAPEL = 'admin';
+async function carregarPapel(){
+  try {
+    const { data: { user } } = await db.auth.getUser();
+    if(!user) return 'admin';
+    const { data } = await db.from('perfis').select('papel').eq('id', user.id).limit(1);
+    return (data && data[0] && data[0].papel) || 'admin';
+  } catch(e){ return 'admin'; }
+}
+function aplicarPermissoes(){
+  document.body.classList.toggle('papel-assessoria', PAPEL === 'assessoria');
+  // Ajusta o rótulo de contexto no topo
+  const cr = document.getElementById('crumbs');
+  if(cr && PAPEL === 'assessoria') cr.textContent = 'SECONCI · ASSESSORIA';
+}
+
+function abrirDevolucao(id){
+  const d = state.docs.find(x => x.id === id);
+  if(!d) return;
+  document.getElementById('dev-id').value = id;
+  document.getElementById('dev-info').innerHTML =
+    `<b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' · '+nomeObra(d.obra) : ''}<br>`
+    + `<span style="color:var(--ink-muted)">${d.tipo} ${d.numero||''} · validade ${fmtDate(d.validade)}</span>`;
+  document.getElementById('dev-data').value = todayISO();
+  openModal('modal-devolucao');
+}
+
+async function salvarDevolucao(){
+  const id = document.getElementById('dev-id').value;
+  const data = document.getElementById('dev-data').value || todayISO();
+  const d = state.docs.find(x => x.id === id);
+  try {
+    const { error } = await db.from('documentos')
+      .update({ retorno_recebido: true, data_retorno_assessoria: data })
+      .eq('id', id);
+    if(error) throw new Error(error.message);
+    // Registra no histórico (melhor esforço — não bloqueia se falhar)
+    try {
+      await db.from('historico_documentos').insert({
+        id: 'h'+uid(), doc_id: id, tipo: 'enviado_assessoria',
+        descricao: `Retorno recebido da assessoria em ${fmtDate(data)}`,
+        data_hora: new Date().toISOString()
+      });
+    } catch(e){ /* histórico é secundário */ }
+    if(d){ d.retornoRecebido = true; d.retornoAssessoria = data; }
+    save(); closeModal('modal-devolucao'); renderDocs();
+    toast('✅ Devolução registrada', 'ok');
+  } catch(err){ toast('Erro ao registrar devolução: '+err.message, 'danger'); }
 }
 
 const DESCONTO_FIXO_CONTRATO = 2104; // valor fixo automaticamente abatido de todo contrato
@@ -1935,7 +2015,13 @@ function renderDocs(){
         if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
         return html; })()}</td>
       <td>${entregaHtml}</td>
-      <td><button class="btn sm" onclick="openDoc('${d.id}')">Editar</button></td>
+      <td>${ PAPEL === 'assessoria'
+        ? (d.tipo === 'LTCAT'
+            ? '<span style="color:var(--ink-muted);font-size:12px">—</span>'
+            : d.retornoRecebido
+              ? `<span class="pill ok">✔ Devolvido${d.retornoAssessoria ? ' '+fmtDate(d.retornoAssessoria) : ''}</span>`
+              : `<button class="btn primary sm" onclick="abrirDevolucao('${d.id}')">Registrar devolução</button>`)
+        : `<button class="btn sm" onclick="openDoc('${d.id}')">Editar</button>` }</td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhum documento encontrado</td></tr>';
 }
@@ -3333,6 +3419,7 @@ function setupEvents(){
   $('#notifyBtn').onclick = openNotifyModal;
   $('#configEnsaiosBtn').onclick = openConfigEnsaios;
   $('#cfg-ensaios-save').onclick = salvarConfigEnsaios;
+  $('#dev-save').onclick = salvarDevolucao;
   $('#notifyBannerCfg').onclick = openNotifyModal;
   $('#notifyBannerClose').onclick = () => { notifyPrefs.dismissedDate = todayISO(); saveNotify(); $('#notifyBanner').classList.remove('show'); };
   $('#nf-save').onclick = () => {
@@ -4628,10 +4715,13 @@ window.addEventListener('load', async () => {
   try {
     const { data: { session } } = await db.auth.getSession();
     if(session){
+      PAPEL = await carregarPapel();
+      aplicarPermissoes();
       $('#loginScreen').classList.remove('show');
       $('#appContainer').classList.add('authenticated');
       initApp();
-      carregarDaNuvem();
+      await carregarDaNuvem();
+      if(PAPEL === 'assessoria') navigate('documentos');
     }
   } catch(e){ console.warn('Sessão:', e); }
 });
