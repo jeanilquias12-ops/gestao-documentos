@@ -2250,11 +2250,17 @@ function montarRelatorio(){
     // Formatador que mostra R$ 0,00 (fiel ao modelo), diferente do fmtReal global que usa "—"
     const fmtR = (v) => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-    const ltcatDocIds = new Set(state.docs.filter(d => d.tipo === 'LTCAT').map(d => d.id));
-    const contratosLtcat = state.contratos.filter(c => ltcatDocIds.has(c.doc));
-    const contratosLtcatIds = new Set(contratosLtcat.map(c => c.id));
-    const avsLtcat = state.avaliacoes.filter(a => contratosLtcatIds.has(a.contrato) && inRange(a.data))
+    // Todo contrato da tabela `contratos` é um contrato de avaliação LTCAT (ensaios) —
+    // não depende de estar formalmente vinculado a um `documento` do tipo LTCAT,
+    // pois esse vínculo (doc_id) é preenchido só quando o documento já foi cadastrado.
+    const avsLtcat = state.avaliacoes.filter(a => inRange(a.data))
       .sort((a,b) => (a.data||'').localeCompare(b.data||''));
+    // Unidade de faturamento: obra do contrato (quando existe) — senão, a empresa
+    const unidadeContrato = (contratoId) => {
+      const c = state.contratos.find(x => x.id === contratoId);
+      if(!c) return '—';
+      return (c.obra && nomeObra(c.obra)) || nomeEmpresa(c.empresa) || '—';
+    };
 
     const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const labelMes = (mm) => { const [y,m] = mm.split('-'); return MESES_NOME[Number(m)-1]+' '+y; };
@@ -2315,8 +2321,7 @@ function montarRelatorio(){
       const porEmpresa = {};
       let fatMes = 0, custoMes = 0;
       avsMes.forEach(a => {
-        const c = state.contratos.find(x=>x.id===a.contrato);
-        const nomeE = c ? nomeEmpresa(c.empresa) : '—';
+        const nomeE = unidadeContrato(a.contrato);
         const p = precoTipo(a.agente);
         if(!porEmpresa[nomeE]) porEmpresa[nomeE] = {qtd:0, fat:0, custo:0, tipos:{}};
         porEmpresa[nomeE].qtd++;
