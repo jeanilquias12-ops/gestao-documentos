@@ -1942,6 +1942,18 @@ function renderDocs(){
 
 /* ================== RENDER AVALIAÇÕES ================== */
 const avExpanded = new Set();
+const avMesExpanded = new Set();
+const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const labelMesAv = (mm) => { if(mm==='sem-data') return 'Sem data'; const [y,m]=mm.split('-'); return MESES_PT[Number(m)-1]+' '+y; };
+
+function toggleAvMes(cId, mm){
+  const key = cId+'|'+mm;
+  const el  = document.getElementById('avmes-'+cId+'-'+mm);
+  const svg = document.getElementById('avmesbtn-'+cId+'-'+mm)?.querySelector('svg');
+  if(!el) return;
+  if(avMesExpanded.has(key)){ avMesExpanded.delete(key); el.style.display='none'; if(svg) svg.style.transform=''; }
+  else { avMesExpanded.add(key); el.style.display=''; if(svg) svg.style.transform='rotate(90deg)'; }
+}
 
 function toggleAv(cId, count){
   const el = $('#av-list-'+cId);
@@ -1986,20 +1998,19 @@ function renderAvaliacoes(){
     const evals = state.avaliacoes.filter(a => a.contrato === c.id).sort((a,b) => (b.data||'').localeCompare(a.data||''));
     const docInfo = c.doc ? state.docs.find(d => d.id === c.doc) : null;
 
-    // Auto-expand se tem avaliação nos últimos 30 dias (apenas na primeira renderização)
-    const hasRecente = evals.some(a => a.data && daysBetween(a.data, todayISO()) <= 30);
-    if(hasRecente && !avExpanded.has(c.id)) avExpanded.add(c.id);
     const isOpen = avExpanded.has(c.id);
 
-    // Monta HTML das avaliações
+    // Monta HTML das avaliações — agrupadas por mês (recolhidas por padrão)
     const evalsHtml = (() => {
       if(!evals.length) return '';
       const gheList = state.ghe.filter(g => g.contrato === c.id);
+      const gheName = (id) => { const g = state.ghe.find(x=>x.id===id); return g ? g.nome : ''; };
       const renderRow = (a) => {
         const tipoInfo = TIPOS_AVALIACAO.find(t => t.nome === a.agente);
+        const gnome = a.ghe ? gheName(a.ghe) : '';
         return `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
-          <span><b>${a.agente}</b></span>
+          <span><b>${a.agente}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${gnome}</span>` : ''}</span>
           <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
           <span style="display:flex;align-items:center;gap:8px">
             ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
@@ -2007,26 +2018,39 @@ function renderAvaliacoes(){
           </span>
         </div>`;
       };
-      if(!gheList.length) return evals.map(renderRow).join('');
-      let html = '';
-      gheList.forEach(g => {
-        const gevs = evals.filter(a => a.ghe === g.id);
-        html += `<div style="margin-bottom:10px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-muted);background:var(--green-50,#f0fdf4);border-left:3px solid var(--green-400,#4ade80);padding:4px 8px;border-radius:0 4px 4px 0;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
-            <span>🏷 GHE: ${g.nome}</span>
-            <button class="btn sm danger" style="padding:2px 8px;font-size:11px" onclick="excluirGhe('${g.id}')">🗑 Excluir GHE</button>
+
+      // Painel compacto de gerenciamento de GHEs (mantém a exclusão sem poluir a lista)
+      const gheMgr = gheList.length ? `<details style="margin-bottom:10px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--ink-muted);padding:4px 0">🏷 Gerenciar GHEs (${gheList.length})</summary>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px">
+          ${gheList.map(g => `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:6px;padding:3px 8px">${g.nome}<button class="btn sm danger" style="padding:0 6px;font-size:11px;line-height:1.6" title="Excluir GHE" onclick="excluirGhe('${g.id}')">✕</button></span>`).join('')}
+        </div>
+      </details>` : '';
+
+      // Agrupa avaliações por mês (mais recente primeiro)
+      const porMes = {};
+      evals.forEach(a => { const mm = (a.data||'').slice(0,7) || 'sem-data'; (porMes[mm] = porMes[mm] || []).push(a); });
+      const meses = Object.keys(porMes).sort((a,b) => b.localeCompare(a));
+
+      const mesesHtml = meses.map(mm => {
+        const rows = porMes[mm];
+        const key = c.id+'|'+mm;
+        const open = avMesExpanded.has(key);
+        const valorMes = rows.reduce((s,a) => { const t = TIPOS_AVALIACAO.find(t=>t.nome===a.agente); return s + (t ? t.valor : 0); }, 0);
+        return `<div style="margin-bottom:4px">
+          <button id="avmesbtn-${c.id}-${mm}" onclick="toggleAvMes('${c.id}','${mm}')" style="width:100%;text-align:left;display:flex;align-items:center;gap:8px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0;transition:transform .15s;transform:${open?'rotate(90deg)':'none'}"><polyline points="9 6 15 12 9 18"/></svg>
+            <span>${labelMesAv(mm)}</span>
+            <span style="color:var(--ink-muted);font-weight:400">· ${rows.length} avaliaç${rows.length!==1?'ões':'ão'}</span>
+            <span style="margin-left:auto;color:var(--ink-muted);font-weight:400">${fmtReal(valorMes)}</span>
+          </button>
+          <div id="avmes-${c.id}-${mm}" style="${open?'':'display:none'};padding:4px 2px 2px">
+            ${rows.map(renderRow).join('')}
           </div>
-          ${gevs.length ? gevs.map(renderRow).join('') : '<p style="color:var(--ink-muted);font-size:12px;padding:6px 8px;margin:0">Nenhuma avaliação neste GHE</p>'}
         </div>`;
-      });
-      const semGhe = evals.filter(a => !a.ghe || !gheList.find(g => g.id === a.ghe));
-      if(semGhe.length){
-        html += `<div style="margin-bottom:10px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-muted);background:var(--muted-bg,#f5f5f5);border-left:3px solid #d1d5db;padding:4px 8px;border-radius:0 4px 4px 0;margin-bottom:4px">Sem GHE</div>
-          ${semGhe.map(renderRow).join('')}
-        </div>`;
-      }
-      return html;
+      }).join('');
+
+      return gheMgr + mesesHtml;
     })();
 
     return `<div class="card">
