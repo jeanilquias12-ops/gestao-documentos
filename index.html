@@ -3447,7 +3447,8 @@ function setupEvents(){
       const idx = (state.eventos||[]).findIndex(x=>x.id===id);
       if(idx>=0) state.eventos[idx]=obj; else state.eventos.push(obj);
       save(); closeModal('modal-evento'); renderEventos(tipo);
-      toast('✅ '+(tipo==='treinamento'?'Treinamento':'Palestra')+' salvo', 'ok');
+      const nomeTipo = {treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria'}[tipo] || 'Registro';
+      toast('✅ '+nomeTipo+' salvo', 'ok');
     } catch(err){ toast('Erro ao salvar: '+err.message, 'danger'); }
   };
   // Modal evento — excluir
