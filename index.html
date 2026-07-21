@@ -340,6 +340,7 @@
 
     <div class="navlabel">Dados</div>
     <button class="navitem" id="notifyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificações</button>
+    <button class="navitem" id="configEnsaiosBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Preços &amp; Custos</button>
 
     <button class="logout-btn" onclick="logout()">🚪 Sair</button>
     <div class="sidebar-foot">Modelo de Controle v1.1<br>Dados sincronizados na nuvem</div>
@@ -824,14 +825,14 @@
     <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
       <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação <span style="font-weight:400;color:var(--ink-muted)">(valor unitário fixo por tabela)</span></label>
       <div class="tipos-grid">
-        <div class="tipo-row"><span>Dosimetria de Ruído<br><small style="color:var(--ink-muted)">R$ 120,00/un</small></span><input id="mc-ruido" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Particulado Total — Poeiras e Sílicas<br><small style="color:var(--ink-muted)">R$ 380,00/un</small></span><input id="mc-poeira" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Vibrações<br><small style="color:var(--ink-muted)">R$ 300,00/un</small></span><input id="mc-vibracoes" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>BTXE<br><small style="color:var(--ink-muted)">R$ 600,00/un</small></span><input id="mc-btxe" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Varreduras de Vapores Orgânicos<br><small style="color:var(--ink-muted)">R$ 1.000,00/un</small></span><input id="mc-vapores" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Cloro Gasoso<br><small style="color:var(--ink-muted)">R$ 600,00/un</small></span><input id="mc-cloro" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Poeira Vegetal<br><small style="color:var(--ink-muted)">R$ 200,00/un</small></span><input id="mc-poeira-veg" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
-        <div class="tipo-row"><span>Varreduras de Metais (10 Metais)<br><small style="color:var(--ink-muted)">R$ 800,00/un</small></span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Dosimetria de Ruído<br><small style="color:var(--ink-muted)" id="mc-ruido-price">R$ 120,00/un</small></span><input id="mc-ruido" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Particulado Total — Poeiras e Sílicas<br><small style="color:var(--ink-muted)" id="mc-poeira-price">R$ 380,00/un</small></span><input id="mc-poeira" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Vibrações<br><small style="color:var(--ink-muted)" id="mc-vibracoes-price">R$ 300,00/un</small></span><input id="mc-vibracoes" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>BTXE<br><small style="color:var(--ink-muted)" id="mc-btxe-price">R$ 600,00/un</small></span><input id="mc-btxe" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Vapores Orgânicos<br><small style="color:var(--ink-muted)" id="mc-vapores-price">R$ 1.000,00/un</small></span><input id="mc-vapores" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Cloro Gasoso<br><small style="color:var(--ink-muted)" id="mc-cloro-price">R$ 600,00/un</small></span><input id="mc-cloro" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Poeira Vegetal<br><small style="color:var(--ink-muted)" id="mc-poeira-veg-price">R$ 200,00/un</small></span><input id="mc-poeira-veg" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
+        <div class="tipo-row"><span>Varreduras de Metais (10 Metais)<br><small style="color:var(--ink-muted)" id="mc-metais-price">R$ 800,00/un</small></span><input id="mc-metais" type="number" min="0" value="0" oninput="recalcTotalContrato()" /></div>
       </div>
     </div>
     <div class="field-block"><label>Valor total do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
@@ -977,6 +978,19 @@
   <div class="modal-f" style="flex-wrap:wrap;gap:6px"><button class="btn sm" id="nf-copy" style="margin-right:auto">📋 Copiar resumo</button><button class="btn sm" id="nf-gmail">✉ Gmail</button><button class="btn sm" id="nf-outlook">✉ Outlook</button><button class="btn sm" id="nf-send-now">📤 Enviar e-mail</button><button class="btn primary" id="nf-save">Salvar preferências</button></div>
 </div></div>
 
+<!-- MODAL CONFIG ENSAIOS (preço de venda + custo de laboratório) -->
+<div class="modal-bg" id="modal-config-ensaios"><div class="modal">
+  <div class="modal-h"><div><h2>Preços &amp; Custos por Ensaio</h2><p>Valor de venda e custo de laboratório usados nos contratos e no relatório LTCAT</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tipo de ensaio</th><th style="text-align:right">Venda (R$)</th><th style="text-align:right">Custo Lab (R$)</th></tr></thead>
+      <tbody id="cfg-ensaios-body"></tbody>
+    </table></div>
+    <p style="font-size:12px;color:var(--ink-muted);margin:12px 2px 0">A <b>margem</b> do relatório é calculada como Venda − Custo Lab. Use ponto ou vírgula para centavos.</p>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="cfg-ensaios-save">Salvar</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1026,16 +1040,32 @@ async function logout(){
 const DESCONTO_FIXO_CONTRATO = 2104; // valor fixo automaticamente abatido de todo contrato
 
 /* ================== TIPOS DE AVALIAÇÃO ================== */
-const TIPOS_AVALIACAO = [
-  {key:'ruido',      id:'mc-ruido',      nome:'Dosimetria de Ruído',                  valor:120},
-  {key:'poeira',     id:'mc-poeira',     nome:'Particulado Total - Poeiras e Sílicas', valor:380},
-  {key:'vibracoes',  id:'mc-vibracoes',  nome:'Vibrações',                            valor:300},
-  {key:'btxe',       id:'mc-btxe',       nome:'BTXE',                                 valor:600},
-  {key:'vapores',    id:'mc-vapores',    nome:'Varreduras de Vapores Orgânicos',        valor:1000},
-  {key:'cloro',      id:'mc-cloro',      nome:'Cloro Gasoso',                          valor:600},
-  {key:'poeira_veg', id:'mc-poeira-veg', nome:'Poeira Vegetal',                        valor:200},
-  {key:'metais',     id:'mc-metais',     nome:'Varreduras de Metais (10 Metais)',       valor:800},
+// Valores-padrão (fallback). A fonte de verdade é a tabela config_ensaios no Supabase,
+// que sobrescreve valor (venda) e custo (laboratório) em carregarDaNuvem().
+const ENSAIOS_DEFAULT = [
+  {key:'ruido',      id:'mc-ruido',      nome:'Dosimetria de Ruído',                   valor:120,  custo:0},
+  {key:'poeira',     id:'mc-poeira',     nome:'Particulado Total - Poeiras e Sílicas', valor:380,  custo:140},
+  {key:'vibracoes',  id:'mc-vibracoes',  nome:'Vibrações',                             valor:300,  custo:0},
+  {key:'btxe',       id:'mc-btxe',       nome:'BTXE',                                  valor:600,  custo:0},
+  {key:'vapores',    id:'mc-vapores',    nome:'Varreduras de Vapores Orgânicos',       valor:1000, custo:315},
+  {key:'cloro',      id:'mc-cloro',      nome:'Cloro Gasoso',                          valor:600,  custo:135},
+  {key:'poeira_veg', id:'mc-poeira-veg', nome:'Poeira Vegetal',                        valor:200,  custo:0},
+  {key:'metais',     id:'mc-metais',     nome:'Varreduras de Metais (10 Metais)',      valor:800,  custo:350},
 ];
+let TIPOS_AVALIACAO = ENSAIOS_DEFAULT.map(e => ({...e}));
+
+// Preço (venda) e custo de laboratório de um tipo de ensaio, pelo nome
+function precoEnsaio(nome){
+  const e = TIPOS_AVALIACAO.find(x => x.nome === nome);
+  return e ? {venda:Number(e.valor)||0, custo:Number(e.custo)||0} : {venda:0, custo:0};
+}
+// Atualiza os rótulos de preço (R$ X/un) no modal de contrato a partir da config atual
+function atualizarLabelsPreco(){
+  TIPOS_AVALIACAO.forEach(t => {
+    const el = document.getElementById(t.id+'-price');
+    if(el) el.textContent = fmtReal(t.valor)+'/un';
+  });
+}
 
 function recalcTotalContrato(){
   let total = 0, valorSugerido = 0;
@@ -2215,18 +2245,10 @@ function montarRelatorio(){
 
   // Avaliação LTCAT (layout fiel ao modelo de relatório gerencial usado fora do sistema)
   if(chk('rel-c-ltcat')){
-    // Tabela de preço de venda (já usada na modal de avaliação) e custo de laboratório por tipo de ensaio
-    const LTCAT_PRECOS = {
-      'Dosimetria de Ruído':                        {venda:120,  custo:0},
-      'Particulado Total - Poeiras e Sílicas':       {venda:380,  custo:140},
-      'Vibrações':                                   {venda:300,  custo:0},
-      'BTXE':                                         {venda:600,  custo:0},
-      'Varreduras de Vapores Orgânicos':             {venda:1000, custo:315},
-      'Cloro Gasoso':                                 {venda:600,  custo:135},
-      'Poeira Vegetal':                               {venda:200,  custo:0},
-      'Varreduras de Metais (10 Metais)':            {venda:800,  custo:350}
-    };
-    const precoTipo = (tipo) => LTCAT_PRECOS[tipo] || {venda:0, custo:0};
+    // Preço de venda e custo de laboratório por tipo de ensaio (config editável em config_ensaios)
+    const precoTipo = (tipo) => precoEnsaio(tipo);
+    // Formatador que mostra R$ 0,00 (fiel ao modelo), diferente do fmtReal global que usa "—"
+    const fmtR = (v) => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
     const ltcatDocIds = new Set(state.docs.filter(d => d.tipo === 'LTCAT').map(d => d.id));
     const contratosLtcat = state.contratos.filter(c => ltcatDocIds.has(c.doc));
@@ -2268,7 +2290,7 @@ function montarRelatorio(){
         const y = chPadT + chChartH - (chChartH*i/4);
         const val = maxFat*i/4;
         ltcatChart += `<line x1="${chPadL}" y1="${y}" x2="${chPadL+chChartW}" y2="${y}" stroke="#ecf0f1"/>`;
-        ltcatChart += `<text x="${chPadL-8}" y="${y+4}" text-anchor="end" fill="#7f8c8d" font-size="11">${fmtReal(val)}</text>`;
+        ltcatChart += `<text x="${chPadL-8}" y="${y+4}" text-anchor="end" fill="#7f8c8d" font-size="11">${fmtR(val)}</text>`;
       }
       mesesKeys.forEach((mm,i) => {
         const fat = fatPorMes[i];
@@ -2276,7 +2298,7 @@ function montarRelatorio(){
         const h = maxFat>0 ? (chChartH*fat/maxFat) : 0;
         const y = chPadT + chChartH - h;
         ltcatChart += `<rect x="${x}" y="${y}" width="${chBarW}" height="${h}" rx="3" fill="url(#rg-ltcat)"/>`;
-        ltcatChart += `<text x="${x+chBarW/2}" y="${y-6}" text-anchor="middle" fill="#2c3e50" font-size="11" font-weight="700">${fmtReal(fat)}</text>`;
+        ltcatChart += `<text x="${x+chBarW/2}" y="${y-6}" text-anchor="middle" fill="#2c3e50" font-size="11" font-weight="700">${fmtR(fat)}</text>`;
         ltcatChart += `<text x="${x+chBarW/2}" y="${chPadT+chChartH+20}" text-anchor="middle" fill="#7f8c8d" font-size="11" font-weight="600">${labelMes(mm).slice(0,3)}/${mm.slice(2,4)}</text>`;
       });
       ltcatChart += '</svg>';
@@ -2310,21 +2332,21 @@ function montarRelatorio(){
       const linhasEmpresa = empresasOrdenadas.map(([nome, info]) => {
         const margemEmp = info.fat - info.custo;
         const detalheTipos = Object.entries(info.tipos).map(([t,q]) => `<li>${t}: ${q}</li>`).join('');
-        return `<tr><td>${nome}</td><td>${info.qtd}</td><td>${fmtReal(info.fat)}</td><td>${fmtReal(info.custo)}</td><td>${fmtReal(margemEmp)}</td></tr>
+        return `<tr><td>${nome}</td><td>${info.qtd}</td><td>${fmtR(info.fat)}</td><td>${fmtR(info.custo)}</td><td>${fmtR(margemEmp)}</td></tr>
           <tr class="detalhe-row"><td colspan="5"><strong>${nome} — Detalhamento de Ensaios:</strong><ul>${detalheTipos}</ul></td></tr>`;
       }).join('');
       return `<section class="ltcat-mes-section" id="ltcat-${slugMes(mm)}">
         <h2>${labelMes(mm)}</h2>
         <div class="ltcat-kpi-container">
-          <div class="ltcat-kpi-card"><h3>Faturamento Bruto</h3><p>${fmtReal(fatMes)}</p></div>
+          <div class="ltcat-kpi-card"><h3>Faturamento Bruto</h3><p>${fmtR(fatMes)}</p></div>
           <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsMes.length}</p></div>
-          <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab</h3><p>${fmtReal(custoMes)}</p></div>
-          <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtReal(margemMes)} (${margemMesPct.toFixed(1)}%)</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab</h3><p>${fmtR(custoMes)}</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtR(margemMes)} (${margemMesPct.toFixed(1)}%)</p></div>
         </div>
         <table class="ltcat-table">
           <thead><tr><th>Empresa</th><th>Qtd. Ensaios</th><th>Faturamento (R$)</th><th>Custo Lab (R$)</th><th>Margem (R$)</th></tr></thead>
           <tbody>${linhasEmpresa}</tbody>
-          <tfoot><tr><td>TOTAL</td><td>${avsMes.length}</td><td>${fmtReal(fatMes)}</td><td>${fmtReal(custoMes)}</td><td>${fmtReal(margemMes)}</td></tr></tfoot>
+          <tfoot><tr><td>TOTAL</td><td>${avsMes.length}</td><td>${fmtR(fatMes)}</td><td>${fmtR(custoMes)}</td><td>${fmtR(margemMes)}</td></tr></tfoot>
         </table>
       </section>`;
     }).join('');
@@ -2358,10 +2380,10 @@ function montarRelatorio(){
       <h1>Relatório Gerencial de Avaliações Ambientais (LTCAT)</h1>
       <p><strong>Período:</strong> ${periodoLtcatLabel}</p>
       <div class="ltcat-kpi-container">
-        <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtReal(fatTotal)}</p></div>
+        <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtR(fatTotal)}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsLtcat.length}</p></div>
-        <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab Total</h3><p>${fmtReal(custoTotal)}</p></div>
-        <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtReal(margemTotal)} (${margemTotalPct.toFixed(1)}%)</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab Total</h3><p>${fmtR(custoTotal)}</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtR(margemTotal)} (${margemTotalPct.toFixed(1)}%)</p></div>
       </div>
       ${mesesKeys.length ? `<h2>Evolução Mensal do Faturamento</h2>${ltcatChart}` : ''}
       ${mesesKeys.length ? `<h2>Navegação Rápida por Mês</h2>${sumarioHtml}` : ''}
@@ -2608,18 +2630,8 @@ function openContrato(id){
 }
 
 function maAgenteOpts(val=''){
-  const lista = [
-    ['Dosimetria de Ruído','R$ 120,00'],
-    ['Particulado Total - Poeiras e Sílicas','R$ 380,00'],
-    ['Vibrações','R$ 300,00'],
-    ['BTXE','R$ 600,00'],
-    ['Varreduras de Vapores Orgânicos','R$ 1.000,00'],
-    ['Cloro Gasoso','R$ 600,00'],
-    ['Poeira Vegetal','R$ 200,00'],
-    ['Varreduras de Metais (10 Metais)','R$ 800,00'],
-  ];
-  return `<option value="">— Selecione —</option>` + lista.map(([n,p]) =>
-    `<option value="${n}"${val===n?' selected':''}>${n} — ${p}</option>`).join('');
+  return `<option value="">— Selecione —</option>` + TIPOS_AVALIACAO.map(t =>
+    `<option value="${t.nome}"${val===t.nome?' selected':''}>${t.nome} — ${fmtReal(t.valor)}</option>`).join('');
 }
 
 function maAddLinha(agente='', dataLinha='', qty=1, envioLab=''){
@@ -2693,6 +2705,51 @@ function openNotifyModal(){
   const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   document.getElementById('nf-https-warn').style.display = isSecure ? 'none' : '';
   openModal('modal-notify');
+}
+
+/* ================== CONFIG DE PREÇOS/CUSTOS DE ENSAIOS ================== */
+// Converte texto de valor monetário (ex: "1.000,50" ou "1000.5") para número
+function parseValorNum(str){
+  if(str==null) return 0;
+  let s = String(str).trim().replace(/[^\d.,]/g,'');
+  if(s==='') return 0;
+  if(s.includes(',')){ s = s.replace(/\./g,'').replace(',','.'); } // formato pt-BR
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.max(0, n);
+}
+
+function openConfigEnsaios(){
+  const body = $('#cfg-ensaios-body');
+  body.innerHTML = TIPOS_AVALIACAO.map(t => `
+    <tr>
+      <td>${t.nome}</td>
+      <td style="text-align:right"><input type="text" inputmode="decimal" class="cfg-venda" data-nome="${t.nome.replace(/"/g,'&quot;')}" value="${Number(t.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" style="width:110px;text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:6px" /></td>
+      <td style="text-align:right"><input type="text" inputmode="decimal" class="cfg-custo" data-nome="${t.nome.replace(/"/g,'&quot;')}" value="${Number(t.custo).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" style="width:110px;text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:6px" /></td>
+    </tr>`).join('');
+  openModal('modal-config-ensaios');
+}
+
+async function salvarConfigEnsaios(){
+  const vendas = [...document.querySelectorAll('#cfg-ensaios-body .cfg-venda')];
+  const custos = [...document.querySelectorAll('#cfg-ensaios-body .cfg-custo')];
+  const rows = TIPOS_AVALIACAO.map((t, i) => ({
+    tipo:  t.nome,
+    venda: parseValorNum(vendas[i]?.value),
+    custo: parseValorNum(custos[i]?.value),
+    ordem: i + 1
+  }));
+  try {
+    const { error } = await db.from('config_ensaios').upsert(
+      rows.map(r => ({ tipo:r.tipo, venda:r.venda, custo:r.custo, ordem:r.ordem, updated_at:new Date().toISOString() })),
+      { onConflict: 'tipo' }
+    );
+    if(error) throw new Error(error.message);
+    // Atualiza runtime
+    rows.forEach(r => { const t = TIPOS_AVALIACAO.find(x => x.nome === r.tipo); if(t){ t.valor = r.venda; t.custo = r.custo; } });
+    atualizarLabelsPreco();
+    save(); closeModal('modal-config-ensaios');
+    toast('✅ Preços e custos atualizados', 'ok');
+  } catch(err){ toast('Erro ao salvar: '+err.message, 'danger'); }
 }
 
 function buildEmailBody(){
@@ -3245,6 +3302,8 @@ function setupEvents(){
 
   // Notificações
   $('#notifyBtn').onclick = openNotifyModal;
+  $('#configEnsaiosBtn').onclick = openConfigEnsaios;
+  $('#cfg-ensaios-save').onclick = salvarConfigEnsaios;
   $('#notifyBannerCfg').onclick = openNotifyModal;
   $('#notifyBannerClose').onclick = () => { notifyPrefs.dismissedDate = todayISO(); saveNotify(); $('#notifyBanner').classList.remove('show'); };
   $('#nf-save').onclick = () => {
@@ -4359,7 +4418,8 @@ async function carregarDaNuvem() {
     { data: psicossociais,  error: errPsi },
     { data: gheRows,        error: errGhe },
     { data: insumosRows,    error: errInsumos },
-    { data: eventosRows,    error: errEventos }
+    { data: eventosRows,    error: errEventos },
+    { data: configRows,     error: errConfig }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -4370,7 +4430,8 @@ async function carregarDaNuvem() {
     db.from('psicossociais').select('*').order('data', { ascending: false }),
     db.from('ghe').select('*'),
     db.from('insumos').select('*').order('data_chegada', { ascending: true }),
-    db.from('eventos').select('*').order('data', { ascending: false })
+    db.from('eventos').select('*').order('data', { ascending: false }),
+    db.from('config_ensaios').select('*').order('ordem', { ascending: true })
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
@@ -4519,6 +4580,15 @@ async function carregarDaNuvem() {
       motivo:       e.motivo || '',
       historico:    Array.isArray(e.historico_reagendamentos) ? e.historico_reagendamentos : []
     }))
+  }
+
+  if (errConfig) { console.warn('Config de ensaios indisponível, usando valores padrão:', errConfig.message); }
+  else if (configRows && configRows.length) {
+    configRows.forEach(cfg => {
+      const t = TIPOS_AVALIACAO.find(x => x.nome === cfg.tipo);
+      if(t){ t.valor = Number(cfg.venda)||0; t.custo = Number(cfg.custo)||0; }
+    });
+    atualizarLabelsPreco();
   }
 
   save()
