@@ -43,24 +43,34 @@ function htmlEmailSimples({ titulo, subtitulo, corHeader, icone, corFundo, corBo
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { subject, message } = req.body || {};
+  const { subject, message, destino } = req.body || {};
   if (!subject || !message) {
     return res.status(400).json({ error: 'subject e message são obrigatórios' });
   }
 
   const apiKey = process.env.BREVO_API_KEY;
-  const to     = process.env.NOTIFY_EMAIL;
   if (!apiKey) return res.status(500).json({ error: 'BREVO_API_KEY não configurada' });
-  if (!to)     return res.status(500).json({ error: 'NOTIFY_EMAIL não configurado' });
 
-  // Detectar tipo pelo assunto para colorir adequadamente
+  // Destino travado no servidor (o cliente só manda um código, nunca um e-mail):
+  //  - 'saude'     -> avisa a Assessoria de Saúde que um documento foi enviado
+  //  - 'seguranca' -> avisa a Segurança do Trabalho que um documento foi devolvido
+  //  - (padrão)    -> e-mail de alertas de sempre (NOTIFY_EMAIL)
+  let to;
+  if (destino === 'saude')          to = process.env.SAUDE_EMAIL || process.env.NOTIFY_EMAIL;
+  else if (destino === 'seguranca') to = process.env.SEGURANCA_EMAIL || process.env.NOTIFY_EMAIL;
+  else                              to = process.env.NOTIFY_EMAIL;
+  if (!to) return res.status(500).json({ error: 'E-mail de destino não configurado (SAUDE_EMAIL / SEGURANCA_EMAIL / NOTIFY_EMAIL)' });
+
+  // Detectar tipo pelo assunto/destino para colorir adequadamente
   const isVencido  = subject.includes('🚨') || subject.includes('vencido');
   const isVencendo = subject.includes('⏰') || subject.includes('vencendo');
-  const corHeader  = isVencido ? '#9B2A1A' : isVencendo ? '#8A5A00' : '#1B6B2F';
-  const corFundo   = isVencido ? '#FCE6E2' : isVencendo ? '#FFF6E0' : '#E8F5E9';
-  const corBorda   = isVencido ? '#E53935' : isVencendo ? '#FFA000' : '#4CAF50';
-  const corTexto   = isVencido ? '#9B2A1A' : isVencendo ? '#8A5A00' : '#2E7D32';
-  const icone      = isVencido ? '🚨' : isVencendo ? '⏰' : '📋';
+  const isEnviado  = destino === 'saude';
+  const isDevolvido= destino === 'seguranca';
+  const corHeader  = isVencido ? '#9B2A1A' : isVencendo ? '#8A5A00' : (isEnviado || isDevolvido) ? '#155E9C' : '#1B6B2F';
+  const corFundo   = isVencido ? '#FCE6E2' : isVencendo ? '#FFF6E0' : (isEnviado || isDevolvido) ? '#E3F0FB' : '#E8F5E9';
+  const corBorda   = isVencido ? '#E53935' : isVencendo ? '#FFA000' : (isEnviado || isDevolvido) ? '#2980B9' : '#4CAF50';
+  const corTexto   = isVencido ? '#9B2A1A' : isVencendo ? '#8A5A00' : (isEnviado || isDevolvido) ? '#155E9C' : '#2E7D32';
+  const icone      = isVencido ? '🚨' : isVencendo ? '⏰' : isEnviado ? '📤' : isDevolvido ? '📥' : '📋';
 
   // Converter texto simples em linhas HTML
   const linhas = message.split('\n').filter(l => l.trim()).map(l =>
