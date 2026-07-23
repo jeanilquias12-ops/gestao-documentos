@@ -750,7 +750,9 @@
 <!-- MODAL DOCUMENTO -->
 <div class="modal-bg" id="modal-doc"><div class="modal">
   <div class="modal-h"><div><h2 id="md-title">Novo documento</h2><p>PGR ou LTCAT vinculado à empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
-  <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" /><div class="form-grid">
+  <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" />
+    <div id="md-reprovado-banner" style="display:none;background:var(--danger-bg,#fff0f0);border:1px solid var(--danger-line,#fca5a5);color:var(--danger-fg,#9B2A1A);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5"></div>
+    <div class="form-grid">
     <div class="field-block full"><label>Empresa *</label><select id="md-empresa" required></select></div>
     <div class="field-block full"><label>Obra</label><select id="md-obra"><option value="">— Sem obra vinculada —</option></select></div>
     <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
@@ -1002,6 +1004,18 @@
   <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="dev-save">Confirmar devolução</button></div>
 </div></div>
 
+<!-- MODAL REPROVAR (assessoria devolve para correção) -->
+<div class="modal-bg" id="modal-reprovar"><div class="modal" style="max-width:480px">
+  <div class="modal-h"><div><h2>Reprovar documento</h2><p>O documento volta para a Segurança corrigir e reenviar</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <input type="hidden" id="rep-id" />
+    <div id="rep-info" style="background:var(--danger-bg,#fff0f0);border:1px solid var(--danger-line,#fca5a5);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.5"></div>
+    <div class="field-block"><label>Motivo da reprovação *</label><textarea id="rep-motivo" rows="3" placeholder="Descreva o que precisa ser corrigido para a Segurança…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
+    <p style="font-size:12px;color:var(--ink-muted);margin:10px 2px 0">Ao reprovar, a contagem de prazo da assessoria é <b>zerada</b> — recomeça só quando a Segurança reenviar corrigido.</p>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn danger" id="rep-save">Reprovar documento</button></div>
+</div></div>
+
 <style>
   /* Modo ASSESSORIA: só documentos + registrar devolução */
   body.papel-assessoria [data-route]:not([data-route="documentos"]),
@@ -1123,6 +1137,44 @@ async function salvarDevolucao(){
     save(); closeModal('modal-devolucao'); renderDocs();
     toast('✅ Devolução registrada', 'ok');
   } catch(err){ toast('Erro ao registrar devolução: '+err.message, 'danger'); }
+}
+
+function abrirReprovar(id){
+  const d = state.docs.find(x => x.id === id);
+  if(!d) return;
+  document.getElementById('rep-id').value = id;
+  document.getElementById('rep-info').innerHTML =
+    `<b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' · '+nomeObra(d.obra) : ''}<br>`
+    + `<span style="color:var(--ink-muted)">${d.tipo} ${d.numero||''}</span>`;
+  document.getElementById('rep-motivo').value = '';
+  openModal('modal-reprovar');
+}
+
+async function salvarReprovacao(){
+  const id = document.getElementById('rep-id').value;
+  const motivo = document.getElementById('rep-motivo').value.trim();
+  if(!motivo){ toast('Descreva o motivo da reprovação', 'danger'); return; }
+  const d = state.docs.find(x => x.id === id);
+  try {
+    const { error } = await db.rpc('reprovar_documento', { p_doc_id: id, p_motivo: motivo });
+    if(error) throw new Error(error.message);
+    // Reflete no estado local (volta para elaboração, relógio zerado)
+    if(d){
+      d.reprovado = true; d.motivoReprovacao = motivo;
+      d.elabFinalizada = false; d.envAssessoria = false; d.envAssessoriaData = '';
+      d.retornoRecebido = false; d.retornoAssessoria = '';
+    }
+    // Avisa a Segurança do Trabalho (melhor esforço)
+    if(d){
+      const msg = `Documento REPROVADO pela Assessoria de Saúde\n`
+        + `• Empresa: ${nomeEmpresa(d.empresa)}${d.obra ? ' — '+nomeObra(d.obra) : ''}\n`
+        + `• Documento: ${d.tipo} ${d.numero||''}\n`
+        + `• Motivo: ${motivo}`;
+      notificarFluxoDoc('seguranca', `SECONCI ⛔ Documento reprovado — ${nomeEmpresa(d.empresa)}`, msg);
+    }
+    save(); closeModal('modal-reprovar'); renderDocs();
+    toast('Documento reprovado — devolvido à Segurança', 'ok');
+  } catch(err){ toast('Erro ao reprovar: '+err.message, 'danger'); }
 }
 
 const DESCONTO_FIXO_CONTRATO = 2104; // valor fixo automaticamente abatido de todo contrato
@@ -2017,7 +2069,7 @@ function renderDocs(){
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
-      <td><span class="pill ${s.key}">${s.label}</span></td>
+      <td><span class="pill ${s.key}">${s.label}</span>${d.reprovado ? '<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px" title="'+(d.motivoReprovacao||'').replace(/"/g,'&quot;')+'">⛔ Reprovado p/ assessoria</span>' : ''}</td>
       <td>${(()=>{ const f = faseDoc(d); let html = f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>';
         if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
         if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
@@ -2028,7 +2080,11 @@ function renderDocs(){
             ? '<span style="color:var(--ink-muted);font-size:12px">—</span>'
             : d.retornoRecebido
               ? `<span class="pill ok">✔ Devolvido${d.retornoAssessoria ? ' '+fmtDate(d.retornoAssessoria) : ''}</span>`
-              : `<button class="btn primary sm" onclick="abrirDevolucao('${d.id}')">Registrar devolução</button>`)
+              : d.reprovado
+                ? `<span class="pill danger">⛔ Reprovado — com a segurança</span>`
+                : d.envAssessoria
+                  ? `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn primary sm" onclick="abrirDevolucao('${d.id}')">Registrar devolução</button><button class="btn danger sm" onclick="abrirReprovar('${d.id}')">Reprovar</button></div>`
+                  : `<span style="color:var(--ink-muted);font-size:12px">Aguardando envio</span>`)
         : `<button class="btn sm" onclick="openDoc('${d.id}')">Editar</button>` }</td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:40px">Nenhum documento encontrado</td></tr>';
@@ -2705,6 +2761,15 @@ function openDoc(id){
   $('#md-retorno-recebido').checked = d?.retornoRecebido || false;
   $('#md-retorno-recebido-info').textContent = d?.retornoAssessoria ? `Recebido em ${fmtDate(d.retornoAssessoria)}` : '';
   updateElabModal();
+  // Banner de reprovação pela assessoria
+  const repBanner = $('#md-reprovado-banner');
+  if(d?.reprovado){
+    repBanner.style.display = '';
+    repBanner.innerHTML = `⛔ <b>Documento reprovado pela assessoria.</b><br>Motivo: ${d.motivoReprovacao || '—'}<br><span style="font-size:12px">Corrija e marque novamente "Elaboração finalizada" para reenviar (a contagem da assessoria recomeça no reenvio).</span>`;
+  } else {
+    repBanner.style.display = 'none';
+    repBanner.innerHTML = '';
+  }
   $('#md-delete').style.display = d ? '' : 'none';
   if(d) renderHistoricoModal(d.id); else $('#md-hist-section').style.display = 'none';
   updateValidadeAuto();
@@ -3220,6 +3285,9 @@ function setupEvents(){
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
     data.atrasoFase1 = docAntigo?.atrasoFase1 ?? null;
     data.atrasoFase2 = docAntigo?.atrasoFase2 ?? null;
+    // Reprovação: ao re-finalizar (reenviar corrigido) limpa a reprovação; senão preserva
+    data.reprovado        = data.elabFinalizada ? false : (docAntigo?.reprovado || false);
+    data.motivoReprovacao = data.reprovado ? (docAntigo?.motivoReprovacao || '') : '';
     if(data.inicioElaboracao && data.elabFinalizada && data.envAssessoriaData){
       const diasF1 = daysBetween(data.inicioElaboracao, data.envAssessoriaData);
       data.atrasoFase1 = diasF1 > 10 ? diasF1 - 10 : 0;
@@ -3437,6 +3505,7 @@ function setupEvents(){
   $('#configEnsaiosBtn').onclick = openConfigEnsaios;
   $('#cfg-ensaios-save').onclick = salvarConfigEnsaios;
   $('#dev-save').onclick = salvarDevolucao;
+  $('#rep-save').onclick = salvarReprovacao;
   $('#notifyBannerCfg').onclick = openNotifyModal;
   $('#notifyBannerClose').onclick = () => { notifyPrefs.dismissedDate = todayISO(); saveNotify(); $('#notifyBanner').classList.remove('show'); };
   $('#nf-save').onclick = () => {
@@ -3992,7 +4061,9 @@ async function salvarDocumentoNuvem(doc) {
     data_retorno_assessoria:   doc.retornoAssessoria || null,
     obra_id:                   doc.obra || null,
     atraso_fase1:              doc.atrasoFase1 ?? null,
-    atraso_fase2:              doc.atrasoFase2 ?? null
+    atraso_fase2:              doc.atrasoFase2 ?? null,
+    reprovado:                 doc.reprovado || false,
+    motivo_reprovacao:         doc.motivoReprovacao || null
   })
   if (error) throw new Error(error.message)
 }
@@ -4619,7 +4690,9 @@ async function carregarDaNuvem() {
     retornoAssessoria:  d.data_retorno_assessoria || '',
     obra:               d.obra_id || '',
     atrasoFase1:        d.atraso_fase1 ?? null,
-    atrasoFase2:        d.atraso_fase2 ?? null
+    atrasoFase2:        d.atraso_fase2 ?? null,
+    reprovado:          d.reprovado || false,
+    motivoReprovacao:   d.motivo_reprovacao || ''
   }))
 
   if (!errEmps) state.empresas = (emps||[]).map(e => ({
