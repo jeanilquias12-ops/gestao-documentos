@@ -921,7 +921,7 @@
   <div class="modal-h"><div><h2 id="mev-title">Novo evento</h2><p id="mev-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b"><form id="form-evento"><input type="hidden" id="mev-id" /><input type="hidden" id="mev-tipo" />
     <div class="form-grid">
-      <div class="field-block full">
+      <div class="field-block full" id="mev-empresa-block">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <label style="margin:0">Empresa / Obra *</label>
           <label style="font-size:12px;color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:400">
@@ -3604,11 +3604,18 @@ function setupEvents(){
   // Modal evento — salvar
   $('#mev-save').onclick = async () => {
     const tipo    = $('#mev-tipo').value;
+    const temaVal = $('#mev-tema').value.trim();
+    const isAuditoria = tipo === 'auditoria';
     const livre   = $('#mev-empresa-livre-toggle').checked;
-    const empresa = livre ? '' : $('#mev-empresa').value;
-    const empresaLivre = livre ? $('#mev-empresa-livre').value.trim() : '';
+    // Auditoria: o "Nome da obra" (tema) é o próprio identificador — vira o empresaLivre
+    const empresa = isAuditoria ? '' : (livre ? '' : $('#mev-empresa').value);
+    const empresaLivre = isAuditoria ? temaVal : (livre ? $('#mev-empresa-livre').value.trim() : '');
     const data    = $('#mev-data').value;
-    if((!empresa && !empresaLivre) || !data){ toast('Preencha empresa/obra e data', 'danger'); return; }
+    if(isAuditoria){
+      if(!temaVal || !data){ toast('Preencha o nome da obra e a data', 'danger'); return; }
+    } else if((!empresa && !empresaLivre) || !data){
+      toast('Preencha empresa/obra e data', 'danger'); return;
+    }
     const id      = $('#mev-id').value || 'ev'+uid();
     const status  = $('#mev-status').value;
     const isEdit  = !!$('#mev-id').value;
@@ -3624,7 +3631,7 @@ function setupEvents(){
     const obj = {
       id, tipo, empresa, empresaLivre, data,
       hora:        horaAtual,
-      tema:        $('#mev-tema').value.trim(),
+      tema:        isAuditoria ? '' : temaVal,
       local:       tipo==='palestra' ? $('#mev-local').value.trim() : '',
       responsavel: $('#mev-responsavel').value.trim(),
       previstos:   previstosRaw==='' ? null : Math.max(0, parseInt(previstosRaw)||0),
@@ -4478,6 +4485,9 @@ function openEvento(tipo,id){
   const showParticipantes = tipo !== 'auditoria';
   $('#mev-previstos-block').style.display = showParticipantes ? '' : 'none';
   $('#mev-presentes-block').style.display = showParticipantes ? '' : 'none';
+  // Auditoria: o identificador é só "Nome da obra" — esconde o campo redundante de Empresa/Obra
+  const isAuditoria = tipo === 'auditoria';
+  $('#mev-empresa-block').style.display = isAuditoria ? 'none' : '';
   const isLivre = !!(e?.empresaLivre);
   $('#mev-empresa-livre-toggle').checked = isLivre;
   ($('#mev-empresa').closest('.ss-wrap') || $('#mev-empresa')).style.display = isLivre ? 'none' : '';
@@ -4487,7 +4497,7 @@ function openEvento(tipo,id){
   $('#mev-empresa-livre').value = e?.empresaLivre || '';
   $('#mev-empresa').innerHTML = '<option value="">— Selecione —</option>' +
     [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(x=>`<option value="${x.id}"${e?.empresa===x.id?' selected':''}>${x.nome}</option>`).join('');
-  $('#mev-tema').value = e?.tema || '';
+  $('#mev-tema').value = isAuditoria ? (e?.empresaLivre || e?.tema || '') : (e?.tema || '');
   $('#mev-data').value = e?.data || todayISO();
   $('#mev-hora').value = e?.hora || '';
   $('#mev-local').value = e?.local || '';
