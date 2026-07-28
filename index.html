@@ -757,8 +757,8 @@
     <div class="field-block full"><label>Obra</label><select id="md-obra"><option value="">— Sem obra vinculada —</option></select></div>
     <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
     <input type="hidden" id="md-numero" value="" />
-    <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required /></div>
-    <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
+    <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required min="2015-01-01" max="2100-12-31" /></div>
+    <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" min="2015-01-01" max="2100-12-31" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
     <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
     <div class="field-block full"><label>Observações</label><textarea id="md-obs" rows="2"></textarea></div>
   </div>
@@ -779,11 +779,11 @@
         </div>
         <div class="envio-row">
           <label style="min-width:90px">Início</label>
-          <input type="date" id="md-inicio-elab" />
+          <input type="date" id="md-inicio-elab" min="2015-01-01" max="2100-12-31" />
         </div>
         <div class="envio-row" style="align-items:center">
           <label style="gap:6px;cursor:pointer;flex:1"><input type="checkbox" id="md-elab-finalizada" /> <span id="md-elab-fin-text">Finalizado e enviado à Assessoria de Saúde</span></label>
-          <input type="date" id="md-env-assessoria-data" />
+          <input type="date" id="md-env-assessoria-data" min="2015-01-01" max="2100-12-31" />
           <span style="font-size:11px;color:var(--ink-muted)" id="md-elab-finalizada-info"></span>
         </div>
       </div>
@@ -794,7 +794,7 @@
         <div class="fluxo-title">Assessoria de Saúde <span class="fluxo-prazo">· 5 dias</span></div>
         <div class="envio-row" style="align-items:center" id="md-retorno-row">
           <label style="gap:6px;cursor:pointer;flex:1"><input type="checkbox" id="md-retorno-recebido" /> Retorno recebido da assessoria</label>
-          <span style="font-size:11px;color:var(--ink-muted)" id="md-retorno-recebido-info"></span>
+          <input type="date" id="md-retorno-recebido-data" min="2015-01-01" max="2100-12-31" />
         </div>
       </div>
     </div>
@@ -804,11 +804,11 @@
         <div class="fluxo-title">Entrega</div>
         <div class="envio-row">
           <label><input type="checkbox" id="md-env-cliente" /> Enviado ao cliente</label>
-          <input type="date" id="md-env-cliente-data" />
+          <input type="date" id="md-env-cliente-data" min="2015-01-01" max="2100-12-31" />
         </div>
         <div class="envio-row">
           <label><input type="checkbox" id="md-env-financeiro" /> Enviado ao financeiro</label>
-          <input type="date" id="md-env-financeiro-data" />
+          <input type="date" id="md-env-financeiro-data" min="2015-01-01" max="2100-12-31" />
         </div>
       </div>
     </div>
@@ -2759,7 +2759,7 @@ function openDoc(id){
   $('#md-elab-finalizada').checked = d?.elabFinalizada || false;
   $('#md-elab-finalizada-info').textContent = d?.envAssessoriaData ? `Enviado em ${fmtDate(d.envAssessoriaData)}` : '';
   $('#md-retorno-recebido').checked = d?.retornoRecebido || false;
-  $('#md-retorno-recebido-info').textContent = d?.retornoAssessoria ? `Recebido em ${fmtDate(d.retornoAssessoria)}` : '';
+  $('#md-retorno-recebido-data').value = d?.retornoAssessoria || '';
   updateElabModal();
   // Banner de reprovação pela assessoria
   const repBanner = $('#md-reprovado-banner');
@@ -3253,19 +3253,15 @@ function setupEvents(){
       $('#md-env-assessoria-data').value = '';
       $('#md-elab-finalizada-info').textContent = '';
       $('#md-retorno-recebido').checked = false;
-      $('#md-retorno-recebido-info').textContent = '';
-      $('#md-retorno-recebido-info').dataset.date = '';
+      $('#md-retorno-recebido-data').value = '';
     }
   };
   $('#md-retorno-recebido').onchange = function(){
     if(this.checked){
       if(!$('#md-elab-finalizada').checked){ this.checked = false; toast('Marque primeiro "Elaboração finalizada"','danger'); return; }
-      const hoje = todayISO();
-      $('#md-retorno-recebido-info').textContent = `Recebido em ${fmtDate(hoje)}`;
-      $('#md-retorno-recebido-info').dataset.date = hoje;
+      if(!$('#md-retorno-recebido-data').value) $('#md-retorno-recebido-data').value = todayISO();
     } else {
-      $('#md-retorno-recebido-info').textContent = '';
-      $('#md-retorno-recebido-info').dataset.date = '';
+      $('#md-retorno-recebido-data').value = '';
     }
   };
 
@@ -3274,12 +3270,29 @@ function setupEvents(){
     const empresa = $('#md-empresa').value;
     const emissao = $('#md-emissao').value;
     if(!empresa || !emissao){ toast('Preencha empresa e emissão', 'danger'); return; }
+    // Trava contra data com ano digitado errado (ex: "20226" em vez de "2026"),
+    // que gera contagens de dias absurdas nos Indicadores.
+    const camposData = [
+      ['md-emissao','Data de emissão'], ['md-validade','Data de validade'],
+      ['md-inicio-elab','Início da elaboração'], ['md-env-assessoria-data','Envio à assessoria'],
+      ['md-retorno-recebido-data','Retorno recebido da assessoria'],
+      ['md-env-cliente-data','Envio ao cliente'], ['md-env-financeiro-data','Envio ao financeiro']
+    ];
+    for(const [campoId, rotulo] of camposData){
+      const v = $('#'+campoId).value;
+      if(!v) continue;
+      const ano = Number((v.split('-')[0]||''));
+      if(!v.match(/^\d{4}-\d{2}-\d{2}$/) || ano < 2015 || ano > 2100){
+        toast(`❌ "${rotulo}" com data/ano inválido (${v}). Confira a data digitada.`, 'danger');
+        return;
+      }
+    }
     const id = $('#md-id').value || 'd'+uid();
     const tipo = $('#md-tipo').value;
     const elabFin = $('#md-elab-finalizada').checked;
     const retRec = tipo === 'LTCAT' ? false : $('#md-retorno-recebido').checked;
     const obra = $('#md-obra').value;
-    const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-info').dataset.date || todayISO()) : ''};
+    const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-data').value || todayISO()) : ''};
     // Calcular atraso persistente nas transições de fase
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
