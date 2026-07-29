@@ -2150,6 +2150,21 @@ function renderAvaliacoes(){
 
     const isOpen = avExpanded.has(c.id);
 
+    // Feito por tipo de ensaio (já realizado)
+    const feitoHtml = (() => {
+      if(!c.tipos) return '';
+      const feitos = TIPOS_AVALIACAO
+        .map(t => ({t, contratado: c.tipos[t.key]||0, feito: doneMap[t.key]||0}))
+        .filter(x => x.feito > 0);
+      if(!feitos.length) return '';
+      return `<div style="background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--green-700);margin-bottom:6px">✅ Feito ${feitos.reduce((s,x)=>s+x.feito,0)} avaliação(ões)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${feitos.map(x => `<span style="display:inline-block;background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--green-700)"><b>${x.t.nome}</b>: ${x.feito}${x.contratado>0?' de '+x.contratado:''}</span>`).join('')}
+        </div>
+      </div>`;
+    })();
+
     // Faltam por tipo de ensaio (contratado - realizado)
     const faltamHtml = (() => {
       if(!c.tipos) return '';
@@ -2242,6 +2257,7 @@ function renderAvaliacoes(){
           <span>${r}/${c.qtd}</span>
         </div>
         ${pct >= 0.8 ? `<div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px">⚠ Atenção: ${Math.round(pct*100)}% do saldo contratado utilizado</div>` : ''}
+        ${feitoHtml}
         ${faltamHtml}
         ${c.valor > 0 ? (() => {
           const baseContrato = c.valor - DESCONTO_FIXO_CONTRATO;
