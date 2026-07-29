@@ -1473,19 +1473,24 @@ function alertasART(){
 
 function realizadasContrato(cId){ return state.avaliacoes.filter(a => a.contrato === cId).length; }
 
+// Identifica a chave do tipo de ensaio (TIPOS_AVALIACAO) a partir do texto livre do agente
+function agenteParaTipoKey(agente){
+  const ag = (agente || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(ag.includes('ruido')) return 'ruido';
+  if(ag.includes('poeira vegetal') || ag.includes('vegetal')) return 'poeira_veg';
+  if(ag.includes('poeira') || ag.includes('particulado') || ag.includes('silica')) return 'poeira';
+  if(ag.includes('vibra')) return 'vibracoes';
+  if(ag.includes('btxe') || ag.includes('benzeno')) return 'btxe';
+  if(ag.includes('vapor') || ag.includes('organico')) return 'vapores';
+  if(ag.includes('cloro')) return 'cloro';
+  if(ag.includes('metal') || ag.includes('metais')) return 'metais';
+  return null;
+}
+
 function realizadasPorTipo(cId){
   const map = {};
   state.avaliacoes.filter(a => a.contrato === cId).forEach(a => {
-    const ag = (a.agente || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-    let key = null;
-    if(ag.includes('ruido')) key = 'ruido';
-    else if(ag.includes('poeira vegetal') || ag.includes('vegetal')) key = 'poeira_veg';
-    else if(ag.includes('poeira') || ag.includes('particulado') || ag.includes('silica')) key = 'poeira';
-    else if(ag.includes('vibra')) key = 'vibracoes';
-    else if(ag.includes('btxe') || ag.includes('benzeno')) key = 'btxe';
-    else if(ag.includes('vapor') || ag.includes('organico')) key = 'vapores';
-    else if(ag.includes('cloro')) key = 'cloro';
-    else if(ag.includes('metal') || ag.includes('metais')) key = 'metais';
+    const key = agenteParaTipoKey(a.agente);
     if(key) map[key] = (map[key] || 0) + 1;
   });
   return map;
@@ -2186,17 +2191,9 @@ function renderAvaliacoes(){
       };
 
       // Painel compacto de gerenciamento de GHEs — mostra qtd. de avaliações por GHE
-      // e destaca os que ainda não têm nenhuma avaliação lançada (pendentes).
       const gheQtd = {};
       evals.forEach(a => { if(a.ghe) gheQtd[a.ghe] = (gheQtd[a.ghe]||0) + 1; });
-      const ghePendentes = gheList.filter(g => !gheQtd[g.id]);
       const gheMgr = gheList.length ? `
-        ${ghePendentes.length ? `<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:8px;padding:10px 14px;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:#7a5f00;margin-bottom:6px">🏷 ${ghePendentes.length} GHE${ghePendentes.length!==1?'s':''} sem nenhuma avaliação ainda</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${ghePendentes.map(g => `<span style="display:inline-block;background:#fff;border:1px solid #FFE082;border-radius:4px;padding:2px 8px;font-size:12px;color:#7a5f00">${g.nome}</span>`).join('')}
-          </div>
-        </div>` : ''}
         <details style="margin-bottom:10px">
         <summary style="cursor:pointer;font-size:12px;color:var(--ink-muted);padding:4px 0">🏷 Gerenciar GHEs (${gheList.length})</summary>
         <div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px">
