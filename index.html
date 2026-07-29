@@ -1102,7 +1102,7 @@ function abrirDevolucao(id){
   if(!d) return;
   document.getElementById('dev-id').value = id;
   document.getElementById('dev-info').innerHTML =
-    `<b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' · '+nomeObra(d.obra) : ''}<br>`
+    (d.obra ? `<b>${nomeObra(d.obra)}</b> · <span style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</span>` : `<b>${nomeEmpresa(d.empresa)}</b>`) + `<br>`
     + `<span style="color:var(--ink-muted)">${d.tipo} ${d.numero||''} · validade ${fmtDate(d.validade)}</span>`;
   document.getElementById('dev-data').value = todayISO();
   openModal('modal-devolucao');
@@ -1144,7 +1144,7 @@ function abrirReprovar(id){
   if(!d) return;
   document.getElementById('rep-id').value = id;
   document.getElementById('rep-info').innerHTML =
-    `<b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' · '+nomeObra(d.obra) : ''}<br>`
+    (d.obra ? `<b>${nomeObra(d.obra)}</b> · <span style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</span>` : `<b>${nomeEmpresa(d.empresa)}</b>`) + `<br>`
     + `<span style="color:var(--ink-muted)">${d.tipo} ${d.numero||''}</span>`;
   document.getElementById('rep-motivo').value = '';
   openModal('modal-reprovar');
@@ -2070,7 +2070,7 @@ function renderDocs(){
       return `<span class="pill muted" style="color:var(--ink-muted)">— Pendente</span>`;
     })();
     return `<tr>
-      <td><b>${nomeEmpresa(d.empresa)}</b>${d.obra ? `<br><small style="color:var(--ink-muted)">${nomeObra(d.obra)}</small>` : ''}</td>
+      <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
@@ -2233,7 +2233,7 @@ function renderAvaliacoes(){
     return `<div class="card">
       <div class="card-h">
         <div>
-          <h3>${nomeEmpresa(c.empresa)}${c.obra ? ` <small style="font-weight:400;color:var(--ink-muted)">· ${nomeObra(c.obra)}</small>` : ''}</h3>
+          <h3>${c.obra ? `${nomeObra(c.obra)} <small style="font-weight:400;color:var(--ink-muted)">· ${nomeEmpresa(c.empresa)}</small>` : nomeEmpresa(c.empresa)}</h3>
           <p>${c.desc || ''}${docInfo ? `${c.desc?' · ':''}vinculado a ${docInfo.tipo} ${docInfo.numero||''}` : ''}</p>
           ${c.tipos ? `<p style="margin:4px 0 0;font-size:12px;color:var(--ink-muted)">${TIPOS_AVALIACAO.filter(t=>(c.tipos[t.key]||0)>0).map(t=>`<span style="display:inline-block;background:var(--green-100);border-radius:4px;padding:1px 6px;margin:1px 2px 1px 0">${t.nome.split(' ')[0] === 'Particulado' ? 'Part. Total' : t.nome.split(' ')[0] === 'Varreduras' ? (t.key==='metais'?'Metais':'Vapores') : t.nome.split(' ')[0]}: ${c.tipos[t.key]}</span>`).join('')}</p>` : ''}
         </div>
