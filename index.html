@@ -1755,9 +1755,34 @@ function renderIndChartFases(meses, labels){
   el.innerHTML = svg;
 }
 
-function renderIndChartDocs(entregas){
+// Agrupa as entregas (uma por documento) em uma linha por empresa —
+// acumulado/média do que foi feito naquela empresa no mês, não uma barra por documento.
+function agruparEntregasPorEmpresa(entregas){
+  const porEmpresa = {};
+  entregas.forEach(e => {
+    const id = e.doc.empresa || e.empresa;
+    if(!porEmpresa[id]) porEmpresa[id] = {empresa: e.empresa, itens: []};
+    porEmpresa[id].itens.push(e);
+  });
+  return Object.values(porEmpresa).map(g => {
+    const n = g.itens.length;
+    const soma = (campo) => g.itens.reduce((s,e) => s + e[campo], 0);
+    const noPrazoCount = g.itens.filter(e => e.noPrazo).length;
+    return {
+      empresa: g.empresa,
+      qtd: n,
+      diasTotal: soma('diasTotal') / n,
+      fase1: soma('fase1') / n,
+      fase2: soma('fase2') / n,
+      noPrazoCount, noPrazo: noPrazoCount === n
+    };
+  }).sort((a,b) => b.diasTotal - a.diasTotal);
+}
+
+function renderIndChartDocs(entregasDocs){
   const el = $('#ind-chart-docs');
   if(!el) return;
+  const entregas = agruparEntregasPorEmpresa(entregasDocs);
   const n = entregas.length;
   if(!n){ el.innerHTML = ''; return; }
 
@@ -1780,7 +1805,8 @@ function renderIndChartDocs(entregas){
     const f1W = Math.max((e.fase1/maxDias)*chartW, 3);
     const hasF2 = e.fase2 > 0;
     const totalW = Math.max((e.diasTotal/maxDias)*chartW, 3);
-    const label = e.empresa.length > 22 ? e.empresa.substring(0,20)+'…' : e.empresa;
+    const nomeBase = e.empresa.length > 22 ? e.empresa.substring(0,20)+'…' : e.empresa;
+    const label = e.qtd > 1 ? `${nomeBase} (${e.qtd})` : nomeBase;
 
     svg += `<rect x="${padL}" y="${y}" width="${chartW}" height="${BAR_H}" rx="${r}" fill="#f3f4f6"/>`;
     if(hasF2){
@@ -1793,8 +1819,10 @@ function renderIndChartDocs(entregas){
 
     svg += `<text x="${padL-10}" y="${y+BAR_H/2+4}" text-anchor="end" fill="#374151" font-size="11.5" font-weight="600">${label}</text>`;
     const cor = e.noPrazo ? '#16a34a' : '#dc2626';
-    svg += `<text x="${padL+totalW+8}" y="${y+BAR_H/2+4}" fill="${cor}" font-size="11.5" font-weight="700">${e.diasTotal}d</text>`;
-    if(!e.noPrazo) svg += `<text x="${padL+totalW+36}" y="${y+BAR_H/2+4}" fill="#ef4444" font-size="10" font-weight="600">+${e.diasTotal-15}</text>`;
+    const diasLabel = e.qtd > 1 ? `${e.diasTotal.toFixed(1)}d méd.` : `${e.diasTotal.toFixed(0)}d`;
+    svg += `<text x="${padL+totalW+8}" y="${y+BAR_H/2+4}" fill="${cor}" font-size="11.5" font-weight="700">${diasLabel}</text>`;
+    if(e.qtd > 1) svg += `<text x="${padL+totalW+8}" y="${y+BAR_H/2+16}" fill="#6b7280" font-size="9.5" font-weight="600">${e.noPrazoCount}/${e.qtd} no prazo</text>`;
+    else if(!e.noPrazo) svg += `<text x="${padL+totalW+36}" y="${y+BAR_H/2+4}" fill="#ef4444" font-size="10" font-weight="600">+${(e.diasTotal-15).toFixed(0)}</text>`;
   });
   svg += '</svg>';
   el.innerHTML = svg;
