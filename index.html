@@ -3576,12 +3576,19 @@ function setupEvents(){
   $('#rep-save').onclick = salvarReprovacao;
   $('#notifyBannerCfg').onclick = openNotifyModal;
   $('#notifyBannerClose').onclick = () => { notifyPrefs.dismissedDate = todayISO(); saveNotify(); $('#notifyBanner').classList.remove('show'); };
-  $('#nf-save').onclick = () => {
+  $('#nf-save').onclick = async () => {
     notifyPrefs.dias = parseInt($('#nf-dias').value);
     notifyPrefs.banner = parseInt($('#nf-banner').value);
     notifyPrefs.email = $('#nf-email').value;
     notifyPrefs.freq = $('#nf-freq').value;
     saveNotify(); closeModal('modal-notify'); renderAll(); toast('✅ Preferências salvas', 'ok');
+    // Antecedência do alerta é compartilhada entre todos os computadores (admin only)
+    if(PAPEL === 'admin'){
+      try {
+        const { error } = await db.from('config_geral').update({ dias_alerta: notifyPrefs.dias, updated_at: new Date().toISOString() }).eq('id', 1);
+        if(error) console.warn('Não foi possível sincronizar a antecedência do alerta:', error.message);
+      } catch(e){ console.warn('Erro ao sincronizar antecedência do alerta:', e.message); }
+    }
   };
   $('#nf-copy').onclick = () => { navigator.clipboard.writeText(buildEmailBody()).then(() => toast('✅ Resumo copiado', 'ok')); };
   $('#nf-gmail').onclick = () => {
@@ -4710,7 +4717,8 @@ async function carregarDaNuvem() {
     { data: gheRows,        error: errGhe },
     { data: insumosRows,    error: errInsumos },
     { data: eventosRows,    error: errEventos },
-    { data: configRows,     error: errConfig }
+    { data: configRows,     error: errConfig },
+    { data: configGeralRows, error: errConfigGeral }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -4722,7 +4730,8 @@ async function carregarDaNuvem() {
     db.from('ghe').select('*'),
     db.from('insumos').select('*').order('data_chegada', { ascending: true }),
     db.from('eventos').select('*').order('data', { ascending: false }),
-    db.from('config_ensaios').select('*').order('ordem', { ascending: true })
+    db.from('config_ensaios').select('*').order('ordem', { ascending: true }),
+    db.from('config_geral').select('*').eq('id', 1).limit(1)
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
@@ -4882,6 +4891,12 @@ async function carregarDaNuvem() {
       if(t){ t.valor = Number(cfg.venda)||0; t.custo = Number(cfg.custo)||0; }
     });
     atualizarLabelsPreco();
+  }
+
+  // Antecedência do alerta de vencimento: config compartilhada (mesma pra todo mundo,
+  // não fica só no localStorage de cada computador)
+  if (!errConfigGeral && configGeralRows && configGeralRows[0]) {
+    notifyPrefs.dias = Number(configGeralRows[0].dias_alerta) || notifyPrefs.dias;
   }
 
   save()
