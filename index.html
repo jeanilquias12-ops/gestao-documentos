@@ -680,7 +680,7 @@
             <div><h3>Detalhamento por documento</h3><p>Entregas individuais do mês selecionado</p></div>
             <div class="field" style="margin:0;min-width:130px"><select id="ind-detalhe-mes" style="font-size:13px"></select></div>
           </div>
-          <div style="padding:16px 20px 0" id="ind-chart-docs"></div>
+          <div style="padding:16px 20px 0;max-width:640px" id="ind-chart-docs"></div>
           <div class="table-wrap">
             <table id="tbl-indicadores-detalhe"><thead>
               <tr><th style="text-align:left">Empresa</th><th>Documento</th><th>Tipo</th><th>Início</th><th>Entrega</th><th>Total</th><th>F1</th><th>F2</th><th>Situação</th></tr>
@@ -1809,41 +1809,47 @@ function renderIndChartDocs(entregasDocs){
   const n = entregas.length;
   if(!n){ el.innerHTML = ''; return; }
 
-  const BAR_H = 26, GAP = 10, padL = 172, padR = 74, padT = 20, padB = 12;
-  const W = 680, H = padT + n*(BAR_H+GAP) - GAP + padB;
+  const BAR_H = 20, ROW_GAP = 12, SUB_H = 13, padL = 188, padR = 56, padT = 26, padB = 8;
+  const W = 620;
+  // Altura de cada linha é variável: ganha um pouco a mais quando mostra "X/Y no prazo"
+  const rowH = entregas.map(e => BAR_H + (e.qtd > 1 ? SUB_H : 0));
+  const rowY = []; let acc = padT;
+  rowH.forEach(h => { rowY.push(acc); acc += h + ROW_GAP; });
+  const H = acc - ROW_GAP + padB;
+
   const META = 15, maxDias = Math.max(META+5, ...entregas.map(e=>e.diasTotal));
   const chartW = W - padL - padR, r = BAR_H/2;
   const metaX = padL + (META/maxDias)*chartW;
 
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:'Inter',system-ui,-apple-system,sans-serif">
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px;height:auto;font-family:'Inter',system-ui,-apple-system,sans-serif">
     <defs>
-      <linearGradient id="gd-f1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
-      <linearGradient id="gd-f2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#ea580c"/></linearGradient>
-      <filter id="rowShadow" x="-10%" y="-40%" width="120%" height="220%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.8" flood-color="#0f172a" flood-opacity="0.15"/>
+      <linearGradient id="gd-f1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7dabf8"/><stop offset="100%" stop-color="#3b6fe0"/></linearGradient>
+      <linearGradient id="gd-f2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fbab6e"/><stop offset="100%" stop-color="#e8752e"/></linearGradient>
+      <filter id="rowShadow" x="-10%" y="-60%" width="120%" height="260%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-color="#0f172a" flood-opacity="0.13"/>
       </filter>
     </defs>`;
 
   entregas.forEach((e, i) => {
-    if(i % 2 === 0) svg += `<rect x="0" y="${padT+i*(BAR_H+GAP)-GAP/2}" width="${W}" height="${BAR_H+GAP}" fill="#fafbfc"/>`;
+    if(i % 2 === 0) svg += `<rect x="0" y="${rowY[i]-ROW_GAP/2}" width="${W}" height="${rowH[i]+ROW_GAP}" fill="#fafbfc"/>`;
   });
 
-  svg += `<line x1="${metaX}" y1="${padT-6}" x2="${metaX}" y2="${H-padB+2}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5 3" opacity=".45"/>`;
-  svg += `<text x="${metaX}" y="${padT-9}" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="700" opacity=".8">meta 15d</text>`;
+  svg += `<text x="${metaX}" y="${padT-11}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing=".02em">META 15D</text>`;
+  svg += `<line x1="${metaX}" y1="${padT-4}" x2="${metaX}" y2="${H-padB+2}" stroke="#ef4444" stroke-width="1.1" stroke-dasharray="4 3" opacity=".4"/>`;
 
   entregas.forEach((e, i) => {
-    const y = padT + i*(BAR_H+GAP);
-    const f1W = Math.max((e.fase1/maxDias)*chartW, BAR_H);
+    const y = rowY[i];
+    const f1W = Math.max((e.fase1/maxDias)*chartW, BAR_H*0.9);
     const hasF2 = e.fase2 > 0;
-    const totalW = Math.max((e.diasTotal/maxDias)*chartW, BAR_H);
-    const nomeBase = e.empresa.length > 22 ? e.empresa.substring(0,20)+'…' : e.empresa;
+    const totalW = Math.max((e.diasTotal/maxDias)*chartW, BAR_H*0.9);
+    const nomeBase = e.empresa.length > 27 ? e.empresa.substring(0,25)+'…' : e.empresa;
     const label = e.qtd > 1 ? `${nomeBase} (${e.qtd})` : nomeBase;
-    const cor = e.noPrazo ? {solid:'#059669'} : {solid:'#be123c'};
+    const cor = e.noPrazo ? '#059669' : '#be123c';
 
-    svg += `<rect x="${padL}" y="${y}" width="${chartW}" height="${BAR_H}" rx="${r}" fill="#f1f5f9"/>`;
+    svg += `<rect x="${padL}" y="${y}" width="${chartW}" height="${BAR_H}" rx="${r}" fill="#eef2f6"/>`;
     svg += `<g filter="url(#rowShadow)">`;
     if(hasF2){
-      const f2W = Math.max((e.fase2/maxDias)*chartW, BAR_H*0.6);
+      const f2W = Math.max((e.fase2/maxDias)*chartW, BAR_H*0.5);
       svg += `<rect x="${padL}" y="${y}" width="${Math.min(f1W+f2W, chartW)}" height="${BAR_H}" rx="${r}" fill="url(#gd-f2)"/>`;
       svg += `<rect x="${padL}" y="${y}" width="${f1W}" height="${BAR_H}" rx="${r}" fill="url(#gd-f1)"/>`;
     } else {
@@ -1851,12 +1857,12 @@ function renderIndChartDocs(entregasDocs){
     }
     svg += `</g>`;
 
-    svg += `<text x="${padL-12}" y="${y+BAR_H/2+4}" text-anchor="end" fill="#334155" font-size="11.5" font-weight="700">${label}</text>`;
+    svg += `<text x="${padL-10}" y="${y+BAR_H/2+3.5}" text-anchor="end" fill="#334155" font-size="10.5" font-weight="700">${label}</text>`;
     const diasLabel = e.qtd > 1 ? `${e.diasTotal.toFixed(1)}d méd.` : `${e.diasTotal.toFixed(0)}d`;
-    const badgeW = diasLabel.length*6.3+14;
-    svg += `<rect x="${padL+totalW+8}" y="${y+BAR_H/2-10}" width="${badgeW}" height="20" rx="10" fill="${cor.solid}"/>`;
-    svg += `<text x="${padL+totalW+8+badgeW/2}" y="${y+BAR_H/2+4}" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="700">${diasLabel}</text>`;
-    if(e.qtd > 1) svg += `<text x="${padL+totalW+8}" y="${y+BAR_H+13}" fill="#94a3b8" font-size="9" font-weight="600">${e.noPrazoCount}/${e.qtd} no prazo</text>`;
+    const badgeW = diasLabel.length*6+12;
+    svg += `<rect x="${padL+totalW+6}" y="${y+BAR_H/2-9}" width="${badgeW}" height="18" rx="9" fill="${cor}"/>`;
+    svg += `<text x="${padL+totalW+6+badgeW/2}" y="${y+BAR_H/2+3.5}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">${diasLabel}</text>`;
+    if(e.qtd > 1) svg += `<text x="${padL}" y="${y+BAR_H+SUB_H-2}" fill="#94a3b8" font-size="9" font-weight="600">${e.noPrazoCount}/${e.qtd} no prazo</text>`;
   });
   svg += '</svg>';
   el.innerHTML = svg;
