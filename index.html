@@ -3146,10 +3146,7 @@ function openMedicao(id){
 
 function renderMedicoes(){
   const fEmp = $('#f-med-empresa').value, fTipo = $('#f-med-tipo').value, fMes = $('#f-med-mes').value;
-  if($('#f-med-empresa').options.length <= 1){
-    $('#f-med-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
-    $('#f-med-empresa').value = fEmp;
-  }
+  $('#f-med-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===fEmp?'selected':''}>${e.nome}</option>`).join('');
   const filtrados = state.medicoes.filter(m => {
     if(fEmp && m.empresa !== fEmp) return false;
     if(fTipo && m.tipo !== fTipo) return false;
@@ -3824,7 +3821,8 @@ function setupEvents(){
     const data = $('#med-data').value;
     if(!empresa || !valor || valor <= 0 || !data){ toast('Preencha empresa, valor e data', 'danger'); return; }
     const id = $('#med-id').value || 'med'+uid();
-    const registro = {id, empresa, obra:$('#med-obra').value, tipo:$('#med-tipo').value, valor, data, desc:$('#med-desc').value, origem: $('#med-id').value ? (state.medicoes.find(m=>m.id===id)?.origem||'manual') : 'manual'};
+    const existente = $('#med-id').value ? state.medicoes.find(m=>m.id===id) : null;
+    const registro = {id, empresa, obra:$('#med-obra').value, tipo:$('#med-tipo').value, valor, data, desc:$('#med-desc').value, doc: existente?.doc || '', origem: existente?.origem || 'manual'};
     try {
       await salvarMedicaoNuvem(registro);
       const idx = state.medicoes.findIndex(m => m.id === id);
