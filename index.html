@@ -728,6 +728,10 @@
           <div class="rel-kpi"><span class="kpi-label">Registros</span><span class="kpi-val" id="med-kpi-qtd">0</span></div>
           <div class="rel-kpi"><span class="kpi-label">Automáticos</span><span class="kpi-val" id="med-kpi-auto">0</span></div>
         </div>
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-h"><div><h3>Faturamento mensal</h3><p>Soma de medições por mês (últimos 12 meses com lançamento)</p></div></div>
+          <div class="card-b" style="padding:16px 18px"><div id="med-chart-mensal"></div></div>
+        </div>
         <div class="card"><div class="table-wrap"><table id="tbl-medicoes"><thead><tr><th>Data</th><th>Empresa</th><th>Obra</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Origem</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
@@ -1619,6 +1623,11 @@ function toast(msg, kind){
 
 function nomeEmpresa(id){ const e = state.empresas.find(x => x.id === id); return e ? e.nome : '—'; }
 function nomeObra(id){ const o = state.obras.find(x => x.id === id); return o ? o.nome : ''; }
+function docLabel(docId){
+  const d = state.docs.find(x => x.id === docId);
+  if(!d) return 'Documento não encontrado';
+  return `${d.tipo}${d.numero ? ' nº '+d.numero : ''}`;
+}
 
 function alertasART(){
   const hoje = todayISO();
@@ -3163,9 +3172,47 @@ function renderMedicoes(){
     <td><span class="pill ${m.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${m.tipo}</span></td>
     <td>${m.desc || '—'}</td>
     <td><b>${fmtReal(m.valor)}</b></td>
-    <td><span class="pill ${m.origem==='automatico'?'ok':'muted'}" style="font-size:11px">${m.origem==='automatico'?'Automático':m.origem==='importado'?'Importado':'Manual'}</span></td>
+    <td><span class="pill ${m.origem==='automatico'?'ok':'muted'}" style="font-size:11px">${m.origem==='automatico'?'Automático':m.origem==='importado'?'Importado':'Manual'}</span>${m.doc ? `<br><small style="color:var(--ink-muted)">${docLabel(m.doc)}</small>` : ''}</td>
     <td><button class="btn ghost sm" onclick="openMedicao('${m.id}')">Editar</button></td>
   </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma medição encontrada</td></tr>';
+
+  renderMedChartMensal();
+}
+
+function renderMedChartMensal(){
+  const cont = $('#med-chart-mensal');
+  if(!cont) return;
+  const porMes = {};
+  state.medicoes.forEach(m => {
+    const mes = (m.data||'').slice(0,7);
+    if(!mes) return;
+    porMes[mes] = (porMes[mes]||0) + (m.valor||0);
+  });
+  const meses = Object.keys(porMes).sort().slice(-12);
+  if(!meses.length){
+    cont.innerHTML = '<p style="color:var(--ink-muted);font-size:13px;padding:12px 0;margin:0">Sem dados suficientes para o gráfico.</p>';
+    return;
+  }
+  const MESES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const max = Math.max(...meses.map(m => porMes[m]), 1);
+  const W = 640, H = 220, baseY = 178, topPad = 26, plotW = W - 40;
+  const n = meses.length;
+  const barW = Math.min(56, plotW / n * 0.55);
+  const slot = plotW / n;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;display:block;margin:0 auto;overflow:visible">`;
+  meses.forEach((mes, i) => {
+    const val = porMes[mes];
+    const h = Math.max(2, Math.round((val / max) * (baseY - topPad)));
+    const x = 20 + i * slot + (slot - barW) / 2;
+    const y = baseY - h;
+    const [ano, mm] = mes.split('-');
+    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="var(--green-500)"/>`;
+    svg += `<text x="${x + barW/2}" y="${y - 6}" text-anchor="middle" font-size="10" fill="var(--ink-muted)">${fmtReal(val).replace('R$ ','').replace('R$ ','')}</text>`;
+    svg += `<text x="${x + barW/2}" y="${baseY + 16}" text-anchor="middle" font-size="10" fill="var(--ink-muted)">${MESES_ABR[Number(mm)-1]}/${ano.slice(2)}</text>`;
+  });
+  svg += `<line x1="18" y1="${baseY}" x2="${W-18}" y2="${baseY}" stroke="var(--line)" stroke-width="1"/>`;
+  svg += `</svg>`;
+  cont.innerHTML = svg;
 }
 
 /* ================== CONTRATOS PGR (confidencial — coordenador) ================== */
@@ -4596,8 +4643,14 @@ async function salvarDocumentoNuvem(doc) {
 
 async function registrarMedicaoPgrAutomatica(docId){
   try {
-    const { error } = await db.rpc('registrar_medicao_pgr_automatica', { p_doc_id: docId });
-    if(error) console.warn('Medição automática não registrada:', error.message);
+    const { data, error } = await db.rpc('registrar_medicao_pgr_automatica', { p_doc_id: docId });
+    if(error){ console.warn('Medição automática não registrada:', error.message); return; }
+    if(data?.status === 'ok'){
+      toast(`💰 Medição de ${fmtReal(data.valor)} registrada automaticamente (PGR)`, 'ok');
+    } else if(data?.status === 'sem_contrato' || data?.status === 'sem_produto_pgr'){
+      toast('⚠ Nenhum contrato PGR configurado para esta empresa — medição não foi lançada. Cadastre em Contratos PGR.', 'danger');
+    }
+    // status 'ja_existe' -> medição já lançada antes para este documento, nada a avisar
   } catch(e){ console.warn('Medição automática não registrada:', e.message); }
 }
 
