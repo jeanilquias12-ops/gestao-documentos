@@ -5,6 +5,14 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1N
 const DIAS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const MESES_PT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
+const TIPO_CFG = {
+  psicossocial: { label: 'Psicossocial', cor: '#6A1B9A' },
+  treinamento:  { label: 'Treinamento',  cor: '#1565C0' },
+  palestra:     { label: 'Palestra',     cor: '#00838F' },
+  auditoria:    { label: 'Auditoria',    cor: '#EF6C00' },
+  ltcat:        { label: 'Avaliação LTCAT', cor: '#2E7D32' }
+};
+
 function fmtDate(iso) {
   if (!iso) return '—';
   const [y, m, d] = iso.split('-');
@@ -19,7 +27,8 @@ function fmtDateExtenso(iso) {
 
 function statusCfg(status) {
   switch (status) {
-    case 'pendente':   return { label: 'Pendente',   cor: '#1565C0', fundo: '#E3F2FD', emoji: '🕐' };
+    case 'pendente':
+    case 'agendado':   return { label: 'Agendado',   cor: '#1565C0', fundo: '#E3F2FD', emoji: '🕐' };
     case 'reagendado': return { label: 'Reagendado', cor: '#8A5A00', fundo: '#FFF6E0', emoji: '🔄' };
     case 'realizado':  return { label: 'Realizado',  cor: '#2E7D32', fundo: '#E8F5E9', emoji: '✅' };
     case 'cancelado':  return { label: 'Cancelado',  cor: '#9B2A1A', fundo: '#FCE6E2', emoji: '❌' };
@@ -35,14 +44,19 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
 
     const linhas = dia.avaliacoes.map((a, i) => {
       const st = statusCfg(a.status);
+      const tipoCfg = TIPO_CFG[a.tipo] || { label: a.tipo, cor: '#555555' };
       return `
         <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9fbfa'}">
           <td style="padding:12px 16px;border-bottom:1px solid #e8ede9;vertical-align:top">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="vertical-align:top;width:100%">
-                  <p style="margin:0 0 3px;font-size:14px;font-weight:700;color:#13301B">${a.empresa}</p>
+                  <p style="margin:0 0 4px">
+                    <span style="display:inline-block;background:${tipoCfg.cor};color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.03em;text-transform:uppercase">${tipoCfg.label}</span>
+                  </p>
+                  <p style="margin:0 0 3px;font-size:14px;font-weight:700;color:#13301B">${a.empresa}${a.tema ? ` — ${a.tema}` : ''}</p>
                   ${a.hora ? `<p style="margin:0 0 3px;font-size:12px;color:#456355">🕐 Horário: <b>${a.hora}</b></p>` : ''}
+                  ${a.local ? `<p style="margin:0 0 3px;font-size:12px;color:#456355">📍 Local: ${a.local}</p>` : ''}
                   ${a.responsavel ? `<p style="margin:0 0 3px;font-size:12px;color:#456355">👤 Responsável: ${a.responsavel}</p>` : ''}
                   ${a.obs ? `<p style="margin:0 0 3px;font-size:12px;color:#7A9387;font-style:italic">📝 ${a.obs}</p>` : ''}
                 </td>
@@ -61,7 +75,7 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
           <p style="margin:0;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:.02em">
             📅 ${fmtDateExtenso(dia.data)} <span style="font-weight:400;color:rgba(255,255,255,.7);margin-left:8px">${fmtDate(dia.data)}</span>
           </p>
-          <span style="margin-left:auto;background:rgba(255,255,255,.2);color:#ffffff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px">${dia.avaliacoes.length} avaliação${dia.avaliacoes.length > 1 ? 'ões' : ''}</span>
+          <span style="margin-left:auto;background:rgba(255,255,255,.2);color:#ffffff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px">${dia.avaliacoes.length} item${dia.avaliacoes.length > 1 ? 's' : ''}</span>
         </div>
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e2ede5;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
           ${linhas}
@@ -83,15 +97,15 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
         <tr><td style="background:${corHeader};border-radius:12px 12px 0 0;padding:36px 40px;text-align:center">
           <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:.14em;text-transform:uppercase">SECONCI Goiás · SST</p>
           <h1 style="margin:0 0 8px;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:-.02em">📋 Agenda Semanal</h1>
-          <p style="margin:0 0 4px;font-size:15px;color:rgba(255,255,255,.9);font-weight:600">Avaliações Psicossociais</p>
+          <p style="margin:0 0 4px;font-size:15px;color:rgba(255,255,255,.9);font-weight:600">Psicossociais · Treinamentos · Palestras · Auditorias · LTCAT</p>
           <p style="margin:0;font-size:13px;color:rgba(255,255,255,.7)">${semanaLabel}</p>
         </td></tr>
 
         <!-- RESUMO -->
         <tr><td style="background:#1B6B2F;padding:14px 40px;text-align:center">
           ${semVazia
-            ? `<p style="margin:0;font-size:13px;color:rgba(255,255,255,.9)">Nenhuma avaliação agendada para a próxima semana.</p>`
-            : `<p style="margin:0;font-size:13px;color:rgba(255,255,255,.9)"><b style="font-size:22px;color:#ffffff">${totalAgendamentos}</b> &nbsp;avaliação${totalAgendamentos > 1 ? 'ões' : ''} agendada${totalAgendamentos > 1 ? 's' : ''} na semana</p>`
+            ? `<p style="margin:0;font-size:13px;color:rgba(255,255,255,.9)">Nenhum agendamento para a próxima semana.</p>`
+            : `<p style="margin:0;font-size:13px;color:rgba(255,255,255,.9)"><b style="font-size:22px;color:#ffffff">${totalAgendamentos}</b> &nbsp;agendamento${totalAgendamentos > 1 ? 's' : ''} na semana</p>`
           }
         </td></tr>
 
@@ -101,7 +115,7 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
             ? `<div style="text-align:center;padding:24px 0">
                 <p style="font-size:40px;margin:0 0 12px">📭</p>
                 <p style="font-size:15px;color:#456355;font-weight:600;margin:0 0 6px">Agenda limpa!</p>
-                <p style="font-size:13px;color:#7A9387;margin:0">Nenhuma avaliação psicossocial pendente ou reagendada para a próxima semana.</p>
+                <p style="font-size:13px;color:#7A9387;margin:0">Nenhum agendamento pendente ou reagendado para a próxima semana.</p>
                </div>`
             : diasHtml
           }
@@ -151,8 +165,9 @@ module.exports = async function handler(req, res) {
   // Buscar dados do Supabase
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
 
-  const [psiRes, clientesRes] = await Promise.all([
+  const [psiRes, eventosRes, clientesRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/psicossociais?data=gte.${inicioSemana}&data=lte.${fimSemana}&order=data.asc,hora.asc&select=id,cliente_id,empresa_livre,data,hora,status,responsavel,observacoes`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/eventos?data=gte.${inicioSemana}&data=lte.${fimSemana}&status=neq.cancelado&order=data.asc,hora.asc&select=id,tipo,cliente_id,empresa_livre,tema,data,hora,local,responsavel,status,observacoes`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers })
   ]);
 
@@ -161,8 +176,9 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Falha ao consultar Supabase', status: psiRes.status, detail: errBody });
   }
 
-  let psicossociais = [], clientes = [];
+  let psicossociais = [], eventos = [], clientes = [];
   { const r = await psiRes.json();      psicossociais = Array.isArray(r) ? r : []; }
+  if (eventosRes.ok) { const r = await eventosRes.json(); eventos = Array.isArray(r) ? r : []; }
   { const r = await clientesRes.json(); clientes      = Array.isArray(r) ? r : []; }
 
   const clienteMap = {};
@@ -179,6 +195,7 @@ module.exports = async function handler(req, res) {
   psicossociais.forEach(p => {
     if (!diasMap[p.data]) return;
     diasMap[p.data].avaliacoes.push({
+      tipo:        'psicossocial',
       empresa:     p.empresa_livre || clienteMap[p.cliente_id] || '—',
       hora:        p.hora || '',
       status:      p.status || 'pendente',
@@ -187,14 +204,32 @@ module.exports = async function handler(req, res) {
     });
   });
 
+  eventos.forEach(e => {
+    if (!diasMap[e.data]) return;
+    diasMap[e.data].avaliacoes.push({
+      tipo:        e.tipo,
+      empresa:     e.empresa_livre || clienteMap[e.cliente_id] || '—',
+      tema:        e.tema || '',
+      hora:        e.hora || '',
+      local:       e.local || '',
+      status:      e.status || 'agendado',
+      responsavel: e.responsavel || '',
+      obs:         e.observacoes || ''
+    });
+  });
+
+  Object.values(diasMap).forEach(d => d.avaliacoes.sort((a, b) => (a.hora || '').localeCompare(b.hora || '')));
+
   const dias = Object.values(diasMap);
-  const totalAgendamentos = psicossociais.length;
+  const totalAgendamentos = psicossociais.length + eventos.length;
+
+  // Semana sem nenhum agendamento: não vale a pena mandar e-mail
+  if (totalAgendamentos === 0) {
+    return res.status(200).json({ success: true, skipped: true, motivo: 'sem agendamentos na semana', semana: `${inicioSemana} a ${fimSemana}` });
+  }
 
   const html = gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje: hojeISO });
-
-  const assunto = totalAgendamentos === 0
-    ? 'SECONCI — 📋 Agenda Semanal: nenhuma avaliação psicossocial'
-    : `SECONCI — 📋 Agenda Semanal: ${totalAgendamentos} avaliação${totalAgendamentos > 1 ? 'ões' : ''} psicossocial${totalAgendamentos > 1 ? 'is' : ''}`;
+  const assunto = `SECONCI — 📋 Agenda Semanal: ${totalAgendamentos} agendamento${totalAgendamentos > 1 ? 's' : ''}`;
 
   const recipients = notifyEmail.split(',').map(e => e.trim()).filter(Boolean);
 
