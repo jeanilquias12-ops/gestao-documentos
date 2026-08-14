@@ -738,10 +738,12 @@
           <div class="field"><label>Tipo</label><select id="f-med-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
           <div class="field"><label>Mês</label><input type="month" id="f-med-mes" /></div>
         </div>
-        <div class="rel-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+        <div class="rel-kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px">
           <div class="rel-kpi kpi-ok"><span class="kpi-label">Total no filtro</span><span class="kpi-val" id="med-kpi-total">R$ 0</span></div>
           <div class="rel-kpi"><span class="kpi-label">Registros</span><span class="kpi-val" id="med-kpi-qtd">0</span></div>
           <div class="rel-kpi"><span class="kpi-label">Automáticos</span><span class="kpi-val" id="med-kpi-auto">0</span></div>
+          <div class="rel-kpi"><span class="kpi-label">Custo Lab (LTCAT)</span><span class="kpi-val" id="med-kpi-custo">R$ 0</span></div>
+          <div class="rel-kpi"><span class="kpi-label">Margem (LTCAT)</span><span class="kpi-val" id="med-kpi-margem">R$ 0</span></div>
         </div>
         <div class="card" style="margin-bottom:18px">
           <div class="card-h"><div><h3>Faturamento mensal</h3><p>Soma de medições por mês (últimos 12 meses com lançamento)</p></div></div>
@@ -1067,9 +1069,19 @@
       <div class="field-block"><label>Empresa *</label><select id="med-empresa"></select></div>
       <div class="field-block"><label>Obra</label><select id="med-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
       <div class="field-block"><label>Tipo *</label><select id="med-tipo"><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
-      <div class="field-block"><label>Valor (R$) *</label><input type="number" id="med-valor" step="0.01" min="0" /></div>
+      <div class="field-block"><label id="med-valor-label">Valor (R$) *</label><input type="number" id="med-valor" step="0.01" min="0" /></div>
       <div class="field-block"><label>Data *</label><input type="date" id="med-data" /></div>
-      <div class="field-block" style="grid-column:1/-1"><label>Descrição</label><input type="text" id="med-desc" placeholder="Ex: Atualização/Elaboração PGR" /></div>
+      <div class="field-block" id="med-desc-block" style="grid-column:1/-1"><label>Descrição</label><input type="text" id="med-desc" placeholder="Ex: Atualização/Elaboração PGR" /></div>
+      <div class="field-block full" id="med-ltcat-section" style="grid-column:1/-1;display:none;background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
+        <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Detalhamento de ensaios <span style="font-weight:400;color:var(--ink-muted)">(quantidade realizada por tipo)</span></label>
+        <div class="tipos-grid" id="med-ensaios-grid"></div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px">
+          <span>Ensaios: <b id="med-ltcat-qtd">0</b></span>
+          <span>Faturamento: <b id="med-ltcat-fat">R$ 0,00</b></span>
+          <span>Custo Lab: <b id="med-ltcat-custo">R$ 0,00</b></span>
+          <span>Margem: <b id="med-ltcat-margem">R$ 0,00</b></span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="modal-f"><button class="btn danger" id="med-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="med-save">Salvar medição</button></div>
@@ -3151,6 +3163,33 @@ function recalcTotalContratoPgr(){
 }
 
 /* ================== MEDIÇÃO MENSAL (confidencial — coordenador) ================== */
+function medicaoAplicarModoTipo(tipo, detalhes){
+  const isLtcat = tipo === 'LTCAT';
+  $('#med-ltcat-section').style.display = isLtcat ? '' : 'none';
+  $('#med-desc-block').style.display = isLtcat ? 'none' : '';
+  $('#med-valor').readOnly = isLtcat;
+  $('#med-valor-label').textContent = isLtcat ? 'Valor (R$) — calculado pelos ensaios' : 'Valor (R$) *';
+  if(isLtcat){
+    $('#med-ensaios-grid').innerHTML = TIPOS_AVALIACAO.map(t => `<div class="tipo-row"><span>${t.nome}<br><small style="color:var(--ink-muted)">${fmtReal(t.valor)}/un</small></span><input id="med-ens-${t.key}" type="number" min="0" value="${(detalhes||{})[t.nome] || 0}" oninput="recalcMedicaoLtcat()" /></div>`).join('');
+    recalcMedicaoLtcat();
+  }
+}
+
+function recalcMedicaoLtcat(){
+  let qtd = 0, fat = 0, custo = 0;
+  TIPOS_AVALIACAO.forEach(t => {
+    const q = parseInt($('#med-ens-'+t.key)?.value) || 0;
+    qtd += q;
+    fat += q * (Number(t.valor)||0);
+    custo += q * (Number(t.custo)||0);
+  });
+  $('#med-ltcat-qtd').textContent = qtd;
+  $('#med-ltcat-fat').textContent = fmtReal(fat);
+  $('#med-ltcat-custo').textContent = fmtReal(custo);
+  $('#med-ltcat-margem').textContent = fmtReal(fat - custo);
+  $('#med-valor').value = fat;
+}
+
 function openMedicao(id){
   const m = id ? state.medicoes.find(x => x.id === id) : null;
   $('#medicao-modal-title').textContent = m ? 'Editar medição' : 'Nova medição';
@@ -3158,12 +3197,29 @@ function openMedicao(id){
   $('#med-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   $('#med-empresa').value = m?.empresa || state.empresas[0]?.id || '';
   populateObraSelectGeneric('med-obra', $('#med-empresa').value, m?.obra || '');
-  $('#med-tipo').value = m?.tipo || 'PGR';
+  const tipo = m?.tipo || 'PGR';
+  $('#med-tipo').value = tipo;
   $('#med-valor').value = m?.valor || '';
   $('#med-data').value = m?.data || todayISO();
   $('#med-desc').value = m?.desc || '';
   $('#med-delete').style.display = m ? '' : 'none';
+  medicaoAplicarModoTipo(tipo, m?.detalhes);
   openModal('modal-medicao');
+}
+
+function medicaoCustoLab(m){
+  if(!m.detalhes) return 0;
+  return Object.entries(m.detalhes).reduce((s,[nome,qtd]) => {
+    const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
+    return s + (t ? (Number(t.custo)||0) * (Number(qtd)||0) : 0);
+  }, 0);
+}
+
+function medicaoDescHtml(m){
+  if(m.tipo === 'LTCAT' && m.detalhes && Object.keys(m.detalhes).length){
+    return Object.entries(m.detalhes).map(([n,q]) => `<span class="pill muted" style="font-size:10.5px;margin:1px 3px 1px 0">${n}: ${q}</span>`).join('');
+  }
+  return m.desc || '—';
 }
 
 function renderMedicoes(){
@@ -3177,16 +3233,21 @@ function renderMedicoes(){
   }).sort((a,b) => (b.data||'').localeCompare(a.data||''));
 
   const total = filtrados.reduce((s,m) => s + (m.valor||0), 0);
+  const ltcats = filtrados.filter(m => m.tipo === 'LTCAT');
+  const fatLtcat = ltcats.reduce((s,m) => s + (m.valor||0), 0);
+  const custoLtcat = ltcats.reduce((s,m) => s + medicaoCustoLab(m), 0);
   $('#med-kpi-total').textContent = fmtReal(total);
   $('#med-kpi-qtd').textContent = filtrados.length;
   $('#med-kpi-auto').textContent = filtrados.filter(m => m.origem === 'automatico').length;
+  $('#med-kpi-custo').textContent = fmtReal(custoLtcat);
+  $('#med-kpi-margem').textContent = fmtReal(fatLtcat - custoLtcat);
 
   $('#tbl-medicoes tbody').innerHTML = filtrados.map(m => `<tr>
     <td class="tight">${fmtDate(m.data)}</td>
     <td>${nomeEmpresa(m.empresa)}</td>
     <td>${m.obra ? nomeObra(m.obra) : '—'}</td>
     <td><span class="pill ${m.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${m.tipo}</span></td>
-    <td>${m.desc || '—'}</td>
+    <td>${medicaoDescHtml(m)}</td>
     <td><b>${fmtReal(m.valor)}</b></td>
     <td><span class="pill ${m.origem==='automatico'?'ok':'muted'}" style="font-size:11px">${m.origem==='automatico'?'Automático':m.origem==='importado'?'Importado':'Manual'}</span>${m.doc ? `<br><small style="color:var(--ink-muted)">${docLabel(m.doc)}</small>` : ''}</td>
     <td><button class="btn ghost sm" onclick="openMedicao('${m.id}')">Editar</button></td>
@@ -3607,6 +3668,7 @@ function setupEvents(){
 
   // Cascata empresa→obra nos modais de medição/contrato PGR
   $('#med-empresa').onchange = function(){ populateObraSelectGeneric('med-obra', this.value, ''); };
+  $('#med-tipo').onchange = function(){ medicaoAplicarModoTipo(this.value, null); };
   $('#cpgr-empresa').onchange = function(){ populateObraSelectGeneric('cpgr-obra', this.value, ''); };
 
   // Cascata empresa→obra no modal documento
@@ -3912,12 +3974,19 @@ function setupEvents(){
   // Salvar medição
   $('#med-save').onclick = async () => {
     const empresa = $('#med-empresa').value;
-    const valor = parseFloat($('#med-valor').value);
+    const tipo = $('#med-tipo').value;
     const data = $('#med-data').value;
+    let detalhes = {};
+    if(tipo === 'LTCAT'){
+      TIPOS_AVALIACAO.forEach(t => { const q = parseInt($('#med-ens-'+t.key)?.value) || 0; if(q > 0) detalhes[t.nome] = q; });
+      if(!Object.keys(detalhes).length){ toast('Informe a quantidade de ao menos um ensaio', 'danger'); return; }
+    }
+    const valor = parseFloat($('#med-valor').value);
     if(!empresa || !valor || valor <= 0 || !data){ toast('Preencha empresa, valor e data', 'danger'); return; }
     const id = $('#med-id').value || 'med'+uid();
     const existente = $('#med-id').value ? state.medicoes.find(m=>m.id===id) : null;
-    const registro = {id, empresa, obra:$('#med-obra').value, tipo:$('#med-tipo').value, valor, data, desc:$('#med-desc').value, doc: existente?.doc || '', origem: existente?.origem || 'manual'};
+    const descAuto = tipo === 'LTCAT' ? Object.entries(detalhes).map(([n,q]) => `${n}: ${q}`).join(', ') : $('#med-desc').value;
+    const registro = {id, empresa, obra:$('#med-obra').value, tipo, valor, data, desc:descAuto, detalhes, doc: existente?.doc || '', origem: existente?.origem || 'manual'};
     try {
       await salvarMedicaoNuvem(registro);
       const idx = state.medicoes.findIndex(m => m.id === id);
@@ -4735,7 +4804,7 @@ async function salvarMedicaoNuvem(m) {
   const { error } = await db.from('medicoes').upsert({
     id: m.id, cliente_id: m.empresa, obra_id: m.obra || null, doc_id: m.doc || null,
     tipo: m.tipo, descricao: m.desc || '', valor: m.valor || 0, data: m.data,
-    origem: m.origem || 'manual'
+    origem: m.origem || 'manual', detalhes: m.detalhes || {}
   })
   if (error) throw new Error(error.message)
 }
@@ -5475,7 +5544,8 @@ async function carregarDaNuvem() {
       desc:      m.descricao || '',
       valor:     Number(m.valor) || 0,
       data:      m.data,
-      origem:    m.origem || 'manual'
+      origem:    m.origem || 'manual',
+      detalhes:  m.detalhes || {}
     }))
   }
 
