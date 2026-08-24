@@ -3918,11 +3918,11 @@ function setupEvents(){
           }
         }
         if(docAntigo.elabFinalizada && !data.elabFinalizada)
-          registrarHistorico(id, 'atualizado', `Elaboração reaberta (devolvida pela assessoria)`);
+          registrarHistorico(id, 'atualizado', `Elaboração reaberta (devolvida pela assessoria)`, data.inicioElaboracao);
         if(!docAntigo.retornoRecebido && data.retornoRecebido)
           registrarHistorico(id, 'enviado_assessoria', `Retorno recebido da assessoria em ${fmtDate(data.retornoAssessoria)}`, data.retornoAssessoria);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
-          registrarHistorico(id, 'atualizado', `Documento atualizado`);
+          registrarHistorico(id, 'atualizado', `Documento atualizado`, data.inicioElaboracao);
       }
       // Email automatico desativado: so dispara via cron diario (07h) e botao manual.
       // Aviso visual no banner/navegacao ja eh suficiente ao salvar.
