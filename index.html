@@ -1960,7 +1960,6 @@ function renderIndChartFases(meses, labels){
     <defs>
       <linearGradient id="gf1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
       <linearGradient id="gf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#c2410c"/></linearGradient>
-      <linearGradient id="gf-atraso" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#be123c"/></linearGradient>
       <filter id="faseShadow" x="-50%" y="-20%" width="200%" height="150%">
         <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.14"/>
       </filter>
@@ -1985,11 +1984,13 @@ function renderIndChartFases(meses, labels){
       const y1 = baseY - h1, y2 = baseY - h2;
       const atraso1 = m.mediaF1 > 10, atraso2 = m.mediaF2 > 5;
       svg += `<g filter="url(#faseShadow)">
-        <path d="${svgRoundTopBar(cx-barW-1, y1, barW, h1, r)}" fill="${atraso1?'url(#gf-atraso)':'url(#gf1)'}"/>
-        <path d="${svgRoundTopBar(cx+1, y2, barW, h2, r)}" fill="${atraso2?'url(#gf-atraso)':'url(#gf2)'}"/>
+        <path d="${svgRoundTopBar(cx-barW-1, y1, barW, h1, r)}" fill="url(#gf1)" stroke="${atraso1?'#dc2626':'none'}" stroke-width="${atraso1?2:0}"/>
+        <path d="${svgRoundTopBar(cx+1, y2, barW, h2, r)}" fill="url(#gf2)" stroke="${atraso2?'#dc2626':'none'}" stroke-width="${atraso2?2:0}"/>
       </g>`;
-      if(h1>14 || atraso1) svg += `<text x="${cx-barW/2-1}" y="${y1-5}" text-anchor="middle" fill="${atraso1?'#be123c':'#1d4ed8'}" font-size="9.5" font-weight="700">${m.mediaF1.toFixed(0)}${atraso1?' ⚠':''}</text>`;
-      if(h2>14 || atraso2) svg += `<text x="${cx+barW/2+1}" y="${y2-5}" text-anchor="middle" fill="${atraso2?'#be123c':'#c2410c'}" font-size="9.5" font-weight="700">${m.mediaF2.toFixed(0)}${atraso2?' ⚠':''}</text>`;
+      if(atraso1) svg += `<text x="${cx-barW/2-1}" y="${y1-16}" text-anchor="middle" font-size="11">⚠</text>`;
+      if(atraso2) svg += `<text x="${cx+barW/2+1}" y="${y2-16}" text-anchor="middle" font-size="11">⚠</text>`;
+      if(h1>14 || atraso1) svg += `<text x="${cx-barW/2-1}" y="${y1-5}" text-anchor="middle" fill="${atraso1?'#dc2626':'#1d4ed8'}" font-size="9.5" font-weight="700">${m.mediaF1.toFixed(0)}</text>`;
+      if(h2>14 || atraso2) svg += `<text x="${cx+barW/2+1}" y="${y2-5}" text-anchor="middle" fill="${atraso2?'#dc2626':'#c2410c'}" font-size="9.5" font-weight="700">${m.mediaF2.toFixed(0)}</text>`;
     }
     svg += `<text x="${cx}" y="${baseY+18}" text-anchor="middle" fill="${isCurrent?'#0f172a':(m.total>0?'#64748b':'#c7d0d9')}" font-size="10" font-weight="${isCurrent?800:600}">${labels[i]}</text>`;
   });
@@ -1997,7 +1998,7 @@ function renderIndChartFases(meses, labels){
   const legY = H - 12;
   svg += `<rect x="${padL}" y="${legY-8}" width="10" height="10" rx="3" fill="#1d4ed8"/><text x="${padL+14}" y="${legY+1}" fill="#64748b" font-size="10.5" font-weight="600">Elaboração (10d)</text>`;
   svg += `<rect x="${padL+140}" y="${legY-8}" width="10" height="10" rx="3" fill="#ea580c"/><text x="${padL+154}" y="${legY+1}" fill="#64748b" font-size="10.5" font-weight="600">Assessoria (5d)</text>`;
-  svg += `<rect x="${padL+270}" y="${legY-8}" width="10" height="10" rx="3" fill="#be123c"/><text x="${padL+284}" y="${legY+1}" fill="#64748b" font-size="10.5" font-weight="600">Fase acima da meta</text>`;
+  svg += `<text x="${padL+270}" y="${legY+1}" font-size="11">⚠</text><text x="${padL+284}" y="${legY+1}" fill="#64748b" font-size="10.5" font-weight="600">Fase acima da meta</text>`;
   svg += '</svg>';
   el.innerHTML = svg;
 }
