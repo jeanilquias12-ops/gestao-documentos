@@ -2098,7 +2098,7 @@ function renderIndDetalhe(meses, mesIdx){
       ? '<span class="pill ok" style="font-size:11px">No prazo</span>'
       : `<span class="pill danger" style="font-size:11px">+${e.diasTotal - 15}d</span>`;
     return `<tr>
-      <td>${e.empresa}</td>
+      <td>${e.doc.obra ? `<b>${nomeObra(e.doc.obra)}</b><br><small style="color:var(--ink-muted)">${e.empresa}</small>` : `<b>${e.empresa}</b>`}</td>
       <td>${e.doc.nome || e.doc.tipo}</td>
       <td><span class="pill" style="font-size:11px;background:${e.doc.tipo==='PGR'?'#E3F2FD':'#F3E5F5'};color:${e.doc.tipo==='PGR'?'#1565C0':'#7B1FA2'}">${e.doc.tipo}</span></td>
       <td>${fmtDate(e.doc.inicioElaboracao)}</td>
