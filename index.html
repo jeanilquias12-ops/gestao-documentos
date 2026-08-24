@@ -2110,8 +2110,8 @@ function renderIndDetalhe(meses, mesIdx){
       <td>${fmtDate(e.doc.inicioElaboracao)}</td>
       <td>${fmtDate(e.dtFim)}</td>
       <td style="font-weight:600;color:${e.diasTotal<=15?'var(--green-700)':'#C62828'}">${e.diasTotal}d</td>
-      <td>${e.fase1}d</td>
-      <td>${e.fase2 > 0 ? e.fase2+'d' : '—'}</td>
+      <td>${e.doc.tipo==='PGR' && e.fase1 > 10 ? `<span style="color:#C62828;font-weight:600" title="Elaboração acima da meta de 10 dias">${e.fase1}d ⚠</span>` : e.fase1+'d'}</td>
+      <td>${e.fase2 > 0 ? (e.doc.tipo==='PGR' && e.fase2 > 5 ? `<span style="color:#C62828;font-weight:600" title="Assessoria acima da meta de 5 dias">${e.fase2}d ⚠</span>` : e.fase2+'d') : '—'}</td>
       <td>${sit}</td>
     </tr>`;
   }).join('');
