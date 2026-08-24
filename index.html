@@ -1759,6 +1759,8 @@ function renderIndicadores(){
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const META_DIAS = 15;
+  const META_FASE1 = 10; // Elaboração (Segurança do Trabalho)
+  const META_FASE2 = 5;  // Assessoria (Saúde)
 
   const tipoFiltro = $('#ind-tipo-filtro')?.value || '';
   // Considera concluído pela mesma lógica do faseDoc (não só envClienteData)
@@ -1796,7 +1798,11 @@ function renderIndicadores(){
         fase1 = daysBetween(d.inicioElaboracao, d.envAssessoriaData);
         fase2 = d.envClienteData ? daysBetween(d.envAssessoriaData, d.envClienteData) : 0;
       }
-      const noPrazo = diasTotal <= META_DIAS;
+      // "No prazo" = cada setor cumpriu o próprio prazo (Elaboração ≤10d, Assessoria ≤5d),
+      // não só a soma total. Documentos sem fase 2 (LTCAT, ou PGR ainda sem envio à
+      // assessoria) usam o prazo total como referência, já que não têm o split de setores.
+      const temFases = d.tipo === 'PGR' && d.envAssessoriaData;
+      const noPrazo = temFases ? (fase1 <= META_FASE1 && fase2 <= META_FASE2) : diasTotal <= META_DIAS;
       const empresa = state.empresas.find(e => e.id === d.empresa);
       return {doc:d, diasTotal, fase1, fase2, noPrazo, dtFim, empresa: empresa?.nome || '—'};
     });
@@ -2104,9 +2110,14 @@ function renderIndDetalhe(meses, mesIdx){
   }
   renderIndChartDocs(m.entregas);
   tbody.innerHTML = m.entregas.map(e => {
-    const sit = e.noPrazo
-      ? '<span class="pill ok" style="font-size:11px">No prazo</span>'
-      : `<span class="pill danger" style="font-size:11px">+${e.diasTotal - 15}d</span>`;
+    let sit;
+    if(e.noPrazo){
+      sit = '<span class="pill ok" style="font-size:11px">No prazo</span>';
+    } else if(e.diasTotal > 15){
+      sit = `<span class="pill danger" style="font-size:11px">+${e.diasTotal - 15}d</span>`;
+    } else {
+      sit = '<span class="pill danger" style="font-size:11px">Fase atrasada</span>';
+    }
     return `<tr>
       <td>${e.doc.obra ? `<b>${nomeObra(e.doc.obra)}</b><br><small style="color:var(--ink-muted)">${e.empresa}</small>` : `<b>${e.empresa}</b>`}</td>
       <td>${e.doc.nome || e.doc.tipo}</td>
