@@ -1569,9 +1569,15 @@ const daysBetween = (a, b) => Math.floor((new Date(b)-new Date(a))/(1000*60*60*2
 
 const HIST_ICONS = {criado:'📄', atualizado:'✏️', validade:'📅', enviado_cliente:'📤', enviado_financeiro:'💰', enviado_assessoria:'🩺'};
 
-function registrarHistorico(docId, tipo, descricao){
+function registrarHistorico(docId, tipo, descricao, dataEvento){
   if(!state.historico) state.historico = [];
-  const entrada = {id:'h'+uid(), docId, tipo, descricao, dataHora: new Date().toISOString()};
+  // Coordenador costuma lançar documentos retroativos (feitos meses atrás).
+  // Nesse caso o histórico usa a data do próprio evento (início/finalizado/retorno/etc),
+  // não a data de hoje — senão fica incoerente registrar hoje algo que já aconteceu antes.
+  const dataHora = (PAPEL === 'coordenador' && dataEvento)
+    ? new Date(dataEvento + 'T12:00:00').toISOString()
+    : new Date().toISOString();
+  const entrada = {id:'h'+uid(), docId, tipo, descricao, dataHora};
   state.historico.push(entrada);
   save();
   salvarHistoricoNuvem(entrada);
@@ -3888,20 +3894,20 @@ function setupEvents(){
       save(); closeModal('modal-doc'); renderAll(); toast('✅ Documento salvo', 'ok');
       // Registrar histórico
       if(!docAntigo){
-        registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`);
+        registrarHistorico(id, 'criado', `Documento ${data.tipo} criado — ${nomeEmpresa(data.empresa)}`, data.inicioElaboracao || data.emissao);
       } else {
         if(docAntigo.validade !== data.validade)
           registrarHistorico(id, 'validade', `Validade atualizada: ${fmtDate(docAntigo.validade)} → ${fmtDate(data.validade)}`);
         if(!docAntigo.envCliente && data.envCliente){
-          registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`);
+          registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`, data.envClienteData);
           if(data.tipo === 'PGR') registrarMedicaoPgrAutomatica(id);
         }
         if(!docAntigo.envFinanceiro && data.envFinanceiro)
-          registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`);
+          registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`, data.envFinanceiroData);
         if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
-          registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`);
+          registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`, data.inicioElaboracao);
         if(!docAntigo.elabFinalizada && data.elabFinalizada){
-          registrarHistorico(id, 'enviado_assessoria', `Elaboração finalizada — enviado à assessoria em ${fmtDate(data.envAssessoriaData)}`);
+          registrarHistorico(id, 'enviado_assessoria', `Elaboração finalizada — enviado à assessoria em ${fmtDate(data.envAssessoriaData)}`, data.envAssessoriaData);
           // Avisa a Assessoria de Saúde que um novo documento chegou (só PGR passa por eles)
           if(data.tipo !== 'LTCAT'){
             const msg = `Documento enviado para avaliação da Assessoria de Saúde\n`
@@ -3914,7 +3920,7 @@ function setupEvents(){
         if(docAntigo.elabFinalizada && !data.elabFinalizada)
           registrarHistorico(id, 'atualizado', `Elaboração reaberta (devolvida pela assessoria)`);
         if(!docAntigo.retornoRecebido && data.retornoRecebido)
-          registrarHistorico(id, 'enviado_assessoria', `Retorno recebido da assessoria em ${fmtDate(data.retornoAssessoria)}`);
+          registrarHistorico(id, 'enviado_assessoria', `Retorno recebido da assessoria em ${fmtDate(data.retornoAssessoria)}`, data.retornoAssessoria);
         if(docAntigo.numero !== data.numero || docAntigo.responsavel !== data.responsavel || docAntigo.emissao !== data.emissao || docAntigo.obs !== data.obs)
           registrarHistorico(id, 'atualizado', `Documento atualizado`);
       }
