@@ -114,9 +114,10 @@ module.exports = async function handler(req, res) {
 
   const diffDays = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000);
 
-  const [docsRes, clientesRes, contratosRes, avaliRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id,enviado_assessoria,data_envio_assessoria,data_inicio_elaboracao,elab_finalizada,retorno_recebido,data_retorno_assessoria`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome`, { headers }),
+  const [docsRes, clientesRes, obrasRes, contratosRes, avaliRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/documentos?select=id,tipo_documento,numero,data_vencimento,cliente_id,obra_id,enviado_assessoria,data_envio_assessoria,data_inicio_elaboracao,elab_finalizada,retorno_recebido,data_retorno_assessoria`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id,nome,status`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/obras?select=id,status`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/contratos?select=id,qtd,doc_id,cliente_id`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avaliacoes?select=contrato_id`, { headers })
   ]);
@@ -126,15 +127,28 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Falha ao consultar Supabase', status: docsRes.status, detail: errBody });
   }
 
-  let docs = [], clientes = [], contratos = [], avals = [];
-  { const r = await docsRes.json();      docs      = Array.isArray(r) ? r : []; }
+  let docsAll = [], clientes = [], obras = [], contratos = [], avals = [];
+  { const r = await docsRes.json();      docsAll   = Array.isArray(r) ? r : []; }
   { const r = await clientesRes.json();  clientes  = Array.isArray(r) ? r : []; }
+  if (obrasRes.ok)     { const r = await obrasRes.json();     obras     = Array.isArray(r) ? r : []; }
   if (contratosRes.ok){ const r = await contratosRes.json(); contratos = Array.isArray(r) ? r : []; }
   if (avaliRes.ok)    { const r = await avaliRes.json();     avals     = Array.isArray(r) ? r : []; }
 
   const clienteMap = {};
   clientes.forEach(c => { clienteMap[c.id] = c.nome; });
   const nomeEmpresa = id => clienteMap[id] || '—';
+
+  // Empresas/obras inativas não geram alerta de vencimento — a obra acabou ou o
+  // cliente saiu, não faz sentido continuar cobrando renovação.
+  const clienteAtivoMap = {};
+  clientes.forEach(c => { clienteAtivoMap[c.id] = c.status !== 'inativa'; });
+  const obraAtivaMap = {};
+  obras.forEach(o => { obraAtivaMap[o.id] = o.status !== 'inativa'; });
+  const docs = docsAll.filter(d => {
+    if (clienteAtivoMap[d.cliente_id] === false) return false;
+    if (d.obra_id && obraAtivaMap[d.obra_id] === false) return false;
+    return true;
+  });
 
   const vencidos = docs.filter(d => d.data_vencimento && d.data_vencimento < today);
   const vencendo = docs.filter(d => d.data_vencimento && d.data_vencimento >= today && d.data_vencimento <= in90);

@@ -1612,6 +1612,19 @@ function maskCNPJ(v){
   return v;
 }
 
+// Documento pertence a empresa/obra ativa? Empresas/obras inativas saem dos
+// alertas de vencimento (dashboard, banner, e-mail diário) — a obra acabou
+// ou o cliente saiu, não faz sentido continuar cobrando renovação.
+function docEmpresaAtiva(d){
+  const emp = state.empresas.find(e => e.id === d.empresa);
+  if(emp && emp.status === 'inativa') return false;
+  if(d.obra){
+    const obra = state.obras.find(o => o.id === d.obra);
+    if(obra && obra.status === 'inativa') return false;
+  }
+  return true;
+}
+
 function statusDoc(doc){
   if(doc.tipo === 'LTCAT' && !doc.validade) return {key:'ok', label:'Válido (sem validade fixa)'};
   if(!doc.validade) return {key:'muted', label:'Sem validade'};
@@ -1667,6 +1680,7 @@ function alertasART(){
   const hoje = todayISO();
   const result = [];
   state.docs.forEach(d => {
+    if(!docEmpresaAtiva(d)) return;
     if(d.tipo !== 'LTCAT' || !d.validade) return;
     const diasRestantes = daysBetween(hoje, d.validade);
     if(diasRestantes > 30) return;
@@ -2137,7 +2151,8 @@ function renderDashboard(){
   const ativas = state.empresas.filter(e => e.status === 'ativa').length;
   const inativas = state.empresas.filter(e => e.status === 'inativa').length;
   let validos=0, vencendo=0, vencidos=0;
-  state.docs.forEach(d => {
+  const docsAtivosDash = state.docs.filter(docEmpresaAtiva);
+  docsAtivosDash.forEach(d => {
     const s = statusDoc(d);
     if(s.key === 'ok') validos++;
     else if(s.key === 'warn') vencendo++;
@@ -2151,7 +2166,7 @@ function renderDashboard(){
   $('#nav-doc-badge').textContent = vencidos + vencendo;
 
   // Próximas ações
-  const acoes = state.docs.map(d => ({d, s:statusDoc(d)}))
+  const acoes = docsAtivosDash.map(d => ({d, s:statusDoc(d)}))
     .filter(x => x.s.key === 'danger' || x.s.key === 'warn')
     .sort((a,b) => (a.d.validade||'').localeCompare(b.d.validade||''))
     .slice(0,8);
@@ -3387,8 +3402,9 @@ function openAval(cId, aId){
 
 /* ================== NOTIFICAÇÕES ================== */
 function getResumoPendencias(){
-  const venc = state.docs.filter(d => statusDoc(d).key === 'danger');
-  const venciendo = state.docs.filter(d => statusDoc(d).key === 'warn');
+  const docsAtivos = state.docs.filter(docEmpresaAtiva);
+  const venc = docsAtivos.filter(d => statusDoc(d).key === 'danger');
+  const venciendo = docsAtivos.filter(d => statusDoc(d).key === 'warn');
   return {venc, venciendo};
 }
 
@@ -3702,10 +3718,24 @@ function setupEvents(){
     if(!nome || !cnpj){ toast('Preencha nome e CNPJ', 'danger'); return; }
     const id = $('#me-id').value || 'e'+uid();
     const data = {id, nome, cnpj, segmento:$('#me-segmento').value, endereco:$('#me-endereco').value, contato:$('#me-contato').value, telefone:$('#me-telefone').value, status:$('#me-status').value};
+    const idx = state.empresas.findIndex(e => e.id === id);
+    const statusAnterior = idx >= 0 ? state.empresas[idx].status : null;
     try {
       await salvarEmpresaNuvem(data);
-      const idx = state.empresas.findIndex(e => e.id === id);
       if(idx >= 0) state.empresas[idx] = data; else state.empresas.push(data);
+      // Inativar a empresa inativa junto todas as obras dela (até serem revertidas);
+      // reativar a empresa reativa só as obras que foram inativadas por essa cascata.
+      if(statusAnterior === 'ativa' && data.status === 'inativa'){
+        const obrasParaInativar = state.obras.filter(o => o.empresa === id && o.status === 'ativa');
+        await Promise.all(obrasParaInativar.map(o => salvarObraNuvem({...o, status:'inativa', inativadaPorEmpresa:true})));
+        obrasParaInativar.forEach(o => { o.status = 'inativa'; o.inativadaPorEmpresa = true; });
+        if(obrasParaInativar.length) toast(`ℹ ${obrasParaInativar.length} obra(s) dessa empresa também foram marcadas como inativas`, 'ok');
+      } else if(statusAnterior === 'inativa' && data.status === 'ativa'){
+        const obrasParaReativar = state.obras.filter(o => o.empresa === id && o.inativadaPorEmpresa);
+        await Promise.all(obrasParaReativar.map(o => salvarObraNuvem({...o, status:'ativa', inativadaPorEmpresa:false})));
+        obrasParaReativar.forEach(o => { o.status = 'ativa'; o.inativadaPorEmpresa = false; });
+        if(obrasParaReativar.length) toast(`ℹ ${obrasParaReativar.length} obra(s) dessa empresa foram reativadas junto`, 'ok');
+      }
       save(); closeModal('modal-empresa'); renderAll(); toast('✅ Empresa salva', 'ok');
     } catch(err) {
       toast('Erro ao salvar no servidor: ' + err.message, 'danger');
@@ -3787,10 +3817,18 @@ function setupEvents(){
     const nome = $('#mo-nome').value.trim();
     if(!empresa || !nome){ toast('Preencha empresa e nome da obra', 'danger'); return; }
     const id = $('#mo-id').value || 'ob'+uid();
-    const data = {id, empresa, nome, endereco:$('#mo-endereco').value, contato:$('#mo-contato').value, telefone:$('#mo-telefone').value, status:$('#mo-status').value};
+    const idxExistente = state.obras.findIndex(o => o.id === id);
+    const existente = idxExistente >= 0 ? state.obras[idxExistente] : null;
+    const novoStatus = $('#mo-status').value;
+    // Se o status não mudou nesta edição, preserva o sinalizador de "inativada junto
+    // com a empresa" — senão uma edição qualquer (ex: telefone) travaria a obra
+    // inativa mesmo depois da empresa ser reativada. Se o status mudou manualmente
+    // aqui, é uma ação explícita do usuário, então o sinalizador zera.
+    const inativadaPorEmpresa = existente && existente.status === novoStatus ? (existente.inativadaPorEmpresa || false) : false;
+    const data = {id, empresa, nome, endereco:$('#mo-endereco').value, contato:$('#mo-contato').value, telefone:$('#mo-telefone').value, status:novoStatus, inativadaPorEmpresa};
     try {
       await salvarObraNuvem(data);
-      const idx = state.obras.findIndex(o => o.id === id);
+      const idx = idxExistente;
       if(idx >= 0) state.obras[idx] = data; else state.obras.push(data);
       save(); closeModal('modal-obra'); renderAll(); toast('✅ Obra salva', 'ok');
     } catch(err) {
@@ -4771,7 +4809,8 @@ async function salvarObraNuvem(obra) {
     endereco:   obra.endereco || '',
     contato:    obra.contato || '',
     telefone:   obra.telefone || '',
-    status:     obra.status || 'ativa'
+    status:     obra.status || 'ativa',
+    inativada_por_empresa: obra.inativadaPorEmpresa || false
   })
   if (error) throw new Error(error.message)
 }
@@ -5442,7 +5481,8 @@ async function carregarDaNuvem() {
     endereco: o.endereco,
     contato:  o.contato,
     telefone: o.telefone,
-    status:   o.status
+    status:   o.status,
+    inativadaPorEmpresa: o.inativada_por_empresa || false
   }))
 
   if (!errContratos) {
