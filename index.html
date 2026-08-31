@@ -796,6 +796,11 @@
     <div class="field-block"><label>Contato (nome)</label><input id="mo-contato" /></div>
     <div class="field-block"><label>Telefone / E-mail</label><input id="mo-telefone" /></div>
     <div class="field-block"><label>Status</label><select id="mo-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+    <div class="field-block full" id="mo-contrato-section" style="grid-column:1/-1;display:none;background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Contrato PGR desta obra <span style="font-weight:400;color:var(--ink-muted)">(opcional — preenche automaticamente a Medição Mensal quando o PGR for enviado ao financeiro)</span></label>
+      <div class="tipos-grid" id="mo-contrato-grid"></div>
+      <div style="margin-top:10px;font-size:13px">Total do contrato: <b id="mo-contrato-total">R$ 0,00</b></div>
+    </div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mo-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mo-save">Salvar obra</button></div>
 </div></div>
@@ -3051,6 +3056,11 @@ function populateObraSelectGeneric(selectId, empresaId, selectedObraId){
     obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${o.nome}</option>`).join('');
 }
 
+function recalcMoContratoTotal(){
+  const total = PRODUTOS_PGR.reduce((s,p) => s + (parseFloat($('#mo-contrato-prod-'+p.key)?.value) || 0), 0);
+  $('#mo-contrato-total').textContent = fmtReal(total);
+}
+
 function openObra(id){
   const o = id ? state.obras.find(x => x.id === id) : null;
   $('#mo-title').textContent = o ? 'Editar obra' : 'Nova obra';
@@ -3064,6 +3074,15 @@ function openObra(id){
   $('#mo-telefone').value = o?.telefone || '';
   $('#mo-status').value = o?.status || 'ativa';
   $('#mo-delete').style.display = o ? '' : 'none';
+  // Contrato PGR embutido: só coordenador vê (mesma confidencialidade da Medição Mensal)
+  const souCoordenador = PAPEL === 'coordenador';
+  $('#mo-contrato-section').style.display = souCoordenador ? '' : 'none';
+  if(souCoordenador){
+    const contratoExistente = o ? state.contratosPgr.find(c => c.empresa === o.empresa && c.obra === o.id) : null;
+    const produtos = contratoExistente?.produtos || {};
+    $('#mo-contrato-grid').innerHTML = PRODUTOS_PGR.map(p => `<div class="tipo-row"><span>${p.nome}</span><input id="mo-contrato-prod-${p.key}" type="number" min="0" step="0.01" value="${produtos[p.key] || 0}" oninput="recalcMoContratoTotal()" /></div>`).join('');
+    recalcMoContratoTotal();
+  }
   openModal('modal-obra');
 }
 
@@ -3835,6 +3854,19 @@ function setupEvents(){
       await salvarObraNuvem(data);
       const idx = idxExistente;
       if(idx >= 0) state.obras[idx] = data; else state.obras.push(data);
+      // Contrato PGR embutido (só coordenador)
+      if(PAPEL === 'coordenador'){
+        const produtos = {};
+        PRODUTOS_PGR.forEach(p => { const v = parseFloat($('#mo-contrato-prod-'+p.key)?.value) || 0; if(v > 0) produtos[p.key] = v; });
+        const valorContrato = Object.values(produtos).reduce((s,v) => s+v, 0);
+        const contratoExistente = state.contratosPgr.find(c => c.empresa === empresa && c.obra === id);
+        if(valorContrato > 0){
+          const registroContrato = {id: contratoExistente?.id || 'cpgr'+uid(), empresa, obra:id, valor:valorContrato, produtos, obs: contratoExistente?.obs || ''};
+          await salvarContratoPgrNuvem(registroContrato);
+          const idxC = state.contratosPgr.findIndex(c => c.id === registroContrato.id);
+          if(idxC >= 0) state.contratosPgr[idxC] = registroContrato; else state.contratosPgr.push(registroContrato);
+        }
+      }
       save(); closeModal('modal-obra'); renderAll(); toast('✅ Obra salva', 'ok');
     } catch(err) {
       toast('Erro ao salvar no servidor: ' + err.message, 'danger');
@@ -3956,12 +3988,12 @@ function setupEvents(){
       } else {
         if(docAntigo.validade !== data.validade)
           registrarHistorico(id, 'validade', `Validade atualizada: ${fmtDate(docAntigo.validade)} → ${fmtDate(data.validade)}`);
-        if(!docAntigo.envCliente && data.envCliente){
+        if(!docAntigo.envCliente && data.envCliente)
           registrarHistorico(id, 'enviado_cliente', `Enviado ao cliente${data.envClienteData ? ' em ' + fmtDate(data.envClienteData) : ''}`, data.envClienteData);
+        if(!docAntigo.envFinanceiro && data.envFinanceiro){
+          registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`, data.envFinanceiroData);
           if(data.tipo === 'PGR') registrarMedicaoPgrAutomatica(id);
         }
-        if(!docAntigo.envFinanceiro && data.envFinanceiro)
-          registrarHistorico(id, 'enviado_financeiro', `Enviado ao financeiro${data.envFinanceiroData ? ' em ' + fmtDate(data.envFinanceiroData) : ''}`, data.envFinanceiroData);
         if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
           registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`, data.inicioElaboracao);
         if(!docAntigo.elabFinalizada && data.elabFinalizada){
