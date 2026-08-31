@@ -1485,9 +1485,14 @@ async function importarContratoPgrPDF(file){
     const mAudValor = fullText.match(/R\$\s*([\d.,]+)[^\n\r.]{0,90}?para\s+cada\s+auditoria/i);
     if(mAudValor) valoresBR.AUDITORIA = mAudValor[1].trim();
 
-    // Fallback genérico: "valor de/total de R$ X" quando o tipo não bateu num padrão específico
+    const mLtcatValor = fullText.match(/valor\s+total[^\n\r.]{0,80}?R\$\s*([\d.,]+)/i);
+    if(mLtcatValor && isLTCAT) valoresBR.LTCAT = mLtcatValor[1].trim();
+
+    // Fallback genérico: "valor ... R$ X" (com qualquer texto pelo meio) quando o tipo
+    // não bateu num padrão específico — cada modelo de contrato descreve o valor de um jeito.
     if(!Object.keys(valoresBR).length){
-      const mGenerico = fullText.match(/valor\s+(?:total\s+)?(?:de\s+)?R\$\s*([\d.,]+)/i);
+      const mGenerico = fullText.match(/valor\s+total[^\n\r.]{0,80}?R\$\s*([\d.,]+)/i)
+        || fullText.match(/valor[^\n\r.]{0,60}?R\$\s*([\d.,]+)/i);
       if(mGenerico){
         const tipoFallback = isPGR ? 'PGR' : isAuditoria ? 'AUDITORIA' : isLTCAT ? 'LTCAT' : 'OUTRO';
         valoresBR[tipoFallback] = mGenerico[1].trim();
