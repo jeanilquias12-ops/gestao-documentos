@@ -5660,8 +5660,8 @@ async function carregarDaNuvem() {
     db.from('contratos_pgr').select('*')
   ])
 
-  if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger'); return }
-  if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger'); return }
+  if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
+  if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger') }
   if (errObras)     { console.error('Erro obras:', errObras.message); toast('Erro ao carregar obras da nuvem', 'danger'); }
   if (errContratos) { console.error('Erro contratos:', errContratos.message); toast('Erro ao carregar contratos da nuvem', 'danger'); }
   if (errAval)      { console.error('Erro avaliações:', errAval.message); toast('Erro ao carregar avaliações da nuvem', 'danger'); }
