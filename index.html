@@ -4143,8 +4143,11 @@ function setupEvents(){
       const diasF1 = daysBetween(data.inicioElaboracao, data.envAssessoriaData);
       data.atrasoFase1 = diasF1 > 10 ? diasF1 - 10 : 0;
     }
-    if(data.inicioElaboracao && data.envClienteData && data.tipo === 'PGR' && data.envAssessoriaData){
-      const diasF2 = daysBetween(data.envAssessoriaData, data.envClienteData);
+    if(data.inicioElaboracao && data.retornoRecebido && data.retornoAssessoria && data.tipo === 'PGR' && data.envAssessoriaData){
+      // Fase 2 = tempo com a Assessoria de Saúde: do envio até o RETORNO da assessoria,
+      // não até o envio ao cliente (isso é uma fase seguinte, "Entrega", e pode acontecer
+      // dias depois sem relação com a demora da assessoria).
+      const diasF2 = daysBetween(data.envAssessoriaData, data.retornoAssessoria);
       data.atrasoFase2 = diasF2 > 5 ? diasF2 - 5 : 0;
     }
     if(data.inicioElaboracao && data.envClienteData && data.tipo === 'LTCAT'){
