@@ -459,6 +459,7 @@
           <div class="field"><label>Fase</label><select id="f-doc-fase"><option value="">Todas</option><option value="elab">Em elaboração</option><option value="assessoria">Ag. assessoria</option><option value="concluido">Concluído</option></select></div>
           <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
           <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
+          <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;padding:8px 0"><input type="checkbox" id="f-doc-inativas" /> Incluir empresas/obras inativas</label></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Entrega</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -2475,6 +2476,7 @@ function renderDocs(){
       if(fase === 'assessoria'&& !(f && f.fase === 2)) return false;
       if(fase === 'concluido' && !(f && f.key === 'fase-done')) return false;
     }
+    if(!$('#f-doc-inativas').checked && !docEmpresaAtiva(d)) return false;
     return (!tipo || d.tipo === tipo) && (!status || sk === status) && (!empresa || d.empresa === empresa) &&
       (!q || (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q) || nomeEmpresa(d.empresa).toLowerCase().includes(q));
   });
@@ -3883,7 +3885,7 @@ function setupEvents(){
   // Filtros
   ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
   ['f-obra-empresa','f-obra-status','f-obra-q'].forEach(id => $('#'+id).oninput = renderObras);
-  ['f-doc-tipo','f-doc-status','f-doc-fase','f-doc-empresa','f-doc-q'].forEach(id => $('#'+id).oninput = renderDocs);
+  ['f-doc-tipo','f-doc-status','f-doc-fase','f-doc-empresa','f-doc-q','f-doc-inativas'].forEach(id => $('#'+id).oninput = renderDocs);
   ['f-av-empresa','f-av-saldo'].forEach(id => $('#'+id).oninput = renderAvaliacoes);
   ['f-psi-empresa','f-psi-status'].forEach(id => $('#'+id).oninput = renderPsicossociais);
   ['f-med-empresa','f-med-tipo','f-med-mes'].forEach(id => $('#'+id).oninput = renderMedicoes);
