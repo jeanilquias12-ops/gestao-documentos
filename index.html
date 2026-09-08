@@ -374,7 +374,7 @@
 
     <div class="content">
       <!-- DASHBOARD -->
-      <section class="page active" id="page-dashboard">
+      <section class="page" id="page-dashboard">
         <div class="page-h">
           <div><h2>Visão geral</h2><p>Acompanhe documentos, vencimentos e saldos contratados em um só lugar.</p></div>
           <div class="page-h-actions">
@@ -5876,12 +5876,15 @@ window.addEventListener('load', async () => {
       if(PAPEL === 'assessoria'){
         navigate('documentos');
       } else {
-        // Volta pra última página visitada antes do F5, em vez de sempre cair no Dashboard
+        // Volta pra última página visitada antes do F5, em vez de sempre cair no Dashboard.
+        // Sempre chama navigate() (com 'dashboard' como fallback) porque a página fica
+        // em branco até isso rodar — ver `.page{display:none}` por padrão no CSS.
         let ultimaRota = null;
         try { ultimaRota = localStorage.getItem('ultimaRota'); } catch(e){}
         const rotasConfidenciais = ['medicoes','contratospgr'];
         const rotaBloqueada = rotasConfidenciais.includes(ultimaRota) && PAPEL !== 'coordenador';
-        if(ultimaRota && !rotaBloqueada && document.getElementById('page-'+ultimaRota)) navigate(ultimaRota);
+        const rotaValida = ultimaRota && !rotaBloqueada && document.getElementById('page-'+ultimaRota);
+        navigate(rotaValida ? ultimaRota : 'dashboard');
       }
     }
   } catch(e){ console.warn('Sessão:', e); }
