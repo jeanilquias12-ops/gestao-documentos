@@ -5863,10 +5863,13 @@ window.addEventListener('load', async () => {
   try {
     const { data: { session } } = await db.auth.getSession();
     if(session){
-      PAPEL = await carregarPapel();
-      aplicarPermissoes();
+      // Esconde a tela de login assim que confirmamos a sessão — antes de
+      // buscar papel/permissões e carregar dados, pra reduzir a piscada
+      // visual do login aparecendo e sumindo a cada F5.
       $('#loginScreen').classList.remove('show');
       $('#appContainer').classList.add('authenticated');
+      PAPEL = await carregarPapel();
+      aplicarPermissoes();
       initApp();
       await carregarDaNuvem();
       if(PAPEL === 'assessoria') navigate('documentos');
