@@ -2016,7 +2016,12 @@ function renderIndicadores(){
   renderIndChartFases(meses, MESES);
 
   const selMes = $('#ind-detalhe-mes');
-  const curMes = selMes.value || String(new Date().getMonth());
+  // Padrão: o mês mais recente que teve entregas de verdade, não o mês corrente do
+  // calendário — senão a tela mostra "sem entregas" mesmo tendo atraso registrado
+  // num mês anterior, dando a falsa impressão de que "está tudo ok".
+  let mesPadrao = new Date().getMonth();
+  for(let i = 11; i >= 0; i--){ if(meses[i].total > 0){ mesPadrao = i; break; } }
+  const curMes = selMes.value || String(mesPadrao);
   selMes.innerHTML = MESES_FULL.map((n,i) => `<option value="${i}" ${String(i)===curMes?'selected':''}>${n}</option>`).join('');
   renderIndDetalhe(meses, parseInt(selMes.value));
 
