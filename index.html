@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
 <style>
   :root{
     --green-900:#0F4F22;--green-700:#1B6B2F;--green-500:#4CAF50;--green-300:#A8D5B5;--green-100:#DDEEE2;--green-50:#F4FAF6;
@@ -4974,7 +4974,9 @@ function registerSW(){
 const SUPABASE_URL = 'https://jpmhnlorbrtjeesknwbl.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy'
 const { createClient } = supabase
-const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+})
 
 async function salvarDocumentoNuvem(doc) {
   const { error } = await db.from('documentos').upsert({
