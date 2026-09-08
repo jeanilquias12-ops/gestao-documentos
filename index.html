@@ -1719,6 +1719,11 @@ function load(){
 }
 
 /* ================== UTILITÁRIOS ================== */
+// Normaliza texto pra busca: minúsculo + sem acento (ex.: "São Paulo" -> "sao paulo"),
+// pra "mauá" achar "MAUÁ" e "sao" achar "São" independente de acento/caixa.
+function normalizeTexto(s){
+  return (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+}
 function maskCNPJ(v){
   v = v.replace(/\D/g,'').slice(0,14);
   if(v.length>12) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/,'$1.$2.$3/$4-$5');
@@ -2382,7 +2387,7 @@ function renderDashboard(){
 function renderEmpresas(){
   const status = $('#f-empresa-status').value;
   const seg = $('#f-empresa-seg').value;
-  const q = $('#f-empresa-q').value.toLowerCase();
+  const q = normalizeTexto($('#f-empresa-q').value);
 
   const segOpts = [...new Set(state.empresas.map(e => e.segmento).filter(Boolean))];
   $('#f-empresa-seg').innerHTML = '<option value="">Todos</option>' + segOpts.map(s => `<option ${s===seg?'selected':''}>${s}</option>`).join('');
@@ -2390,7 +2395,7 @@ function renderEmpresas(){
   let list = state.empresas.filter(e =>
     (!status || e.status === status) &&
     (!seg || e.segmento === seg) &&
-    (!q || e.nome.toLowerCase().includes(q) || e.cnpj.includes(q))
+    (!q || normalizeTexto(e.nome).includes(q) || e.cnpj.includes(q))
   );
 
   const sort = sortState.empresas || {col:'nome', dir:1};
@@ -2423,14 +2428,14 @@ function renderEmpresas(){
 function renderObras(){
   const empresaF = $('#f-obra-empresa').value;
   const statusF = $('#f-obra-status').value;
-  const q = $('#f-obra-q').value.toLowerCase();
+  const q = normalizeTexto($('#f-obra-q').value);
 
   $('#f-obra-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresaF?'selected':''}>${e.nome}</option>`).join('');
 
   let list = state.obras.filter(o =>
     (!empresaF || o.empresa === empresaF) &&
     (!statusF || o.status === statusF) &&
-    (!q || o.nome.toLowerCase().includes(q))
+    (!q || normalizeTexto(o.nome).includes(q))
   );
 
   const sort = sortState.obras || {col:'nome', dir:1};
@@ -2463,7 +2468,8 @@ function renderDocs(){
   const status = $('#f-doc-status').value;
   const fase = $('#f-doc-fase').value;
   const empresa = $('#f-doc-empresa').value;
-  const q = $('#f-doc-q').value.toLowerCase();
+  const q = normalizeTexto($('#f-doc-q').value);
+  const incluirInativas = $('#f-doc-inativas').checked;
 
   $('#f-doc-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
 
@@ -2476,9 +2482,10 @@ function renderDocs(){
       if(fase === 'assessoria'&& !(f && f.fase === 2)) return false;
       if(fase === 'concluido' && !(f && f.key === 'fase-done')) return false;
     }
-    if(!$('#f-doc-inativas').checked && !docEmpresaAtiva(d)) return false;
+    if(!incluirInativas && !docEmpresaAtiva(d)) return false;
     return (!tipo || d.tipo === tipo) && (!status || sk === status) && (!empresa || d.empresa === empresa) &&
-      (!q || (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q) || nomeEmpresa(d.empresa).toLowerCase().includes(q));
+      (!q || normalizeTexto(d.numero).includes(q) || normalizeTexto(d.responsavel).includes(q) ||
+        normalizeTexto(nomeEmpresa(d.empresa)).includes(q) || (d.obra && normalizeTexto(nomeObra(d.obra)).includes(q)));
   });
 
   const sort = sortState.docs || {col:'validade', dir:1};
@@ -3767,11 +3774,11 @@ function setupGlobalSearch(){
   const inp = $('#globalSearch');
   const res = $('#searchResults');
   inp.oninput = () => {
-    const q = inp.value.toLowerCase().trim();
+    const q = normalizeTexto(inp.value.trim());
     if(!q){ res.classList.remove('show'); return; }
-    const emp = state.empresas.filter(e => e.nome.toLowerCase().includes(q) || e.cnpj.includes(q)).slice(0,5);
-    const obr = state.obras.filter(o => o.nome.toLowerCase().includes(q)).slice(0,5);
-    const docs = state.docs.filter(d => (d.numero||'').toLowerCase().includes(q) || (d.responsavel||'').toLowerCase().includes(q)).slice(0,5);
+    const emp = state.empresas.filter(e => normalizeTexto(e.nome).includes(q) || e.cnpj.includes(q)).slice(0,5);
+    const obr = state.obras.filter(o => normalizeTexto(o.nome).includes(q)).slice(0,5);
+    const docs = state.docs.filter(d => normalizeTexto(d.numero).includes(q) || normalizeTexto(d.responsavel).includes(q)).slice(0,5);
     let html = '';
     if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${e.nome}</b></span><small>${e.cnpj}</small></div>`).join(''); }
     if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${o.nome}</b></span><small>${nomeEmpresa(o.empresa)}</small></div>`).join(''); }
@@ -3787,9 +3794,9 @@ function setupGlobalSearch(){
 function setupAutofill(){
   const nome = $('#me-nome'), af = $('#me-nome-af');
   nome.oninput = () => {
-    const q = nome.value.toLowerCase();
+    const q = normalizeTexto(nome.value);
     if(q.length < 2){ af.classList.remove('show'); return; }
-    const matches = state.empresas.filter(e => e.nome.toLowerCase().includes(q)).slice(0,5);
+    const matches = state.empresas.filter(e => normalizeTexto(e.nome).includes(q)).slice(0,5);
     if(!matches.length){ af.classList.remove('show'); return; }
     af.innerHTML = matches.map(e => `<div data-id="${e.id}"><span>${e.nome}</span><small>${e.cnpj}</small></div>`).join('');
     af.classList.add('show');
@@ -3846,7 +3853,8 @@ function makeSearchableSelect(sel){
   }
 
   function renderOpts(q){
-    const filtered = [...sel.options].filter(o => !q || o.text.toLowerCase().includes(q.toLowerCase()));
+    const qn = normalizeTexto(q);
+    const filtered = [...sel.options].filter(o => !qn || normalizeTexto(o.text).includes(qn));
     opts.innerHTML = filtered.length
       ? filtered.map(o => `<div class="ss-opt" data-val="${o.value}">${o.text}</div>`).join('')
       : '<div class="ss-empty">Nenhum resultado</div>';
@@ -4703,14 +4711,14 @@ function statusInsumo(dias, validadeDias){
 
 function renderInsumos(){
   const statusFiltro = $('#f-ins-status')?.value || '';
-  const q = ($('#f-ins-q')?.value || '').toLowerCase();
+  const q = normalizeTexto($('#f-ins-q')?.value || '');
   const tbody = $('#tbl-insumos tbody');
   if(!tbody) return;
 
   let lista = [...state.insumos];
   lista.forEach(i => { i._dias = diasRestantesInsumo(i.chegada, i.validade); i._status = statusInsumo(i._dias, i.validade); });
   if(statusFiltro) lista = lista.filter(i => i._status.key === statusFiltro);
-  if(q) lista = lista.filter(i => i.nome.toLowerCase().includes(q));
+  if(q) lista = lista.filter(i => normalizeTexto(i.nome).includes(q));
   lista.sort((a,b) => (a._dias ?? 9999) - (b._dias ?? 9999));
 
   // badge no nav
@@ -5876,20 +5884,23 @@ window.addEventListener('load', async () => {
       $('#appContainer').classList.add('authenticated');
       PAPEL = await carregarPapel();
       aplicarPermissoes();
-      initApp();
-      await carregarDaNuvem();
+      // initApp()/carregarDaNuvem() cada um no seu try — se um deles falhar (erro de
+      // rede, bug num render específico), a página não pode ficar em branco: sempre
+      // temos que chegar no navigate() abaixo, senão nenhuma página fica visível
+      // (ver `.page{display:none}` por padrão no CSS).
+      try { initApp(); } catch(e){ console.error('Erro ao iniciar app:', e); }
+      try { await carregarDaNuvem(); } catch(e){ console.error('Erro ao carregar dados da nuvem:', e); toast('⚠ Erro ao carregar dados — tente atualizar a página', 'danger'); }
       if(PAPEL === 'assessoria'){
         navigate('documentos');
       } else {
         // Volta pra última página visitada antes do F5, em vez de sempre cair no Dashboard.
-        // Sempre chama navigate() (com 'dashboard' como fallback) porque a página fica
-        // em branco até isso rodar — ver `.page{display:none}` por padrão no CSS.
         let ultimaRota = null;
         try { ultimaRota = localStorage.getItem('ultimaRota'); } catch(e){}
         const rotasConfidenciais = ['medicoes','contratospgr'];
         const rotaBloqueada = rotasConfidenciais.includes(ultimaRota) && PAPEL !== 'coordenador';
         const rotaValida = ultimaRota && !rotaBloqueada && document.getElementById('page-'+ultimaRota);
-        navigate(rotaValida ? ultimaRota : 'dashboard');
+        try { navigate(rotaValida ? ultimaRota : 'dashboard'); }
+        catch(e){ console.error('Erro ao navegar, forçando Dashboard:', e); try { navigate('dashboard'); } catch(e2){} }
       }
     }
   } catch(e){ console.warn('Sessão:', e); }
