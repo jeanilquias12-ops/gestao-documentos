@@ -398,6 +398,11 @@
             <div class="card-b" id="saldos-baixos" style="display:flex;flex-direction:column;gap:14px"></div>
           </div>
         </div>
+        <div class="card" id="card-pendencias-faturamento" style="margin-top:18px;display:none">
+          <div class="card-h"><div><h3>⚠ Pendências de faturamento</h3><p>Lançamentos que parecem ter ficado sem medição correspondente</p></div><button class="btn ghost sm" data-route="medicoes">Ver Medição Mensal →</button></div>
+          <div id="dash-pendencias-fat" style="display:flex;flex-direction:column;gap:8px;padding:4px 0"></div>
+        </div>
+
         <div class="card" style="margin-top:18px">
           <div class="card-h"><div><h3>Agendamentos psicossociais</h3><p>Próximas avaliações pendentes ou reagendadas</p></div><button class="btn ghost sm" onclick="openAgenda('psicossociais')">Ver todos →</button></div>
           <div id="dash-psi-lista"></div>
@@ -3541,6 +3546,52 @@ function getResumoPendencias(){
   return {venc, venciendo};
 }
 
+function renderPendenciasFaturamento(){
+  const card = $('#card-pendencias-faturamento');
+  if(!card) return;
+  if(PAPEL !== 'coordenador'){ card.style.display = 'none'; return; }
+
+  const itens = [];
+
+  // PGR enviado ao financeiro sem nenhuma medição na mesma empresa/obra
+  state.docs.filter(d => d.tipo === 'PGR' && d.envFinanceiro).forEach(d => {
+    const temMedicao = state.medicoes.some(m => m.tipo === 'PGR' && m.empresa === d.empresa && (m.obra || '') === (d.obra || ''));
+    if(!temMedicao){
+      itens.push(`PGR de <b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' — ' + nomeObra(d.obra) : ''} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`);
+    }
+  });
+
+  // Avaliações (LTCAT) lançadas a mais do que foi faturado, por empresa/obra/tipo de ensaio
+  const lancPorChave = {};
+  state.avaliacoes.forEach(a => {
+    const c = state.contratos.find(x => x.id === a.contrato);
+    if(!c) return;
+    const key = c.empresa + '|' + (c.obra || '') + '|' + a.agente;
+    lancPorChave[key] = (lancPorChave[key] || 0) + 1;
+  });
+  const fatPorChave = {};
+  state.medicoes.filter(m => m.tipo === 'LTCAT').forEach(m => {
+    Object.entries(m.detalhes || {}).forEach(([agente, qtd]) => {
+      const key = m.empresa + '|' + (m.obra || '') + '|' + agente;
+      fatPorChave[key] = (fatPorChave[key] || 0) + (Number(qtd) || 0);
+    });
+  });
+  Object.keys(lancPorChave).forEach(key => {
+    const lanc = lancPorChave[key], fat = fatPorChave[key] || 0;
+    if(lanc > fat){
+      const [empId, obraId, agente] = key.split('|');
+      itens.push(`<b>${nomeEmpresa(empId)}</b>${obraId ? ' — ' + nomeObra(obraId) : ''}: ${lanc - fat} avaliação(ões) de "${agente}" sem medição correspondente.`);
+    }
+  });
+
+  if(!itens.length){ card.style.display = 'none'; return; }
+  card.style.display = '';
+  const MAX = 10;
+  $('#dash-pendencias-fat').innerHTML = itens.slice(0, MAX).map(t =>
+    `<div style="display:flex;gap:8px;align-items:flex-start;padding:9px 12px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:13px;color:var(--warn-fg)"><span>⚠</span><span>${t}</span></div>`
+  ).join('') + (itens.length > MAX ? `<small style="color:var(--ink-muted);padding:2px 4px">+ ${itens.length - MAX} outra(s) pendência(s)</small>` : '');
+}
+
 function renderNotifyBanner(){
   if(!notifyPrefs.banner){ $('#notifyBanner').classList.remove('show'); return; }
   if(notifyPrefs.dismissedDate === todayISO()){ $('#notifyBanner').classList.remove('show'); return; }
@@ -4620,7 +4671,7 @@ function setupEvents(){
   setupAutofill();
 
   // Selects pesquisáveis de empresa
-  ['f-doc-empresa','f-av-empresa','f-psi-empresa','f-ev-treinamento-empresa','f-ev-palestra-empresa','f-ev-ltcat-empresa','mc-empresa','md-empresa','mp-empresa','mev-empresa'].forEach(id => {
+  ['f-obra-empresa','f-doc-empresa','f-av-empresa','f-psi-empresa','f-ev-treinamento-empresa','f-ev-palestra-empresa','f-ev-ltcat-empresa','f-med-empresa','mc-empresa','mc-obra','md-empresa','md-obra','mo-empresa','mp-empresa','mev-empresa','med-empresa','med-obra','cpgr-empresa','cpgr-obra','me-converter-empresa'].forEach(id => {
     const sel = $('#'+id);
     if(sel) makeSearchableSelect(sel);
   });
@@ -4739,6 +4790,7 @@ function renderAll(){
   renderEventos('ltcat');
   renderRelatorios();
   renderNotifyBanner();
+  renderPendenciasFaturamento();
 }
 
 function initApp(){
@@ -4970,12 +5022,15 @@ async function registrarMedicaoPgrAutomatica(docId){
 async function registrarMedicaoAvaliacaoAutomatica(avaliacaoId){
   try {
     const { data, error } = await db.rpc('registrar_medicao_avaliacao_automatica', { p_avaliacao_id: avaliacaoId });
-    if(error){ console.warn('Medição automática (avaliação) não registrada:', error.message); return null; }
+    if(error){
+      toast('⚠ Medição automática não registrada: ' + error.message, 'danger');
+      return null;
+    }
     if(data?.status === 'sem_preco_configurado'){
-      console.warn('Sem preço configurado em Config. Ensaios para esta avaliação — medição não lançada.');
+      toast('⚠ Este tipo de ensaio não tem preço em Config. Ensaios — a medição NÃO foi lançada automaticamente. Cadastre o preço e lance manualmente.', 'danger');
     }
     return data;
-  } catch(e){ console.warn('Medição automática (avaliação) não registrada:', e.message); return null; }
+  } catch(e){ toast('⚠ Medição automática não registrada: ' + e.message, 'danger'); return null; }
 }
 
 async function salvarObraNuvem(obra) {
