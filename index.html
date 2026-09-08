@@ -3039,6 +3039,8 @@ function montarRelatorio(){
   // Indicadores
   if(chk('rel-c-indicadores')){
     const META_DIAS = 15;
+    const META_FASE1 = 10;
+    const META_FASE2 = 5;
     const isConcluido = d => (d.tipo === 'LTCAT' && d.elabFinalizada) || (d.tipo !== 'LTCAT' && d.retornoRecebido);
     const dataEntrega = d => d.envClienteData || d.envAssessoriaData || null;
     const concluidos = state.docs.filter(d => d.inicioElaboracao && isConcluido(d) && dataEntrega(d));
@@ -3051,7 +3053,14 @@ function montarRelatorio(){
       const docsMes = docsAno.filter(d => dataEntrega(d).substring(5,7) === mm);
       const entregas = docsMes.map(d => {
         const diasTotal = daysBetween(d.inicioElaboracao, dataEntrega(d));
-        return {diasTotal, noPrazo: diasTotal <= META_DIAS};
+        let fase1 = diasTotal, fase2 = 0;
+        if(d.tipo === 'PGR' && d.envAssessoriaData){
+          fase1 = daysBetween(d.inicioElaboracao, d.envAssessoriaData);
+          fase2 = d.envClienteData ? daysBetween(d.envAssessoriaData, d.envClienteData) : 0;
+        }
+        const temFases = d.tipo === 'PGR' && d.envAssessoriaData;
+        const noPrazo = temFases ? (fase1 <= META_FASE1 && fase2 <= META_FASE2) : diasTotal <= META_DIAS;
+        return {diasTotal, noPrazo};
       });
       const total = entregas.length, noPrazo = entregas.filter(e=>e.noPrazo).length;
       const efetividade = total > 0 ? noPrazo/total : null;
@@ -3628,6 +3637,12 @@ async function salvarConfigEnsaios(){
       { onConflict: 'tipo' }
     );
     if(error) throw new Error(error.message);
+    // Remove do banco os ensaios que foram deletados pelo usuário
+    const nomesSalvos = new Set(rows.map(r => r.tipo));
+    const removidos = TIPOS_AVALIACAO.filter(t => !nomesSalvos.has(t.nome));
+    for(const r of removidos){
+      await db.from('config_ensaios').delete().eq('tipo', r.nome);
+    }
     // Atualiza runtime: reaproveita id/key existentes, cria novos para itens adicionados
     rows.forEach(r => {
       const existente = TIPOS_AVALIACAO.find(x => x.nome === r.tipo);
@@ -3637,6 +3652,10 @@ async function salvarConfigEnsaios(){
         TIPOS_AVALIACAO.push({key, id:'mc-'+key, nome:r.tipo, valor:r.venda, custo:r.custo});
       }
     });
+    // Remove do runtime os ensaios que não estão mais na lista
+    for(let i = TIPOS_AVALIACAO.length - 1; i >= 0; i--){
+      if(!nomesSalvos.has(TIPOS_AVALIACAO[i].nome)) TIPOS_AVALIACAO.splice(i, 1);
+    }
     atualizarLabelsPreco();
     save(); closeModal('modal-config-ensaios');
     toast('✅ Preços e custos atualizados', 'ok');
@@ -3869,14 +3888,17 @@ function setupEvents(){
     if(!confirm('Excluir empresa? Documentos e contratos vinculados também serão removidos.')) return;
     const id = $('#me-id').value;
     const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
+    const obraIds = state.obras.filter(o => o.empresa === id).map(o => o.id);
     const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
     const aIds = state.avaliacoes.filter(a => cIds.includes(a.contrato)).map(a => a.id);
     try {
       await excluirEmpresaNuvem(id);
       await Promise.all(docIds.map(did => excluirDocumentoNuvem(did)));
+      await Promise.all(obraIds.map(oid => excluirObraNuvem(oid)));
       await Promise.all(cIds.map(cid => excluirContratoNuvem(cid)));
       await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
       state.empresas = state.empresas.filter(e => e.id !== id);
+      state.obras = state.obras.filter(o => o.empresa !== id);
       state.docs = state.docs.filter(d => d.empresa !== id);
       state.contratos = state.contratos.filter(c => c.empresa !== id);
       state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
@@ -4299,6 +4321,7 @@ function setupEvents(){
     }
     /* ── FIM VERIFICAÇÃO DE CONFLITOS ── */
 
+    let valorMedicaoAutomatica = 0;
     try {
       if(isEdit){
         const id = $('#ma-id').value;
@@ -4314,12 +4337,17 @@ function setupEvents(){
             await salvarAvaliacaoNuvem(obj);
             state.avaliacoes.push(obj);
             total++;
+            const rMed = await registrarMedicaoAvaliacaoAutomatica(obj.id);
+            if(rMed?.status === 'ok') valorMedicaoAutomatica += rMed.preco;
           }
         }
       }
       save(); closeModal('modal-aval'); renderAll();
       const total2 = isEdit ? 0 : items.reduce((s,i)=>s+i.qty,0);
       toast(isEdit ? '✅ Avaliação salva' : `✅ ${total2} avaliação(ões) salva(s)`, 'ok');
+      if(!isEdit && valorMedicaoAutomatica > 0){
+        toast(`💰 ${fmtReal(valorMedicaoAutomatica)} lançado automaticamente na Medição Mensal`, 'ok');
+      }
     } catch(err) {
       toast('Erro ao salvar no servidor: ' + err.message, 'danger');
     }
@@ -4841,8 +4869,9 @@ function scheduleDesktopNotification(){
   if(!('Notification' in window)) return;
   if(!notifShouldFire()) return;
 
-  const vencidos = state.docs.filter(d => statusDoc(d).key === 'danger');
-  const vencendo = state.docs.filter(d => statusDoc(d).key === 'warn');
+  const docsAtivos = state.docs.filter(docEmpresaAtiva);
+  const vencidos = docsAtivos.filter(d => statusDoc(d).key === 'danger');
+  const vencendo = docsAtivos.filter(d => statusDoc(d).key === 'warn');
   const total = vencidos.length + vencendo.length;
   if(total === 0) return;
 
@@ -4936,6 +4965,17 @@ async function registrarMedicaoPgrAutomatica(docId){
     }
     // status 'ja_existe' -> medição já lançada antes para este documento, nada a avisar
   } catch(e){ console.warn('Medição automática não registrada:', e.message); }
+}
+
+async function registrarMedicaoAvaliacaoAutomatica(avaliacaoId){
+  try {
+    const { data, error } = await db.rpc('registrar_medicao_avaliacao_automatica', { p_avaliacao_id: avaliacaoId });
+    if(error){ console.warn('Medição automática (avaliação) não registrada:', error.message); return null; }
+    if(data?.status === 'sem_preco_configurado'){
+      console.warn('Sem preço configurado em Config. Ensaios para esta avaliação — medição não lançada.');
+    }
+    return data;
+  } catch(e){ console.warn('Medição automática (avaliação) não registrada:', e.message); return null; }
 }
 
 async function salvarObraNuvem(obra) {
