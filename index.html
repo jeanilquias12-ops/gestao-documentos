@@ -1847,6 +1847,7 @@ function emailDetalheContrato(contrato, realizadas, pendentes){
 
 /* ================== NAVEGAÇÃO ================== */
 function navigate(route){
+  try { localStorage.setItem('ultimaRota', route); } catch(e){}
   $$('.page').forEach(p => p.classList.remove('active'));
   const pg = $('#page-'+route);
   if(pg) pg.classList.add('active');
@@ -5872,7 +5873,16 @@ window.addEventListener('load', async () => {
       aplicarPermissoes();
       initApp();
       await carregarDaNuvem();
-      if(PAPEL === 'assessoria') navigate('documentos');
+      if(PAPEL === 'assessoria'){
+        navigate('documentos');
+      } else {
+        // Volta pra última página visitada antes do F5, em vez de sempre cair no Dashboard
+        let ultimaRota = null;
+        try { ultimaRota = localStorage.getItem('ultimaRota'); } catch(e){}
+        const rotasConfidenciais = ['medicoes','contratospgr'];
+        const rotaBloqueada = rotasConfidenciais.includes(ultimaRota) && PAPEL !== 'coordenador';
+        if(ultimaRota && !rotaBloqueada && document.getElementById('page-'+ultimaRota)) navigate(ultimaRota);
+      }
     }
   } catch(e){ console.warn('Sessão:', e); }
 });
