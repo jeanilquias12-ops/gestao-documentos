@@ -3476,20 +3476,20 @@ function recalcMedicaoLtcat(){
   $('#med-valor').value = fat;
 }
 
-function openMedicao(id){
+function openMedicao(id, preset){
   const m = id ? state.medicoes.find(x => x.id === id) : null;
-  $('#medicao-modal-title').textContent = m ? 'Editar medição' : 'Nova medição';
+  $('#medicao-modal-title').textContent = m ? 'Editar medição' : (preset ? 'Nova medição — pendência de faturamento' : 'Nova medição');
   $('#med-id').value = m?.id || '';
   $('#med-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
-  $('#med-empresa').value = m?.empresa || state.empresas[0]?.id || '';
-  populateObraSelectGeneric('med-obra', $('#med-empresa').value, m?.obra || '');
-  const tipo = m?.tipo || 'PGR';
+  $('#med-empresa').value = m?.empresa || preset?.empresa || state.empresas[0]?.id || '';
+  populateObraSelectGeneric('med-obra', $('#med-empresa').value, m?.obra || preset?.obra || '');
+  const tipo = m?.tipo || preset?.tipo || 'PGR';
   $('#med-tipo').value = tipo;
   $('#med-valor').value = m?.valor || '';
   $('#med-data').value = m?.data || todayISO();
   $('#med-desc').value = m?.desc || '';
   $('#med-delete').style.display = m ? '' : 'none';
-  medicaoAplicarModoTipo(tipo, m?.detalhes);
+  medicaoAplicarModoTipo(tipo, m?.detalhes || preset?.detalhes);
   openModal('modal-medicao');
 }
 
@@ -3658,6 +3658,10 @@ function getResumoPendencias(){
   return {venc, venciendo};
 }
 
+// Cada item carrega o preset pronto pra abrir a Medição Mensal já preenchida —
+// "dar baixa" numa pendência é clicar em Lançar, conferir o valor e salvar.
+window._pendenciasFaturamentoPresets = [];
+
 function renderPendenciasFaturamento(){
   const card = $('#card-pendencias-faturamento');
   if(!card) return;
@@ -3669,11 +3673,15 @@ function renderPendenciasFaturamento(){
   state.docs.filter(d => d.tipo === 'PGR' && d.envFinanceiro).forEach(d => {
     const temMedicao = state.medicoes.some(m => m.tipo === 'PGR' && m.empresa === d.empresa && (m.obra || '') === (d.obra || ''));
     if(!temMedicao){
-      itens.push(`PGR de <b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' — ' + nomeObra(d.obra) : ''} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`);
+      itens.push({
+        texto: `PGR de <b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' — ' + nomeObra(d.obra) : ''} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`,
+        preset: {empresa: d.empresa, obra: d.obra || '', tipo: 'PGR'}
+      });
     }
   });
 
-  // Avaliações (LTCAT) lançadas a mais do que foi faturado, por empresa/obra/tipo de ensaio
+  // Avaliações (LTCAT) lançadas a mais do que foi faturado, por empresa/obra/tipo de ensaio —
+  // agrupa por empresa+obra pra virar UMA medição só com todos os tipos pendentes daquela obra.
   const lancPorChave = {};
   state.avaliacoes.forEach(a => {
     const c = state.contratos.find(x => x.id === a.contrato);
@@ -3688,20 +3696,41 @@ function renderPendenciasFaturamento(){
       fatPorChave[key] = (fatPorChave[key] || 0) + (Number(qtd) || 0);
     });
   });
+  const pendPorObra = {}; // empresa+obra -> {empresa, obra, detalhes:{agente:qtd}, partes:[texto]}
   Object.keys(lancPorChave).forEach(key => {
     const lanc = lancPorChave[key], fat = fatPorChave[key] || 0;
     if(lanc > fat){
       const [empId, obraId, agente] = key.split('|');
-      itens.push(`<b>${nomeEmpresa(empId)}</b>${obraId ? ' — ' + nomeObra(obraId) : ''}: ${lanc - fat} avaliação(ões) de "${agente}" sem medição correspondente.`);
+      const faltam = lanc - fat;
+      const obraKey = empId + '|' + obraId;
+      if(!pendPorObra[obraKey]) pendPorObra[obraKey] = {empresa: empId, obra: obraId, detalhes: {}, partes: []};
+      pendPorObra[obraKey].detalhes[agente] = (pendPorObra[obraKey].detalhes[agente] || 0) + faltam;
+      pendPorObra[obraKey].partes.push(`${faltam} de "${agente}"`);
     }
+  });
+  Object.values(pendPorObra).forEach(p => {
+    itens.push({
+      texto: `<b>${nomeEmpresa(p.empresa)}</b>${p.obra ? ' — ' + nomeObra(p.obra) : ''}: ${p.partes.join(', ')} sem medição correspondente.`,
+      preset: {empresa: p.empresa, obra: p.obra, tipo: 'LTCAT', detalhes: p.detalhes}
+    });
   });
 
   if(!itens.length){ card.style.display = 'none'; return; }
   card.style.display = '';
+  window._pendenciasFaturamentoPresets = itens.map(i => i.preset);
   const MAX = 10;
-  $('#dash-pendencias-fat').innerHTML = itens.slice(0, MAX).map(t =>
-    `<div style="display:flex;gap:8px;align-items:flex-start;padding:9px 12px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:13px;color:var(--warn-fg)"><span>⚠</span><span>${t}</span></div>`
-  ).join('') + (itens.length > MAX ? `<small style="color:var(--ink-muted);padding:2px 4px">+ ${itens.length - MAX} outra(s) pendência(s)</small>` : '');
+  $('#dash-pendencias-fat').innerHTML = itens.slice(0, MAX).map((it,i) =>
+    `<div style="display:flex;gap:10px;align-items:center;padding:9px 12px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:13px;color:var(--warn-fg)">
+      <span>⚠</span><span style="flex:1">${it.texto}</span>
+      <button type="button" class="btn sm" style="flex-shrink:0" onclick="abrirMedicaoParaPendencia(${i})">Lançar</button>
+    </div>`
+  ).join('') + (itens.length > MAX ? `<small style="color:var(--ink-muted);padding:2px 4px">+ ${itens.length - MAX} outra(s) pendência(s) — resolva as de cima pra elas aparecerem</small>` : '');
+}
+
+function abrirMedicaoParaPendencia(idx){
+  const preset = window._pendenciasFaturamentoPresets[idx];
+  if(!preset) return;
+  openMedicao(null, preset);
 }
 
 function renderNotifyBanner(){
