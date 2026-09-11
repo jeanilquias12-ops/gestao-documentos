@@ -656,12 +656,11 @@
             <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px">
               <label class="rel-chk"><input type="checkbox" id="rel-c-resumo" checked /> Resumo geral</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-docs" checked /> Documentos</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-avals" /> Avaliações</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-panorama" /> Panorama por empresa</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-psi" /> Psicossociais</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-treino" /> Treinamentos</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-palestra" /> Palestras</label>
-              <label class="rel-chk"><input type="checkbox" id="rel-c-ltcat" /> Avaliação LTCAT</label>
+              <label class="rel-chk"><input type="checkbox" id="rel-c-ltcat" /> Avaliações & Faturamento (LTCAT)</label>
               <label class="rel-chk"><input type="checkbox" id="rel-c-indicadores" /> Indicadores</label>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2859,10 +2858,6 @@ function renderAvaliacoes(){
 function renderRelatorios(){ montarRelatorio(); }
 
 /* ================== RELATÓRIO MONTÁVEL (período + seções) ================== */
-function relNomeEmpresaContrato(contratoId){
-  const c = state.contratos.find(x => x.id === contratoId);
-  return c ? nomeEmpresa(c.empresa) : '—';
-}
 
 function montarRelatorio(){
   const ini = $('#rel-ini') ? $('#rel-ini').value : '';
@@ -2942,21 +2937,6 @@ function montarRelatorio(){
       <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Tipo</th><th>Emissão</th><th>Validade</th><th>Status</th><th>Elaboração</th><th>Entrega</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum documento</td></tr>'
-      }</tbody></table></div></div>`;
-  }
-
-  // Avaliações
-  if(chk('rel-c-avals')){
-    const avs = state.avaliacoes.filter(a => inRange(a.data));
-    const porEmp = {};
-    avs.forEach(a => { const nome = relNomeEmpresaContrato(a.contrato); porEmp[nome] = (porEmp[nome]||0) + 1; });
-    const maxQtd = Math.max(...Object.values(porEmp), 1);
-    const linhas = Object.entries(porEmp).sort((a,b) => b[1]-a[1])
-      .map(([nome, qtd]) => `<tr><td><b>${nome}</b></td><td style="text-align:center"><span class="rel-emp-minibar" style="width:${qtd/maxQtd*50}px"></span> <b>${qtd}</b></td></tr>`).join('');
-    html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Avaliações no período <span class="rel-count">${avs.length}</span></h3><p>${Object.keys(porEmp).length} empresa${Object.keys(porEmp).length!==1?'s':''}</p></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Empresa</th><th style="text-align:center">Quantidade</th></tr></thead><tbody>${
-        linhas || '<tr><td colspan="2" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma avaliação no período</td></tr>'
       }</tbody></table></div></div>`;
   }
 
