@@ -2884,15 +2884,15 @@ function montarRelatorio(){
     // Alertas
     const alertas = [];
     state.docs.filter(d => statusDoc(d).key === 'danger').forEach(d => {
-      alertas.push({t:'danger', m:`${nomeEmpresa(d.empresa)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
+      alertas.push({t:'danger', m:`${nomeEmpresa(d.empresa)}${d.obra ? ' — ' + nomeObra(d.obra) : ''} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
     });
     state.contratos.forEach(c => {
       const r = realizadasContrato(c.id);
-      if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${nomeEmpresa(c.empresa)} — saldo esgotado (${r}/${c.qtd})`});
+      if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${nomeEmpresa(c.empresa)}${c.obra ? ' — ' + nomeObra(c.obra) : ''} — saldo esgotado (${r}/${c.qtd})`});
     });
     state.docs.forEach(d => {
       const f = faseDoc(d);
-      if(f && f.key === 'danger') alertas.push({t:'warn', m:`${nomeEmpresa(d.empresa)} — ${d.tipo}: ${f.label}`});
+      if(f && f.key === 'danger') alertas.push({t:'warn', m:`${nomeEmpresa(d.empresa)}${d.obra ? ' — ' + nomeObra(d.obra) : ''} — ${d.tipo}: ${f.label}`});
     });
     if(alertas.length){
       html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}</div>`;
@@ -2910,7 +2910,8 @@ function montarRelatorio(){
       const entrega = d.envCliente && d.envFinanceiro ? '<span class="pill ok" style="font-size:11px">Completo</span>'
         : d.envCliente ? '<span class="pill enviado-c" style="font-size:11px">Ag. financeiro</span>'
         : '<span class="pill muted" style="font-size:11px">Pendente</span>';
-      return `<tr><td><b>${nomeEmpresa(d.empresa)}</b></td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
+      const obraHtml = d.obra ? `<br><small style="color:var(--ink-muted)">${nomeObra(d.obra)}</small>` : '';
+      return `<tr><td><b>${nomeEmpresa(d.empresa)}</b>${obraHtml}</td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
       <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT</p></div></div>
@@ -3002,22 +3003,15 @@ function montarRelatorio(){
 
   // Avaliação LTCAT (layout fiel ao modelo de relatório gerencial usado fora do sistema)
   if(chk('rel-c-ltcat')){
-    // Preço de venda e custo de laboratório por tipo de ensaio (config editável em config_ensaios)
-    const precoTipo = (tipo) => precoEnsaio(tipo);
     // Formatador que mostra R$ 0,00 (fiel ao modelo), diferente do fmtReal global que usa "—"
     const fmtR = (v) => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-    // Todo contrato da tabela `contratos` é um contrato de avaliação LTCAT (ensaios) —
-    // não depende de estar formalmente vinculado a um `documento` do tipo LTCAT,
-    // pois esse vínculo (doc_id) é preenchido só quando o documento já foi cadastrado.
-    const avsLtcat = state.avaliacoes.filter(a => inRange(a.data))
+    // Faturamento real: parte das medições efetivamente lançadas (tabela `medicoes`),
+    // não do preço teórico de cada avaliação — assim bate com a Medição Mensal.
+    const medsLtcat = state.medicoes.filter(m => m.tipo === 'LTCAT' && inRange(m.data))
       .sort((a,b) => (a.data||'').localeCompare(b.data||''));
-    // Unidade de faturamento: obra do contrato (quando existe) — senão, a empresa
-    const unidadeContrato = (contratoId) => {
-      const c = state.contratos.find(x => x.id === contratoId);
-      if(!c) return '—';
-      return (c.obra && nomeObra(c.obra)) || nomeEmpresa(c.empresa) || '—';
-    };
+    const qtdDetalhes = (m) => Object.values(m.detalhes||{}).reduce((s,q) => s + (Number(q)||0), 0);
+    const unidadeMedicao = (m) => (m.obra && nomeObra(m.obra)) || nomeEmpresa(m.empresa) || '—';
 
     const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const labelMes = (mm) => { const [y,m] = mm.split('-'); return MESES_NOME[Number(m)-1]+' '+y; };
@@ -3025,24 +3019,24 @@ function montarRelatorio(){
 
     // Agrupar por mês
     const mesesMap = {};
-    avsLtcat.forEach(a => {
-      const mm = (a.data||'').slice(0,7);
+    medsLtcat.forEach(m => {
+      const mm = (m.data||'').slice(0,7);
       if(!mm) return;
       if(!mesesMap[mm]) mesesMap[mm] = [];
-      mesesMap[mm].push(a);
+      mesesMap[mm].push(m);
     });
     const mesesKeys = Object.keys(mesesMap).sort();
 
     // Totais globais
-    let fatTotal = 0, custoTotal = 0;
-    avsLtcat.forEach(a => { const p = precoTipo(a.agente); fatTotal += p.venda; custoTotal += p.custo; });
+    let fatTotal = 0, custoTotal = 0, qtdTotal = 0;
+    medsLtcat.forEach(m => { fatTotal += Number(m.valor)||0; custoTotal += medicaoCustoLab(m); qtdTotal += qtdDetalhes(m); });
     const margemTotal = fatTotal - custoTotal;
     const margemTotalPct = fatTotal > 0 ? (margemTotal/fatTotal*100) : 0;
 
     // Gráfico de evolução mensal do faturamento (barras, estilo do modelo)
     let ltcatChart = '';
     if(mesesKeys.length){
-      const fatPorMes = mesesKeys.map(mm => mesesMap[mm].reduce((s,a)=>s+precoTipo(a.agente).venda,0));
+      const fatPorMes = mesesKeys.map(mm => mesesMap[mm].reduce((s,m)=>s+(Number(m.valor)||0),0));
       const chW = 900, chH = 260, chPadL = 60, chPadR = 20, chPadT = 24, chPadB = 40;
       const chChartW = chW-chPadL-chPadR, chChartH = chH-chPadT-chPadB;
       const chGap = chChartW/mesesKeys.length, chBarW = Math.min(chGap*0.5, 46);
@@ -3074,19 +3068,20 @@ function montarRelatorio(){
 
     // Seções por mês
     const secoesMes = mesesKeys.map(mm => {
-      const avsMes = mesesMap[mm];
+      const medsMes = mesesMap[mm];
       const porEmpresa = {};
-      let fatMes = 0, custoMes = 0;
-      avsMes.forEach(a => {
-        const nomeE = unidadeContrato(a.contrato);
-        const p = precoTipo(a.agente);
+      let fatMes = 0, custoMes = 0, qtdMes = 0;
+      medsMes.forEach(m => {
+        const nomeE = unidadeMedicao(m);
+        const fat = Number(m.valor)||0, custo = medicaoCustoLab(m), qtd = qtdDetalhes(m);
         if(!porEmpresa[nomeE]) porEmpresa[nomeE] = {qtd:0, fat:0, custo:0, tipos:{}};
-        porEmpresa[nomeE].qtd++;
-        porEmpresa[nomeE].fat += p.venda;
-        porEmpresa[nomeE].custo += p.custo;
-        fatMes += p.venda; custoMes += p.custo;
-        const tipo = a.agente || 'Não informado';
-        porEmpresa[nomeE].tipos[tipo] = (porEmpresa[nomeE].tipos[tipo]||0) + 1;
+        porEmpresa[nomeE].qtd += qtd;
+        porEmpresa[nomeE].fat += fat;
+        porEmpresa[nomeE].custo += custo;
+        fatMes += fat; custoMes += custo; qtdMes += qtd;
+        Object.entries(m.detalhes||{}).forEach(([tipo,q]) => {
+          porEmpresa[nomeE].tipos[tipo] = (porEmpresa[nomeE].tipos[tipo]||0) + (Number(q)||0);
+        });
       });
       const margemMes = fatMes - custoMes;
       const margemMesPct = fatMes > 0 ? (margemMes/fatMes*100) : 0;
@@ -3101,14 +3096,14 @@ function montarRelatorio(){
         <h2>${labelMes(mm)}</h2>
         <div class="ltcat-kpi-container">
           <div class="ltcat-kpi-card"><h3>Faturamento Bruto</h3><p>${fmtR(fatMes)}</p></div>
-          <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsMes.length}</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${qtdMes}</p></div>
           <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab</h3><p>${fmtR(custoMes)}</p></div>
           <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtR(margemMes)} (${margemMesPct.toFixed(1)}%)</p></div>
         </div>
         <table class="ltcat-table">
           <thead><tr><th>Empresa</th><th>Qtd. Ensaios</th><th>Faturamento (R$)</th><th>Custo Lab (R$)</th><th>Margem (R$)</th></tr></thead>
           <tbody>${linhasEmpresa}</tbody>
-          <tfoot><tr><td>TOTAL</td><td>${avsMes.length}</td><td>${fmtR(fatMes)}</td><td>${fmtR(custoMes)}</td><td>${fmtR(margemMes)}</td></tr></tfoot>
+          <tfoot><tr><td>TOTAL</td><td>${qtdMes}</td><td>${fmtR(fatMes)}</td><td>${fmtR(custoMes)}</td><td>${fmtR(margemMes)}</td></tr></tfoot>
         </table>
       </section>`;
     }).join('');
@@ -3143,13 +3138,13 @@ function montarRelatorio(){
       <p><strong>Período:</strong> ${periodoLtcatLabel}</p>
       <div class="ltcat-kpi-container">
         <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtR(fatTotal)}</p></div>
-        <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${avsLtcat.length}</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${qtdTotal}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab Total</h3><p>${fmtR(custoTotal)}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtR(margemTotal)} (${margemTotalPct.toFixed(1)}%)</p></div>
       </div>
       ${mesesKeys.length ? `<h2>Evolução Mensal do Faturamento</h2>${ltcatChart}` : ''}
       ${mesesKeys.length ? `<h2>Navegação Rápida por Mês</h2>${sumarioHtml}` : ''}
-      ${secoesMes || '<p style="text-align:center;color:#7f8c8d;padding:24px">Nenhuma avaliação LTCAT no período</p>'}
+      ${secoesMes || '<p style="text-align:center;color:#7f8c8d;padding:24px">Nenhuma medição LTCAT no período</p>'}
     </div>`;
   }
 
