@@ -2396,7 +2396,7 @@ function renderDashboard(){
     .slice(0,8);
   const tb = $('#tbl-acoes tbody');
   tb.innerHTML = acoes.length ? acoes.map(({d,s}) => `<tr>
-    <td>${nomeEmpresa(d.empresa)}</td>
+    <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
     <td><b>${d.tipo}</b> <small style="color:var(--ink-muted)">${d.numero||''}</small></td>
     <td class="tight">${fmtDate(d.validade)}</td>
     <td><span class="pill ${s.key}">${s.label}</span></td>
@@ -2412,7 +2412,7 @@ function renderDashboard(){
   sb.innerHTML = saldos.length ? saldos.map(({c, r, pct}) => `
     <div>
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span><b>${nomeEmpresa(c.empresa)}</b><br><small style="color:var(--ink-muted)">${c.desc||'—'}</small></span>
+        <span>${c.obra ? `<b>${nomeObra(c.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(c.empresa)}</small>` : `<b>${nomeEmpresa(c.empresa)}</b><br><small style="color:var(--ink-muted)">${c.desc||'—'}</small>`}</span>
         <span class="pill ${pct>=1?'danger':'warn'}">${r}/${c.qtd}</span>
       </div>
       <div class="progress"><div class="progress-bar ${pct>=1?'danger':'warn'}" style="width:${Math.min(pct*100,100)}%"></div></div>
@@ -2452,7 +2452,7 @@ function renderDashboard(){
       const faseTxt = f.fase === 1 ? 'Seg. do Trabalho (10d)' : 'Assessoria de Saúde (5d)';
       const atrasoHtml = (d.atrasoFase1 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F1: +${d.atrasoFase1}d</span> ` : '') + (d.atrasoFase2 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>` : '');
       return `<tr>
-        <td><b>${nomeEmpresa(d.empresa)}</b></td>
+        <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
         <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
         <td style="font-size:12.5px;color:var(--ink-soft)">${faseTxt}</td>
         <td colspan="2"><span class="pill ${f.key}">${f.label}</span>${atrasoHtml ? '<br>'+atrasoHtml : ''}</td>
@@ -2472,7 +2472,7 @@ function renderDashboard(){
       const cls = diasRestantes < 0 ? 'danger' : diasRestantes <= 10 ? 'danger' : 'warn';
       const label = diasRestantes < 0 ? `Vencida há ${Math.abs(diasRestantes)}d` : `${diasRestantes} dias`;
       return `<tr>
-        <td><b>${nomeEmpresa(doc.empresa)}</b></td>
+        <td>${doc.obra ? `<b>${nomeObra(doc.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(doc.empresa)}</small>` : `<b>${nomeEmpresa(doc.empresa)}</b>`}</td>
         <td><span class="mono">${doc.numero||'—'}</span></td>
         <td class="tight">${fmtDate(doc.validade)}</td>
         <td>${realizadas}</td>
@@ -2883,16 +2883,17 @@ function montarRelatorio(){
 
     // Alertas
     const alertas = [];
+    const rotuloUnidade = (empresa, obra) => obra ? `<b>${nomeObra(obra)}</b> — ${nomeEmpresa(empresa)}` : `<b>${nomeEmpresa(empresa)}</b>`;
     state.docs.filter(d => statusDoc(d).key === 'danger').forEach(d => {
-      alertas.push({t:'danger', m:`${nomeEmpresa(d.empresa)}${d.obra ? ' — ' + nomeObra(d.obra) : ''} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
+      alertas.push({t:'danger', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
     });
     state.contratos.forEach(c => {
       const r = realizadasContrato(c.id);
-      if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${nomeEmpresa(c.empresa)}${c.obra ? ' — ' + nomeObra(c.obra) : ''} — saldo esgotado (${r}/${c.qtd})`});
+      if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${rotuloUnidade(c.empresa, c.obra)} — saldo esgotado (${r}/${c.qtd})`});
     });
     state.docs.forEach(d => {
       const f = faseDoc(d);
-      if(f && f.key === 'danger') alertas.push({t:'warn', m:`${nomeEmpresa(d.empresa)}${d.obra ? ' — ' + nomeObra(d.obra) : ''} — ${d.tipo}: ${f.label}`});
+      if(f && f.key === 'danger') alertas.push({t:'warn', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo}: ${f.label}`});
     });
     if(alertas.length){
       html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}</div>`;
@@ -3669,7 +3670,7 @@ function renderPendenciasFaturamento(){
     const temMedicao = state.medicoes.some(m => m.tipo === 'PGR' && m.empresa === d.empresa && (m.obra || '') === (d.obra || ''));
     if(!temMedicao){
       itens.push({
-        texto: `PGR de <b>${nomeEmpresa(d.empresa)}</b>${d.obra ? ' — ' + nomeObra(d.obra) : ''} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`,
+        texto: `PGR de ${d.obra ? `<b>${nomeObra(d.obra)}</b> — ${nomeEmpresa(d.empresa)}` : `<b>${nomeEmpresa(d.empresa)}</b>`} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`,
         preset: {empresa: d.empresa, obra: d.obra || '', tipo: 'PGR'}
       });
     }
@@ -3705,7 +3706,7 @@ function renderPendenciasFaturamento(){
   });
   Object.values(pendPorObra).forEach(p => {
     itens.push({
-      texto: `<b>${nomeEmpresa(p.empresa)}</b>${p.obra ? ' — ' + nomeObra(p.obra) : ''}: ${p.partes.join(', ')} sem medição correspondente.`,
+      texto: `${p.obra ? `<b>${nomeObra(p.obra)}</b> — ${nomeEmpresa(p.empresa)}` : `<b>${nomeEmpresa(p.empresa)}</b>`}: ${p.partes.join(', ')} sem medição correspondente.`,
       preset: {empresa: p.empresa, obra: p.obra, tipo: 'LTCAT', detalhes: p.detalhes}
     });
   });
