@@ -1294,6 +1294,19 @@ function aplicarPermissoes(){
     const e = document.getElementById(id);
     if(e) e.style.display = vejoMedicoes ? '' : 'none';
   });
+  // Relatório Interno do financeiro: só Resumo geral + Avaliações & Faturamento
+  // (nada de status de documentos, psicossociais, treinamentos etc — fora do escopo dele).
+  if(PAPEL === 'financeiro'){
+    ['rel-c-docs','rel-c-panorama','rel-c-psi','rel-c-treino','rel-c-palestra','rel-c-indicadores'].forEach(id => {
+      const chk = document.getElementById(id);
+      if(!chk) return;
+      chk.checked = false;
+      const lbl = chk.closest('label');
+      if(lbl) lbl.style.display = 'none';
+    });
+    const ltcatChk = document.getElementById('rel-c-ltcat');
+    if(ltcatChk) ltcatChk.checked = true;
+  }
 }
 
 function abrirDevolucao(id){
