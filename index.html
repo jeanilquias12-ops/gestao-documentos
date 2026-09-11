@@ -258,6 +258,7 @@
   .ev-row:last-child{border-bottom:none}
 
   @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     body{background:#fff}
     .sidebar,.topbar,.search,#pdfBtn,.navlabel,.logout-btn,.sidebar-foot,.no-print{display:none!important}
     .app.authenticated{grid-template-columns:1fr!important}
@@ -2870,9 +2871,18 @@ function montarRelatorio(){
   const periodoLabel = (ini || fim) ? `${ini ? fmtDate(ini) : '…'} a ${fim ? fmtDate(fim) : '…'}` : 'todo o período';
   const chk = id => $('#'+id) && $('#'+id).checked;
 
-  let html = `<div class="card rel-sec" style="background:var(--green-700);border:none"><div class="card-b" style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div><b style="font-size:18px;color:#fff">Relatório de Atividades</b><br><span style="color:rgba(255,255,255,.7);font-size:13px">${periodoLabel}</span></div>
-      <span style="color:rgba(255,255,255,.6);font-size:12px">SECONCI Goiás · SST · Gerado em ${fmtDate(todayISO())}</span>
+  let html = `<div class="card rel-sec" style="background:var(--green-700);border:none;-webkit-print-color-adjust:exact;print-color-adjust:exact"><div class="card-b" style="padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.15);display:grid;place-items:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><rect x="9" y="3" width="6" height="18" rx="2"/><rect x="3" y="9" width="18" height="6" rx="2"/></svg>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600">SECONCI Goiás · SST</div>
+          <b style="font-size:19px;color:#fff">Relatório de Atividades</b><br>
+          <span style="color:rgba(255,255,255,.75);font-size:13px">${periodoLabel}</span>
+        </div>
+      </div>
+      <span style="color:rgba(255,255,255,.6);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
     </div></div>`;
 
   // Resumo geral
@@ -3258,6 +3268,10 @@ function montarRelatorio(){
       </div>
     </div>`;
   }
+
+  html += `<div style="text-align:center;padding:18px 0 6px;color:var(--ink-muted);font-size:11px;border-top:1px solid var(--line);margin-top:6px">
+    Documento gerado automaticamente pelo sistema SECONCI Goiás · SST em ${fmtDate(todayISO())} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+  </div>`;
 
   const cont = $('#rel-dynamic');
   if(cont){ cont.innerHTML = html; cont.scrollIntoView({behavior:'smooth', block:'start'}); }
