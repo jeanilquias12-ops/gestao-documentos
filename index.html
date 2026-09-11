@@ -2910,8 +2910,8 @@ function montarRelatorio(){
       const entrega = d.envCliente && d.envFinanceiro ? '<span class="pill ok" style="font-size:11px">Completo</span>'
         : d.envCliente ? '<span class="pill enviado-c" style="font-size:11px">Ag. financeiro</span>'
         : '<span class="pill muted" style="font-size:11px">Pendente</span>';
-      const obraHtml = d.obra ? `<br><small style="color:var(--ink-muted)">${nomeObra(d.obra)}</small>` : '';
-      return `<tr><td><b>${nomeEmpresa(d.empresa)}</b>${obraHtml}</td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
+      const empresaHtml = d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`;
+      return `<tr><td>${empresaHtml}</td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
       <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT</p></div></div>
