@@ -1795,6 +1795,18 @@ function docEmpresaAtiva(d){
   return true;
 }
 
+// Mesma regra do docEmpresaAtiva, mas para contratos (saldo de avaliações) —
+// contrato de empresa/obra inativa não deve gerar alerta de saldo esgotado.
+function contratoEmpresaAtiva(c){
+  const emp = state.empresas.find(e => e.id === c.empresa);
+  if(emp && emp.status === 'inativa') return false;
+  if(c.obra){
+    const obra = state.obras.find(o => o.id === c.obra);
+    if(obra && obra.status === 'inativa') return false;
+  }
+  return true;
+}
+
 function statusDoc(doc){
   if(doc.tipo === 'LTCAT' && !doc.validade) return {key:'ok', label:'Válido (sem validade fixa)'};
   if(!doc.validade) return {key:'muted', label:'Sem validade'};
@@ -2403,7 +2415,7 @@ function renderDashboard(){
   </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:30px">✅ Nenhuma ação pendente</td></tr>';
 
   // Saldos baixos
-  const saldos = state.contratos.map(c => {
+  const saldos = state.contratos.filter(contratoEmpresaAtiva).map(c => {
     const r = realizadasContrato(c.id);
     const pct = c.qtd ? r/c.qtd : 0;
     return {c, r, pct};
@@ -2442,6 +2454,7 @@ function renderDashboard(){
 
   // Elaborações em andamento (Fase 1 e Fase 2)
   const elaboracoes = state.docs
+    .filter(docEmpresaAtiva)
     .map(d => ({d, f: faseDoc(d)}))
     .filter(x => x.f && x.f.fase > 0)
     .sort((a,b) => (b.f.dias||0) - (a.f.dias||0));
@@ -2864,18 +2877,19 @@ function montarRelatorio(){
 
   // Resumo geral
   if(chk('rel-c-resumo')){
+    const docsAtivosRel = state.docs.filter(docEmpresaAtiva);
     let validos=0, vencendo=0, vencidos=0, emElab=0, agAssess=0;
-    state.docs.forEach(d => {
+    docsAtivosRel.forEach(d => {
       const s = statusDoc(d);
       if(s.key === 'ok') validos++; else if(s.key === 'warn') vencendo++; else if(s.key === 'danger') vencidos++;
       const f = faseDoc(d);
       if(f){ if(f.fase === 1) emElab++; else if(f.fase === 2) agAssess++; }
     });
     const totalAvals = state.avaliacoes.length;
-    const saldoPend = state.contratos.reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
+    const saldoPend = state.contratos.filter(contratoEmpresaAtiva).reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
 
     html += `<div class="rel-kpi-grid">
-      <div class="rel-kpi kpi-ok"><span class="kpi-label">Documentos</span><span class="kpi-val">${state.docs.length}</span><span class="kpi-sub">${validos} válido${validos!==1?'s':''} · ${vencendo} vencendo · ${vencidos} vencido${vencidos!==1?'s':''}</span></div>
+      <div class="rel-kpi kpi-ok"><span class="kpi-label">Documentos</span><span class="kpi-val">${docsAtivosRel.length}</span><span class="kpi-sub">${validos} válido${validos!==1?'s':''} · ${vencendo} vencendo · ${vencidos} vencido${vencidos!==1?'s':''}</span></div>
       <div class="rel-kpi${vencidos>0?' kpi-danger':vencendo>0?' kpi-warn':' kpi-ok'}"><span class="kpi-label">Situação</span><span class="kpi-val">${vencidos>0?'Atenção':vencendo>0?'Alerta':'OK'}</span><span class="kpi-sub">${vencidos>0?vencidos+' doc'+(vencidos!==1?'s':'')+' vencido'+(vencidos!==1?'s':''):vencendo>0?vencendo+' vencendo':'Todos em dia'}</span></div>
       <div class="rel-kpi"><span class="kpi-label">Avaliações</span><span class="kpi-val">${totalAvals}</span><span class="kpi-sub">${saldoPend} pendente${saldoPend!==1?'s':''} no saldo</span></div>
       <div class="rel-kpi"><span class="kpi-label">Em elaboração</span><span class="kpi-val">${emElab+agAssess}</span><span class="kpi-sub">${emElab} seg. trabalho · ${agAssess} assessoria</span></div>
@@ -2884,14 +2898,14 @@ function montarRelatorio(){
     // Alertas
     const alertas = [];
     const rotuloUnidade = (empresa, obra) => obra ? `<b>${nomeObra(obra)}</b> — ${nomeEmpresa(empresa)}` : `<b>${nomeEmpresa(empresa)}</b>`;
-    state.docs.filter(d => statusDoc(d).key === 'danger').forEach(d => {
+    docsAtivosRel.filter(d => statusDoc(d).key === 'danger').forEach(d => {
       alertas.push({t:'danger', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
     });
-    state.contratos.forEach(c => {
+    state.contratos.filter(contratoEmpresaAtiva).forEach(c => {
       const r = realizadasContrato(c.id);
       if(c.qtd && r >= c.qtd) alertas.push({t:'warn', m:`${rotuloUnidade(c.empresa, c.obra)} — saldo esgotado (${r}/${c.qtd})`});
     });
-    state.docs.forEach(d => {
+    docsAtivosRel.forEach(d => {
       const f = faseDoc(d);
       if(f && f.key === 'danger') alertas.push({t:'warn', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo}: ${f.label}`});
     });
@@ -2902,7 +2916,7 @@ function montarRelatorio(){
 
   // Documentos
   if(chk('rel-c-docs')){
-    const sorted = [...state.docs].sort((a,b) => nomeEmpresa(a.empresa).localeCompare(nomeEmpresa(b.empresa),'pt'));
+    const sorted = state.docs.filter(docEmpresaAtiva).sort((a,b) => nomeEmpresa(a.empresa).localeCompare(nomeEmpresa(b.empresa),'pt'));
     const nPgr = sorted.filter(d=>d.tipo==='PGR').length, nLtcat = sorted.filter(d=>d.tipo==='LTCAT').length;
     const linhas = sorted.map(d => {
       const s = statusDoc(d);
@@ -2938,18 +2952,20 @@ function montarRelatorio(){
 
   // Panorama por empresa
   if(chk('rel-c-panorama')){
-    const linhas = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
-      const pgr = state.docs.filter(d => d.empresa === e.id && d.tipo === 'PGR').length;
-      const ltcat = state.docs.filter(d => d.empresa === e.id && d.tipo === 'LTCAT').length;
+    const empresasAtivas = state.empresas.filter(e => e.status !== 'inativa');
+    const linhas = [...empresasAtivas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
+      const docsAtivosE = state.docs.filter(d => d.empresa === e.id && docEmpresaAtiva(d));
+      const pgr = docsAtivosE.filter(d => d.tipo === 'PGR').length;
+      const ltcat = docsAtivosE.filter(d => d.tipo === 'LTCAT').length;
       if(!pgr && !ltcat) return '';
-      const contratosE = state.contratos.filter(c => c.empresa === e.id);
+      const contratosE = state.contratos.filter(c => c.empresa === e.id && contratoEmpresaAtiva(c));
       const avs = contratosE.reduce((s,c) => s + realizadasContrato(c.id), 0);
       const saldoPend = contratosE.reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
       const totalContratado = contratosE.reduce((s,c) => s + (c.qtd||0), 0);
       const saldoHtml = !totalContratado ? '<span style="color:var(--ink-muted)">—</span>'
         : saldoPend <= 0 ? '<span class="pill danger" style="font-size:11px">Esgotado</span>'
         : `<span style="font-size:12px">${saldoPend}/${totalContratado}</span>`;
-      const docsE = state.docs.filter(d => d.empresa === e.id);
+      const docsE = docsAtivosE;
       const fases = docsE.map(d => faseDoc(d)).filter(Boolean);
       const elabE = fases.filter(f => f.fase === 1).length;
       const assessE = fases.filter(f => f.fase === 2).length;
@@ -2961,7 +2977,7 @@ function montarRelatorio(){
       return `<tr><td><b>${e.nome}</b></td><td style="text-align:center">${pgr}</td><td style="text-align:center">${ltcat}</td><td style="text-align:center">${avs||'—'}</td><td>${saldoHtml}</td><td>${faseHtml}</td><td><span class="pill ${st.k}" style="font-size:11px">${st.l}</span></td></tr>`;
     }).filter(Boolean).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${state.empresas.length}</span></h3><p>Documentos, avaliações e situação de cada empresa</p></div></div>
+      <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${empresasAtivas.length}</span></h3><p>Documentos, avaliações e situação de cada empresa</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Aval.</th><th>Saldo</th><th>Elaboração</th><th>Situação</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma empresa</td></tr>'
       }</tbody></table></div></div>`;
