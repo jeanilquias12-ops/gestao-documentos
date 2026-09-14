@@ -1974,7 +1974,20 @@ function emailDetalheContrato(contrato, realizadas, pendentes){
 }
 
 /* ================== NAVEGAÇÃO ================== */
+// Mesma regra usada pra esconder os botões do menu (aplicarPermissoes/CSS papel-*),
+// mas aplicada aqui também — sem isso, nada impede chamar navigate('empresas') direto
+// (ex.: console do navegador) e cair numa página com dado incompleto por causa da RLS.
+function rotaPermitida(route){
+  if(PAPEL === 'assessoria') return route === 'documentos';
+  if(PAPEL === 'financeiro') return route === 'relatorios' || route === 'medicoes';
+  if(route === 'medicoes' || route === 'contratospgr') return PAPEL === 'coordenador';
+  return true;
+}
 function navigate(route){
+  if(!rotaPermitida(route)){
+    console.warn('Rota bloqueada para o papel atual:', PAPEL, route);
+    route = PAPEL === 'assessoria' ? 'documentos' : PAPEL === 'financeiro' ? 'relatorios' : 'dashboard';
+  }
   try { localStorage.setItem('ultimaRota', route); } catch(e){}
   $$('.page').forEach(p => p.classList.remove('active'));
   const pg = $('#page-'+route);
@@ -4104,7 +4117,7 @@ function setupAutofill(){
     if(q.length < 2){ af.classList.remove('show'); return; }
     const matches = state.empresas.filter(e => normalizeTexto(e.nome).includes(q)).slice(0,5);
     if(!matches.length){ af.classList.remove('show'); return; }
-    af.innerHTML = matches.map(e => `<div data-id="${e.id}"><span>${e.nome}</span><small>${e.cnpj}</small></div>`).join('');
+    af.innerHTML = matches.map(e => `<div data-id="${e.id}"><span>${escapeHtml(e.nome)}</span><small>${escapeHtml(e.cnpj)}</small></div>`).join('');
     af.classList.add('show');
   };
   af.onclick = e => {
@@ -4120,7 +4133,7 @@ function setupAutofill(){
     if(q.length < 4){ afc.classList.remove('show'); return; }
     const matches = state.empresas.filter(e => e.cnpj.replace(/\D/g,'').includes(q)).slice(0,5);
     if(!matches.length){ afc.classList.remove('show'); return; }
-    afc.innerHTML = matches.map(e => `<div data-id="${e.id}"><span>${e.nome}</span><small>${e.cnpj}</small></div>`).join('');
+    afc.innerHTML = matches.map(e => `<div data-id="${e.id}"><span>${escapeHtml(e.nome)}</span><small>${escapeHtml(e.cnpj)}</small></div>`).join('');
     afc.classList.add('show');
   };
   afc.onclick = e => {
@@ -4162,7 +4175,7 @@ function makeSearchableSelect(sel){
     const qn = normalizeTexto(q);
     const filtered = [...sel.options].filter(o => !qn || normalizeTexto(o.text).includes(qn));
     opts.innerHTML = filtered.length
-      ? filtered.map(o => `<div class="ss-opt" data-val="${o.value}">${o.text}</div>`).join('')
+      ? filtered.map(o => `<div class="ss-opt" data-val="${escapeHtml(o.value)}">${escapeHtml(o.text)}</div>`).join('')
       : '<div class="ss-empty">Nenhum resultado</div>';
     opts.querySelectorAll('.ss-opt').forEach(d => {
       d.onmousedown = e => {
@@ -5994,6 +6007,9 @@ async function carregarDaNuvem() {
   if (errGhe)       { console.error('Erro GHE:', errGhe.message); toast('Erro ao carregar GHEs da nuvem', 'danger'); }
   if (errInsumos)   { console.error('Erro insumos:', errInsumos.message); toast('Erro ao carregar insumos da nuvem', 'danger'); }
   if (errEventos)   { console.error('Erro eventos:', errEventos.message); toast('Erro ao carregar agenda de treinamentos/palestras', 'danger'); }
+  if (errConfigGeral) { console.error('Erro config geral:', errConfigGeral.message); toast('Erro ao carregar configuração geral', 'danger'); }
+  if (errMedicoes)    { console.error('Erro medições:', errMedicoes.message); toast('Erro ao carregar medições da nuvem', 'danger'); }
+  if (errContratosPgr){ console.error('Erro contratos PGR:', errContratosPgr.message); toast('Erro ao carregar contratos PGR', 'danger'); }
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
