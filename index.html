@@ -4825,6 +4825,20 @@ function setupEvents(){
         }
       }
 
+      // 3) Tipo de ensaio lançado que não está contratado (fora do que foi negociado)
+      const _contratoObj = state.contratos.find(c => c.id === contrato);
+      if(_contratoObj){
+        const _tiposContratados = _contratoObj.tipos || {};
+        const _agentesNaoContratados = [...new Set(items.map(i => i.agente).filter(Boolean))]
+          .filter(nome => {
+            const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
+            return !t || !(_tiposContratados[t.key] > 0);
+          });
+        if(_agentesNaoContratados.length > 0){
+          _avisos.push(`• ${_agentesNaoContratados.join(', ')} não consta no contrato desta empresa/obra.`);
+        }
+      }
+
       if(_avisos.length > 0){
         const _msg = '⚠️ Possível conflito de agendamento:\n\n' + _avisos.join('\n') + '\n\nDeseja agendar mesmo assim?';
         if(!confirm(_msg)) return;
