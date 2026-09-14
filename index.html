@@ -2853,7 +2853,7 @@ function renderAvaliacoes(){
         const gnome = a.ghe ? gheName(a.ghe) : '';
         return `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
-          <span><b>${a.agente}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${gnome}</span>` : ''}</span>
+          <span><b>${a.agente}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${gnome}</span>` : ''}${a.foraDoContrato ? ` <span class="pill warn" style="font-size:10.5px;padding:1px 6px" title="Esse tipo de ensaio não consta no contrato desta empresa/obra">⚠ fora do contrato</span>` : ''}</span>
           <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
           <span style="display:flex;align-items:center;gap:8px">
             ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
@@ -3018,6 +3018,19 @@ function montarRelatorio(){
       const f = faseDoc(d);
       if(f && f.key === 'danger') alertas.push({t:'warn', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo}: ${f.label}`});
     });
+    {
+      const foraContratoPorEmpresa = {};
+      state.avaliacoes.filter(a => a.foraDoContrato).forEach(a => {
+        const c = state.contratos.find(x => x.id === a.contrato);
+        if(!c) return;
+        const key = c.empresa + '|' + (c.obra||'');
+        if(!foraContratoPorEmpresa[key]) foraContratoPorEmpresa[key] = {empresa:c.empresa, obra:c.obra, qtd:0};
+        foraContratoPorEmpresa[key].qtd++;
+      });
+      Object.values(foraContratoPorEmpresa).forEach(f => {
+        alertas.push({t:'warn', m:`${rotuloUnidade(f.empresa, f.obra)} — ${f.qtd} avaliação${f.qtd!==1?'ões':''} lançada${f.qtd!==1?'s':''} fora do contrato`});
+      });
+    }
     if(alertas.length){
       html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}</div>`;
     }
@@ -3124,6 +3137,12 @@ function montarRelatorio(){
     const qtdDetalhes = (m) => Object.values(m.detalhes||{}).reduce((s,q) => s + (Number(q)||0), 0);
     const unidadeMedicao = (m) => (m.obra && nomeObra(m.obra)) || nomeEmpresa(m.empresa) || '—';
 
+    // Avaliações faturadas no período (via medição vinculada) que foram lançadas
+    // fora do que estava no contrato — vale o alerta aqui também, pois é o
+    // relatório que o financeiro efetivamente enxerga.
+    const medIdsPeriodo = new Set(medsLtcat.map(m => m.id));
+    const qtdForaContrato = state.avaliacoes.filter(a => a.foraDoContrato && a.medicaoId && medIdsPeriodo.has(a.medicaoId)).length;
+
     const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const labelMes = (mm) => { const [y,m] = mm.split('-'); return MESES_NOME[Number(m)-1]+' '+y; };
     const slugMes = (mm) => mm.replace('-','');
@@ -3224,6 +3243,7 @@ function montarRelatorio(){
     html += `<div class="ltcat-report">
       <h1>Relatório Gerencial de Avaliações Ambientais (LTCAT)</h1>
       <p><strong>Período:</strong> ${periodoLtcatLabel}</p>
+      ${qtdForaContrato > 0 ? `<p style="background:#FFF8E1;border:1px solid #FFE082;color:#8a6d00;border-radius:6px;padding:10px 14px;font-size:13px;margin:10px 0">⚠ ${qtdForaContrato} avaliação${qtdForaContrato!==1?'ões':''} faturada${qtdForaContrato!==1?'s':''} neste período ${qtdForaContrato!==1?'foram':'foi'} lançada${qtdForaContrato!==1?'s':''} fora do contrato original.</p>` : ''}
       <div class="ltcat-kpi-container">
         <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtR(fatTotal)}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${qtdTotal}</p></div>
@@ -4802,6 +4822,15 @@ function setupEvents(){
     if(items.some(i => !i.agente)){ toast('Selecione o tipo em todas as avaliações', 'danger'); return; }
     if(items.some(i => !i.data)){ toast('Preencha a data em todas as avaliações', 'danger'); return; }
 
+    // Usado tanto no aviso de conflito quanto pra marcar cada avaliação como
+    // fora_do_contrato ao salvar (fica rastreável depois, na tela e no relatório).
+    const _contratoAtual = state.contratos.find(c => c.id === contrato);
+    const _tiposContratadosAtual = _contratoAtual?.tipos || {};
+    const agenteContratado = (nome) => {
+      const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
+      return !!(t && _tiposContratadosAtual[t.key] > 0);
+    };
+
     /* ── VERIFICAÇÃO DE CONFLITOS ── */
     if(!isEdit){
       const _editId = $('#ma-id').value;
@@ -4826,14 +4855,9 @@ function setupEvents(){
       }
 
       // 3) Tipo de ensaio lançado que não está contratado (fora do que foi negociado)
-      const _contratoObj = state.contratos.find(c => c.id === contrato);
-      if(_contratoObj){
-        const _tiposContratados = _contratoObj.tipos || {};
+      if(_contratoAtual){
         const _agentesNaoContratados = [...new Set(items.map(i => i.agente).filter(Boolean))]
-          .filter(nome => {
-            const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
-            return !t || !(_tiposContratados[t.key] > 0);
-          });
+          .filter(nome => !agenteContratado(nome));
         if(_agentesNaoContratados.length > 0){
           _avisos.push(`• ${_agentesNaoContratados.join(', ')} não consta no contrato desta empresa/obra.`);
         }
@@ -4850,7 +4874,7 @@ function setupEvents(){
     try {
       if(isEdit){
         const id = $('#ma-id').value;
-        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', envio_lab: items[0].envio_lab, ghe: gheId};
+        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', envio_lab: items[0].envio_lab, ghe: gheId, foraDoContrato: !agenteContratado(items[0].agente)};
         await salvarAvaliacaoNuvem(obj);
         const idx = state.avaliacoes.findIndex(a => a.id === id);
         if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
@@ -4858,7 +4882,7 @@ function setupEvents(){
         let total = 0;
         for(const item of items){
           for(let i = 0; i < item.qty; i++){
-            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', envio_lab: item.envio_lab, ghe: gheId};
+            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', envio_lab: item.envio_lab, ghe: gheId, foraDoContrato: !agenteContratado(item.agente)};
             await salvarAvaliacaoNuvem(obj);
             state.avaliacoes.push(obj);
             total++;
@@ -5636,7 +5660,8 @@ async function salvarAvaliacaoNuvem(a) {
     agente: a.agente, resultado: a.resultado,
     conclusao: a.conclusao || '', local_avaliacao: a.local || '',
     ghe_id: a.ghe || null,
-    data_envio_lab: a.envio_lab || null
+    data_envio_lab: a.envio_lab || null,
+    fora_do_contrato: a.foraDoContrato || false
   })
   if (error) throw new Error(error.message)
 }
@@ -6248,7 +6273,8 @@ async function carregarDaNuvem() {
       local:     a.local_avaliacao || '',
       ghe:       a.ghe_id || '',
       envio_lab: a.data_envio_lab || '',
-      medicaoId: a.medicao_id || ''
+      medicaoId: a.medicao_id || '',
+      foraDoContrato: a.fora_do_contrato || false
     }))
   }
 
