@@ -1225,8 +1225,8 @@
   body.papel-assessoria #notifyBanner,
   body.papel-assessoria .topbar .search { display: none !important; }
 
-  /* Modo FINANCEIRO: só Relatórios + Medição Mensal (+ Demandas, visível a todos) */
-  body.papel-financeiro [data-route]:not([data-route="relatorios"]):not([data-route="medicoes"]):not([data-route="demandas"]),
+  /* Modo FINANCEIRO: só Relatórios + Medição Mensal + Avaliações (saldo/valores, sem ações) */
+  body.papel-financeiro [data-route]:not([data-route="relatorios"]):not([data-route="medicoes"]):not([data-route="avaliacoes"]),
   body.papel-financeiro #agendaParent,
   body.papel-financeiro #agendaSub,
   body.papel-financeiro #configEnsaiosBtn,
@@ -1317,10 +1317,11 @@ function aplicarPermissoes(){
     const e = document.getElementById(id);
     if(e) e.style.display = vejoMedicoes ? '' : 'none';
   });
-  // Relatório Interno do financeiro: só Resumo geral + Avaliações & Faturamento
-  // (nada de status de documentos, psicossociais, treinamentos etc — fora do escopo dele).
+  // Relatório Interno do financeiro: só Avaliações & Faturamento (a única seção
+  // 100% financeira) — nada de contagem/status de documentos, saldo de avaliação,
+  // atraso de elaboração, psicossociais, treinamentos etc — fora do escopo dele.
   if(PAPEL === 'financeiro'){
-    ['rel-c-docs','rel-c-panorama','rel-c-psi','rel-c-treino','rel-c-palestra','rel-c-indicadores'].forEach(id => {
+    ['rel-c-resumo','rel-c-docs','rel-c-panorama','rel-c-psi','rel-c-treino','rel-c-palestra','rel-c-indicadores'].forEach(id => {
       const chk = document.getElementById(id);
       if(!chk) return;
       chk.checked = false;
@@ -1330,6 +1331,10 @@ function aplicarPermissoes(){
     const ltcatChk = document.getElementById('rel-c-ltcat');
     if(ltcatChk) ltcatChk.checked = true;
   }
+  // Página Avaliações: financeiro só visualiza saldo/valores contratados, sem
+  // poder criar contrato ou lançar avaliação (isso é operacional, não financeiro).
+  const btnNewContrato = document.getElementById('btnNewContrato');
+  if(btnNewContrato) btnNewContrato.style.display = PAPEL === 'financeiro' ? 'none' : '';
 }
 
 function abrirDevolucao(id){
@@ -2004,7 +2009,7 @@ function emailDetalheContrato(contrato, realizadas, pendentes){
 // (ex.: console do navegador) e cair numa página com dado incompleto por causa da RLS.
 function rotaPermitida(route){
   if(PAPEL === 'assessoria') return route === 'documentos' || route === 'demandas';
-  if(PAPEL === 'financeiro') return route === 'relatorios' || route === 'medicoes' || route === 'demandas';
+  if(PAPEL === 'financeiro') return route === 'relatorios' || route === 'medicoes' || route === 'avaliacoes';
   if(route === 'medicoes' || route === 'contratospgr') return PAPEL === 'coordenador';
   return true;
 }
@@ -2905,8 +2910,8 @@ function renderAvaliacoes(){
           ${c.tipos ? `<p style="margin:4px 0 0;font-size:12px;color:var(--ink-muted)">${TIPOS_AVALIACAO.filter(t=>(c.tipos[t.key]||0)>0).map(t=>`<span style="display:inline-block;background:var(--green-100);border-radius:4px;padding:1px 6px;margin:1px 2px 1px 0">${t.nome.split(' ')[0] === 'Particulado' ? 'Part. Total' : t.nome.split(' ')[0] === 'Varreduras' ? (t.key==='metais'?'Metais':'Vapores') : t.nome.split(' ')[0]}: ${c.tipos[t.key]}</span>`).join('')}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn sm" onclick="openContrato('${c.id}')">Editar contrato</button>
-          <button class="btn primary sm" onclick="openAval('${c.id}')">+ Lançar avaliação</button>
+          ${PAPEL === 'financeiro' ? '' : `<button class="btn sm" onclick="openContrato('${c.id}')">Editar contrato</button>
+          <button class="btn primary sm" onclick="openAval('${c.id}')">+ Lançar avaliação</button>`}
         </div>
       </div>
       <div class="card-b">
@@ -6382,7 +6387,7 @@ window.addEventListener('load', async () => {
         // Financeiro só enxerga Relatórios e Medição Mensal.
         let ultimaRota = null;
         try { ultimaRota = localStorage.getItem('ultimaRota'); } catch(e){}
-        const rotasPermitidas = ['relatorios','medicoes'];
+        const rotasPermitidas = ['relatorios','medicoes','avaliacoes'];
         try { navigate(rotasPermitidas.includes(ultimaRota) ? ultimaRota : 'relatorios'); }
         catch(e){ console.error('Erro ao navegar, forçando Relatórios:', e); try { navigate('relatorios'); } catch(e2){} }
       } else {
