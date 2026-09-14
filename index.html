@@ -354,6 +354,7 @@
     <button class="navitem" data-route="empresas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6"/></svg>Empresas</button>
     <button class="navitem" data-route="obras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/><path d="M9 20v-4h6v4"/><path d="M3 11l9-7 9 7"/></svg>Obras</button>
     <button class="navitem" data-route="documentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documentos<span class="badge" id="nav-doc-badge">0</span></button>
+    <button class="navitem" data-route="demandas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>Demandas</button>
     <button class="navitem" data-route="avaliacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>Avaliações</button>
     <button class="navitem" data-route="insumos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Insumos<span class="badge" id="nav-insumos-badge" style="display:none">0</span></button>
     <button class="navitem nav-parent" id="agendaParent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda<span class="nav-caret">▾</span></button>
@@ -518,6 +519,18 @@
           <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;padding:8px 0"><input type="checkbox" id="f-doc-inativas" /> Incluir empresas/obras inativas</label></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Entrega</th><th></th></tr></thead><tbody></tbody></table></div></div>
+      </section>
+
+      <!-- DEMANDAS -->
+      <section class="page" id="page-demandas">
+        <div class="page-h">
+          <div><h2>📋 Demandas</h2><p>Fila de pedidos cadastrados pelo coordenador — do cadastro até o início do trabalho.</p></div>
+          <div class="page-h-actions"><button class="btn primary" id="btnNewDemanda" style="display:none">+ Nova demanda</button></div>
+        </div>
+        <div class="filters">
+          <div class="field"><label>Status</label><select id="f-dm-status"><option value="">Todas</option><option value="aguardando">Aguardando</option><option value="iniciado">Iniciado</option></select></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table id="tbl-demandas"><thead><tr><th>Demanda</th><th>Empresa</th><th>Cadastrada em</th><th>Aguardando</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- AVALIAÇÕES -->
@@ -862,6 +875,18 @@
   <div class="modal-f"><button class="btn danger" id="me-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" id="me-to-obra" style="display:none;background:#7E57C2;color:#fff">Converter em Obra ↗</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="me-save">Salvar empresa</button></div>
 </div></div>
 
+<!-- MODAL DEMANDA -->
+<div class="modal-bg" id="modal-demanda"><div class="modal">
+  <div class="modal-h"><div><h2 id="dm-title">Nova demanda</h2><p>Registra um pedido pra acompanhar até iniciar o trabalho</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b"><form id="form-demanda"><input type="hidden" id="dm-id" /><div class="form-grid">
+    <div class="field-block full"><label>Título / o que precisa ser feito *</label><input id="dm-titulo" required placeholder="Ex: Elaborar PGR novo, Renovar LTCAT…" /></div>
+    <div class="field-block full"><label>Empresa *</label><select id="dm-empresa" required></select></div>
+    <div class="field-block full"><label>Obra</label><select id="dm-obra"><option value="">— Sem obra vinculada —</option></select></div>
+    <div class="field-block full"><label>Observações</label><textarea id="dm-obs" rows="3"></textarea></div>
+  </div></form></div>
+  <div class="modal-f"><button class="btn danger" id="dm-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="dm-save">Salvar demanda</button></div>
+</div></div>
+
 <!-- MODAL OBRA -->
 <div class="modal-bg" id="modal-obra"><div class="modal">
   <div class="modal-h"><div><h2 id="mo-title">Nova obra</h2><p>Cadastro de obra vinculada a uma empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mo-import-btn" onclick="document.getElementById('mo-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mo-pdf-input" accept=".pdf" style="display:none" onchange="importarObraPDF(this.files[0])"><button class="btn ghost sm" data-close>✕</button></div></div>
@@ -1188,8 +1213,8 @@
 </div></div>
 
 <style>
-  /* Modo ASSESSORIA: só documentos + registrar devolução */
-  body.papel-assessoria [data-route]:not([data-route="documentos"]),
+  /* Modo ASSESSORIA: só documentos + registrar devolução (+ Demandas, visível a todos) */
+  body.papel-assessoria [data-route]:not([data-route="documentos"]):not([data-route="demandas"]),
   body.papel-assessoria #agendaParent,
   body.papel-assessoria #agendaSub,
   body.papel-assessoria #configEnsaiosBtn,
@@ -1200,8 +1225,8 @@
   body.papel-assessoria #notifyBanner,
   body.papel-assessoria .topbar .search { display: none !important; }
 
-  /* Modo FINANCEIRO: só Relatórios + Medição Mensal */
-  body.papel-financeiro [data-route]:not([data-route="relatorios"]):not([data-route="medicoes"]),
+  /* Modo FINANCEIRO: só Relatórios + Medição Mensal (+ Demandas, visível a todos) */
+  body.papel-financeiro [data-route]:not([data-route="relatorios"]):not([data-route="medicoes"]):not([data-route="demandas"]),
   body.papel-financeiro #agendaParent,
   body.papel-financeiro #agendaSub,
   body.papel-financeiro #configEnsaiosBtn,
@@ -1761,7 +1786,7 @@ async function importarObraPDF(file){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[]};
+let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[]};
 let _psiCalMes = new Date().getMonth();
 let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
@@ -1978,8 +2003,8 @@ function emailDetalheContrato(contrato, realizadas, pendentes){
 // mas aplicada aqui também — sem isso, nada impede chamar navigate('empresas') direto
 // (ex.: console do navegador) e cair numa página com dado incompleto por causa da RLS.
 function rotaPermitida(route){
-  if(PAPEL === 'assessoria') return route === 'documentos';
-  if(PAPEL === 'financeiro') return route === 'relatorios' || route === 'medicoes';
+  if(PAPEL === 'assessoria') return route === 'documentos' || route === 'demandas';
+  if(PAPEL === 'financeiro') return route === 'relatorios' || route === 'medicoes' || route === 'demandas';
   if(route === 'medicoes' || route === 'contratospgr') return PAPEL === 'coordenador';
   return true;
 }
@@ -1995,7 +2020,7 @@ function navigate(route){
   $$('.navitem').forEach(b => b.classList.remove('active'));
   const navBtn = $$('.navitem').find(b => b.dataset.route === route);
   if(navBtn) navBtn.classList.add('active');
-  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
+  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', demandas:'Demandas', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
   // Submenu lateral da Agenda
@@ -3500,6 +3525,98 @@ function openObra(id){
   openModal('modal-obra');
 }
 
+/* ================== DEMANDAS (fila de espera do coordenador) ================== */
+function openDemanda(id){
+  const d = id ? state.demandas.find(x => x.id === id) : null;
+  $('#dm-title').textContent = d ? 'Editar demanda' : 'Nova demanda';
+  $('#dm-id').value = d?.id || '';
+  $('#dm-titulo').value = d?.titulo || '';
+  $('#dm-empresa').innerHTML = '<option value="">— Selecione a empresa —</option>' +
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
+  $('#dm-empresa').value = d?.empresa || '';
+  populateObraSelectGeneric('dm-obra', d?.empresa || '', d?.obra || '');
+  $('#dm-obs').value = d?.obs || '';
+  $('#dm-delete').style.display = d ? '' : 'none';
+  openModal('modal-demanda');
+}
+
+async function salvarDemanda(){
+  const id = $('#dm-id').value || 'dm'+uid();
+  const titulo = $('#dm-titulo').value.trim();
+  const empresa = $('#dm-empresa').value;
+  if(!titulo || !empresa){ toast('Preencha título e empresa', 'danger'); return; }
+  const existente = state.demandas.find(x => x.id === id);
+  const data = {
+    id, empresa, obra: $('#dm-obra').value || '',
+    titulo, obs: $('#dm-obs').value.trim(),
+    status: existente?.status || 'aguardando',
+    criadoEm: existente?.criadoEm || new Date().toISOString(),
+    iniciadoEm: existente?.iniciadoEm || ''
+  };
+  try {
+    await salvarDemandaNuvem(data);
+    const idx = state.demandas.findIndex(x => x.id === id);
+    if(idx >= 0) state.demandas[idx] = data; else state.demandas.push(data);
+    save(); closeModal('modal-demanda'); renderDemandas();
+    toast('✅ Demanda salva', 'ok');
+  } catch(err){ toast('Erro ao salvar demanda: ' + err.message, 'danger'); }
+}
+
+async function iniciarDemanda(id){
+  const d = state.demandas.find(x => x.id === id);
+  if(!d || d.status === 'iniciado') return;
+  const atualizado = {...d, status:'iniciado', iniciadoEm: new Date().toISOString()};
+  try {
+    await salvarDemandaNuvem(atualizado);
+    Object.assign(d, atualizado);
+    save(); renderDemandas();
+    toast('▶ Demanda marcada como iniciada', 'ok');
+  } catch(err){ toast('Erro ao iniciar demanda: ' + err.message, 'danger'); }
+}
+
+async function excluirDemanda(){
+  const id = $('#dm-id').value;
+  if(!id) return;
+  if(!confirm('Excluir esta demanda?')) return;
+  try {
+    await excluirDemandaNuvem(id);
+    state.demandas = state.demandas.filter(x => x.id !== id);
+    save(); closeModal('modal-demanda'); renderDemandas();
+    toast('Demanda excluída', 'danger');
+  } catch(err){ toast('Erro ao excluir demanda: ' + err.message, 'danger'); }
+}
+
+function renderDemandas(){
+  const tb = $('#tbl-demandas tbody');
+  if(!tb) return;
+  const souCoordenador = PAPEL === 'coordenador';
+  const btnNew = $('#btnNewDemanda');
+  if(btnNew) btnNew.style.display = souCoordenador ? '' : 'none';
+
+  const filtroStatus = $('#f-dm-status') ? $('#f-dm-status').value : '';
+  const lista = state.demandas
+    .filter(d => !filtroStatus || d.status === filtroStatus)
+    .sort((a,b) => {
+      if(a.status !== b.status) return a.status === 'aguardando' ? -1 : 1;
+      return (a.criadoEm||'').localeCompare(b.criadoEm||'');
+    });
+
+  tb.innerHTML = lista.length ? lista.map(d => {
+    const empresaHtml = d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`;
+    const diasAguardando = Math.max(0, daysBetween(d.criadoEm, d.iniciadoEm || new Date().toISOString()));
+    const aguardandoHtml = d.status === 'aguardando'
+      ? `<span class="pill ${diasAguardando >= 5 ? 'danger' : diasAguardando >= 2 ? 'warn' : 'muted'}">${diasAguardando}d</span>`
+      : `<span style="color:var(--ink-muted);font-size:12px">esperou ${diasAguardando}d</span>`;
+    const statusHtml = d.status === 'aguardando'
+      ? `<span class="pill warn">Aguardando</span>`
+      : `<span class="pill ok">Iniciado</span>`;
+    const acoes = souCoordenador
+      ? `${d.status === 'aguardando' ? `<button type="button" class="btn sm" onclick="iniciarDemanda('${d.id}')">Iniciar</button> ` : ''}<button type="button" class="btn ghost sm" onclick="openDemanda('${d.id}')">Editar</button>`
+      : '';
+    return `<tr><td><b>${escapeHtml(d.titulo)}</b>${d.obs ? `<br><small style="color:var(--ink-muted)">${escapeHtml(d.obs)}</small>` : ''}</td><td>${empresaHtml}</td><td class="tight">${fmtDate((d.criadoEm||'').slice(0,10))}</td><td>${aguardandoHtml}</td><td>${statusHtml}</td><td>${acoes}</td></tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma demanda cadastrada</td></tr>';
+}
+
 function openEmpresa(id){
   const e = id ? state.empresas.find(x => x.id === id) : null;
   $('#me-title').textContent = e ? 'Editar empresa' : 'Nova empresa';
@@ -4226,6 +4343,11 @@ function setupEvents(){
   $('#btnNewPsi').onclick = () => openPsi();
   $('#btnNewMedicao').onclick = () => openMedicao();
   $('#btnNewContratoPgr').onclick = () => openContratoPgr();
+  $('#btnNewDemanda').onclick = () => openDemanda();
+  $('#dm-save').onclick = salvarDemanda;
+  $('#dm-delete').onclick = excluirDemanda;
+  $('#dm-empresa').onchange = () => populateObraSelectGeneric('dm-obra', $('#dm-empresa').value, '');
+  $('#f-dm-status').oninput = renderDemandas;
 
   // Cascata empresa→obra nos modais de medição/contrato PGR
   $('#med-empresa').onchange = function(){ populateObraSelectGeneric('med-obra', this.value, ''); };
@@ -5129,6 +5251,7 @@ function renderAll(){
   renderRelatorios();
   renderNotifyBanner();
   renderPendenciasFaturamento();
+  renderDemandas();
 }
 
 function initApp(){
@@ -5389,6 +5512,25 @@ async function salvarObraNuvem(obra) {
 
 async function excluirObraNuvem(id) {
   const { error } = await db.from('obras').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+async function salvarDemandaNuvem(d) {
+  const { error } = await db.from('demandas').upsert({
+    id:           d.id,
+    cliente_id:   d.empresa,
+    obra_id:      d.obra || null,
+    titulo:       d.titulo,
+    observacoes:  d.obs || '',
+    status:       d.status || 'aguardando',
+    criado_em:    d.criadoEm,
+    iniciado_em:  d.iniciadoEm || null
+  })
+  if (error) throw new Error(error.message)
+}
+
+async function excluirDemandaNuvem(id) {
+  const { error } = await db.from('demandas').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 
@@ -5979,7 +6121,8 @@ async function carregarDaNuvem() {
     { data: configRows,     error: errConfig },
     { data: configGeralRows, error: errConfigGeral },
     { data: medicoesRows,   error: errMedicoes },
-    { data: contratosPgrRows, error: errContratosPgr }
+    { data: contratosPgrRows, error: errContratosPgr },
+    { data: demandasRows,   error: errDemandas }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -5994,7 +6137,8 @@ async function carregarDaNuvem() {
     db.from('config_ensaios').select('*').order('ordem', { ascending: true }),
     db.from('config_geral').select('*').eq('id', 1).limit(1),
     db.from('medicoes').select('*').order('data', { ascending: false }),
-    db.from('contratos_pgr').select('*')
+    db.from('contratos_pgr').select('*'),
+    db.from('demandas').select('*').order('criado_em', { ascending: true })
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
@@ -6010,6 +6154,7 @@ async function carregarDaNuvem() {
   if (errConfigGeral) { console.error('Erro config geral:', errConfigGeral.message); toast('Erro ao carregar configuração geral', 'danger'); }
   if (errMedicoes)    { console.error('Erro medições:', errMedicoes.message); toast('Erro ao carregar medições da nuvem', 'danger'); }
   if (errContratosPgr){ console.error('Erro contratos PGR:', errContratosPgr.message); toast('Erro ao carregar contratos PGR', 'danger'); }
+  if (errDemandas)    { console.error('Erro demandas:', errDemandas.message); toast('Erro ao carregar quadro de demandas', 'danger'); }
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
@@ -6194,6 +6339,19 @@ async function carregarDaNuvem() {
       valor:    Number(c.valor) || 0,
       produtos: c.produtos || {},
       obs:      c.observacao || ''
+    }))
+  }
+
+  if (!errDemandas) {
+    state.demandas = (demandasRows||[]).map(d => ({
+      id:         d.id,
+      empresa:    d.cliente_id,
+      obra:       d.obra_id || '',
+      titulo:     d.titulo,
+      obs:        d.observacoes || '',
+      status:     d.status || 'aguardando',
+      criadoEm:   d.criado_em,
+      iniciadoEm: d.iniciado_em || ''
     }))
   }
 
