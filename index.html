@@ -4824,11 +4824,23 @@ function setupEvents(){
 
     // Usado tanto no aviso de conflito quanto pra marcar cada avaliação como
     // fora_do_contrato ao salvar (fica rastreável depois, na tela e no relatório).
+    // Não basta o tipo existir no contrato — precisa ainda ter saldo: contratado
+    // menos o que já foi realizado antes menos o que está sendo pedido agora.
     const _contratoAtual = state.contratos.find(c => c.id === contrato);
     const _tiposContratadosAtual = _contratoAtual?.tipos || {};
+    const _realizadasAntesAtual = _contratoAtual ? realizadasPorTipo(_contratoAtual.id) : {};
+    const _qtyPedidaPorKey = {};
+    items.forEach(i => {
+      const t = TIPOS_AVALIACAO.find(x => x.nome === i.agente);
+      if(t) _qtyPedidaPorKey[t.key] = (_qtyPedidaPorKey[t.key]||0) + i.qty;
+    });
     const agenteContratado = (nome) => {
       const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
-      return !!(t && _tiposContratadosAtual[t.key] > 0);
+      if(!t) return false;
+      const contratado = _tiposContratadosAtual[t.key] || 0;
+      const jaFeitas = _realizadasAntesAtual[t.key] || 0;
+      const pedidoTotal = _qtyPedidaPorKey[t.key] || 0;
+      return (jaFeitas + pedidoTotal) <= contratado;
     };
 
     /* ── VERIFICAÇÃO DE CONFLITOS ── */
@@ -4854,12 +4866,12 @@ function setupEvents(){
         }
       }
 
-      // 3) Tipo de ensaio lançado que não está contratado (fora do que foi negociado)
+      // 3) Tipo de ensaio sem saldo no contrato (não consta, ou já esgotou a quantidade contratada)
       if(_contratoAtual){
         const _agentesNaoContratados = [...new Set(items.map(i => i.agente).filter(Boolean))]
           .filter(nome => !agenteContratado(nome));
         if(_agentesNaoContratados.length > 0){
-          _avisos.push(`• ${_agentesNaoContratados.join(', ')} não consta no contrato desta empresa/obra.`);
+          _avisos.push(`• ${_agentesNaoContratados.join(', ')} sem saldo contratado (não consta no contrato, ou a quantidade contratada já foi atingida).`);
         }
       }
 
