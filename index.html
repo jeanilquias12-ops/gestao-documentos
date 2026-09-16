@@ -1971,6 +1971,12 @@ function realizadasContrato(cId){ return state.avaliacoes.filter(a => a.contrato
 
 // Identifica a chave do tipo de ensaio (TIPOS_AVALIACAO) a partir do texto livre do agente
 function agenteParaTipoKey(agente){
+  // Prioriza o match exato contra TIPOS_AVALIACAO (cobre tipos customizados
+  // criados em Preços & Custos, cuja key vem de slugifyKey e não bate com
+  // nenhuma palavra-chave fixa abaixo). O heurístico por palavra-chave fica
+  // só de fallback pra texto livre/importado que não bate exatamente.
+  const exato = TIPOS_AVALIACAO.find(t => t.nome === agente);
+  if(exato) return exato.key;
   const ag = (agente || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   if(ag.includes('ruido')) return 'ruido';
   if(ag.includes('poeira vegetal') || ag.includes('vegetal')) return 'poeira_veg';
@@ -1983,13 +1989,34 @@ function agenteParaTipoKey(agente){
   return null;
 }
 
-function realizadasPorTipo(cId){
+function realizadasPorTipo(cId, excludeId){
   const map = {};
-  state.avaliacoes.filter(a => a.contrato === cId).forEach(a => {
+  state.avaliacoes.filter(a => a.contrato === cId && a.id !== excludeId).forEach(a => {
     const key = agenteParaTipoKey(a.agente);
     if(key) map[key] = (map[key] || 0) + 1;
   });
   return map;
+}
+
+// Recalcula fora_do_contrato do zero pra todas as avaliações de um tipo dentro
+// de um contrato, em ordem cronológica: as N primeiras (N = qtd contratada
+// daquele tipo) ficam dentro do saldo, o resto fica marcado como fora. Chamado
+// depois de salvar ou excluir uma avaliação, pra nunca deixar a flag
+// desatualizada (ex.: excluir a que estourou o saldo libera a próxima).
+async function recalcularForaDoContrato(contratoId, agenteNome){
+  const contrato = state.contratos.find(c => c.id === contratoId);
+  const t = TIPOS_AVALIACAO.find(x => x.nome === agenteNome);
+  const contratado = (contrato && t) ? (contrato.tipos?.[t.key] || 0) : 0;
+  const doTipo = state.avaliacoes
+    .filter(a => a.contrato === contratoId && a.agente === agenteNome)
+    .sort((a,b) => (a.data||'').localeCompare(b.data||'') || a.id.localeCompare(b.id));
+  for(let i = 0; i < doTipo.length; i++){
+    const deveSerFora = i >= contratado;
+    if(!!doTipo[i].foraDoContrato !== deveSerFora){
+      doTipo[i].foraDoContrato = deveSerFora;
+      try { await salvarAvaliacaoNuvem(doTipo[i]); } catch(e){ console.error('Erro ao recalcular fora_do_contrato:', e); }
+    }
+  }
 }
 
 function emailDetalheContrato(contrato, realizadas, pendentes){
@@ -2857,7 +2884,7 @@ function renderAvaliacoes(){
           <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
           <span style="display:flex;align-items:center;gap:8px">
             ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
-            <button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>
+            ${PAPEL === 'financeiro' ? '' : `<button class="btn sm ghost" onclick="openAval('${c.id}','${a.id}')">Editar</button>`}
           </span>
         </div>`;
       };
@@ -2871,7 +2898,7 @@ function renderAvaliacoes(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px">
           ${gheList.map(g => {
             const qtd = gheQtd[g.id] || 0;
-            return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:${qtd?'var(--green-50,#f0fdf4)':'#FFF8E1'};border:1px solid ${qtd?'var(--line)':'#FFE082'};border-radius:6px;padding:3px 8px">${g.nome} <span style="color:var(--ink-muted);font-weight:600">(${qtd})</span><button class="btn sm danger" style="padding:0 6px;font-size:11px;line-height:1.6" title="Excluir GHE" onclick="excluirGhe('${g.id}')">✕</button></span>`;
+            return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:${qtd?'var(--green-50,#f0fdf4)':'#FFF8E1'};border:1px solid ${qtd?'var(--line)':'#FFE082'};border-radius:6px;padding:3px 8px">${g.nome} <span style="color:var(--ink-muted);font-weight:600">(${qtd})</span>${PAPEL === 'financeiro' ? '' : `<button class="btn sm danger" style="padding:0 6px;font-size:11px;line-height:1.6" title="Excluir GHE" onclick="excluirGhe('${g.id}')">✕</button>`}</span>`;
           }).join('')}
         </div>
       </details>` : '';
@@ -3590,6 +3617,7 @@ async function salvarDemanda(){
 async function iniciarDemanda(id){
   const d = state.demandas.find(x => x.id === id);
   if(!d || d.status === 'iniciado') return;
+  if(!confirm(`Marcar "${d.titulo}" como iniciada?`)) return;
   const atualizado = {...d, status:'iniciado', iniciadoEm: new Date().toISOString()};
   try {
     await salvarDemandaNuvem(atualizado);
@@ -3749,9 +3777,15 @@ function openContrato(id){
 
   function atualizarObraContrato(selObraId){
     const empId = $('#mc-empresa').value;
-    const obras = empId ? state.obras.filter(o => o.empresa === empId && o.status === 'ativa') : [];
+    let obras = empId ? state.obras.filter(o => o.empresa === empId && o.status === 'ativa') : [];
+    // Se a obra já vinculada ao contrato estiver inativa, mantém ela na lista
+    // (marcada) pra não desvincular silenciosamente ao só reabrir e salvar.
+    if(selObraId && !obras.some(o => o.id === selObraId)){
+      const obraInativa = state.obras.find(o => o.id === selObraId);
+      if(obraInativa) obras = [...obras, obraInativa];
+    }
     $('#mc-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
-      obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${o.nome}</option>`).join('');
+      obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${o.nome}${o.status==='inativa'?' (inativa)':''}</option>`).join('');
   }
   atualizarObraContrato(c?.obra || '');
   $('#mc-empresa').onchange = () => { atualizarObraContrato(''); };
@@ -4689,7 +4723,7 @@ function setupEvents(){
   $('#mc-save').onclick = async () => {
     const empresa = $('#mc-empresa').value;
     const tipos = {};
-    TIPOS_AVALIACAO.forEach(t => { tipos[t.key] = parseInt($('#'+t.id).value)||0; });
+    TIPOS_AVALIACAO.forEach(t => { tipos[t.key] = Math.max(0, parseInt($('#'+t.id).value)||0); });
     const qtd = TIPOS_AVALIACAO.reduce((s,t) => s + tipos[t.key], 0);
     if(!empresa || qtd < 1){ toast('Preencha empresa e ao menos um tipo de avaliação', 'danger'); return; }
     const id = $('#mc-id').value || 'c'+uid();
@@ -4828,7 +4862,9 @@ function setupEvents(){
     // menos o que já foi realizado antes menos o que está sendo pedido agora.
     const _contratoAtual = state.contratos.find(c => c.id === contrato);
     const _tiposContratadosAtual = _contratoAtual?.tipos || {};
-    const _realizadasAntesAtual = _contratoAtual ? realizadasPorTipo(_contratoAtual.id) : {};
+    // Exclui a própria avaliação sendo editada da contagem "já feitas" — senão
+    // ela conta em dobro (uma vez como "já feita", outra como "sendo pedida").
+    const _realizadasAntesAtual = _contratoAtual ? realizadasPorTipo(_contratoAtual.id, $('#ma-id').value || undefined) : {};
     const _qtyPedidaPorKey = {};
     items.forEach(i => {
       const t = TIPOS_AVALIACAO.find(x => x.nome === i.agente);
@@ -4884,24 +4920,33 @@ function setupEvents(){
 
     let valorMedicaoAutomatica = 0;
     try {
+      const _agentesTocados = new Set();
       if(isEdit){
         const id = $('#ma-id').value;
-        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', envio_lab: items[0].envio_lab, ghe: gheId, foraDoContrato: !agenteContratado(items[0].agente)};
+        const obj = {id, contrato, data: items[0].data, agente: items[0].agente, local: '', envio_lab: items[0].envio_lab, ghe: gheId, foraDoContrato: false};
         await salvarAvaliacaoNuvem(obj);
         const idx = state.avaliacoes.findIndex(a => a.id === id);
         if(idx >= 0) state.avaliacoes[idx] = obj; else state.avaliacoes.push(obj);
+        _agentesTocados.add(items[0].agente);
       } else {
         let total = 0;
         for(const item of items){
           for(let i = 0; i < item.qty; i++){
-            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', envio_lab: item.envio_lab, ghe: gheId, foraDoContrato: !agenteContratado(item.agente)};
+            const obj = {id:'a'+uid(), contrato, data: item.data, agente: item.agente, local: '', envio_lab: item.envio_lab, ghe: gheId, foraDoContrato: false};
             await salvarAvaliacaoNuvem(obj);
             state.avaliacoes.push(obj);
             total++;
             const rMed = await registrarMedicaoAvaliacaoAutomatica(obj.id);
             if(rMed?.status === 'ok') valorMedicaoAutomatica += rMed.preco;
           }
+          _agentesTocados.add(item.agente);
         }
+      }
+      // Recalcula do zero a flag fora_do_contrato de cada tipo tocado, em vez de
+      // só marcar a avaliação nova isoladamente — garante consistência mesmo com
+      // edição (não conta a própria avaliação em dobro) e ordem cronológica real.
+      for(const _agente of _agentesTocados){
+        await recalcularForaDoContrato(contrato, _agente);
       }
       save(); closeModal('modal-aval'); renderAll();
       const total2 = isEdit ? 0 : items.reduce((s,i)=>s+i.qty,0);
@@ -4916,9 +4961,13 @@ function setupEvents(){
   $('#ma-delete').onclick = async () => {
     if(!confirm('Excluir avaliação?')) return;
     const aid = $('#ma-id').value;
+    const avExcluida = state.avaliacoes.find(a => a.id === aid);
     try {
       await excluirAvaliacaoNuvem(aid);
       state.avaliacoes = state.avaliacoes.filter(a => a.id !== aid);
+      // Reabre saldo pra quem ficou pra trás: a exclusão pode liberar espaço
+      // pra outra avaliação do mesmo tipo que estava marcada como fora do contrato.
+      if(avExcluida) await recalcularForaDoContrato(avExcluida.contrato, avExcluida.agente);
       save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
