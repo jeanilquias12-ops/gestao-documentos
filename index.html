@@ -3903,14 +3903,15 @@ function renderMedicoes(){
     <td><button class="btn ghost sm" onclick="openMedicao('${m.id}')">Editar</button></td>
   </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma medição encontrada</td></tr>';
 
-  renderMedChartMensal();
+  renderMedChartMensal(filtrados);
 }
 
-function renderMedChartMensal(){
+function renderMedChartMensal(medicoesFiltradas){
   const cont = $('#med-chart-mensal');
   if(!cont) return;
+  const lista = medicoesFiltradas || state.medicoes;
   const porMes = {};
-  state.medicoes.forEach(m => {
+  lista.forEach(m => {
     const mes = (m.data||'').slice(0,7);
     if(!mes) return;
     porMes[mes] = (porMes[mes]||0) + (m.valor||0);
