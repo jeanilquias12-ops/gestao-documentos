@@ -3296,8 +3296,12 @@ function montarRelatorio(){
     const isConcluido = d => (d.tipo === 'LTCAT' && d.elabFinalizada) || (d.tipo !== 'LTCAT' && d.retornoRecebido);
     const dataEntrega = d => d.envClienteData || d.envAssessoriaData || null;
     const concluidos = state.docs.filter(d => d.inicioElaboracao && isConcluido(d) && dataEntrega(d));
-    const anoAtual = String(new Date().getFullYear());
-    const docsAno = concluidos.filter(d => dataEntrega(d).substring(0,4) === anoAtual);
+    // Respeita o período do relatório: se início/fim foram escolhidos, usa o
+    // ano da data final (ou inicial) como referência, e ainda filtra cada
+    // entrega pelas datas exatas — não só pelo ano batendo. Sem período
+    // selecionado ("todo o período"), mantém o padrão de mostrar o ano atual.
+    const anoAtual = fim ? fim.slice(0,4) : (ini ? ini.slice(0,4) : String(new Date().getFullYear()));
+    const docsAno = concluidos.filter(d => dataEntrega(d).substring(0,4) === anoAtual && inRange(dataEntrega(d)));
     const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
     const meses = Array.from({length:12}, (_,i) => {
