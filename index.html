@@ -3021,7 +3021,7 @@ function montarRelatorio(){
       const f = faseDoc(d);
       if(f){ if(f.fase === 1) emElab++; else if(f.fase === 2) agAssess++; }
     });
-    const totalAvals = state.avaliacoes.length;
+    const totalAvals = state.avaliacoes.filter(a => inRange(a.data)).length;
     const saldoPend = state.contratos.filter(contratoEmpresaAtiva).reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
 
     html += `<div class="rel-kpi-grid">
@@ -3229,21 +3229,26 @@ function montarRelatorio(){
       const porEmpresa = {};
       let fatMes = 0, custoMes = 0, qtdMes = 0;
       medsMes.forEach(m => {
+        // Chave por empresa+obra (id), não pelo nome exibido — dois registros
+        // com nomes iguais (ex.: obra de uma empresa com o mesmo nome de outra
+        // empresa/obra) não podem ser somados como se fossem a mesma unidade.
+        const chaveE = (m.empresa||'') + '|' + (m.obra||'');
         const nomeE = unidadeMedicao(m);
         const fat = Number(m.valor)||0, custo = medicaoCustoLab(m), qtd = qtdDetalhes(m);
-        if(!porEmpresa[nomeE]) porEmpresa[nomeE] = {qtd:0, fat:0, custo:0, tipos:{}};
-        porEmpresa[nomeE].qtd += qtd;
-        porEmpresa[nomeE].fat += fat;
-        porEmpresa[nomeE].custo += custo;
+        if(!porEmpresa[chaveE]) porEmpresa[chaveE] = {nome: nomeE, qtd:0, fat:0, custo:0, tipos:{}};
+        porEmpresa[chaveE].qtd += qtd;
+        porEmpresa[chaveE].fat += fat;
+        porEmpresa[chaveE].custo += custo;
         fatMes += fat; custoMes += custo; qtdMes += qtd;
         Object.entries(m.detalhes||{}).forEach(([tipo,q]) => {
-          porEmpresa[nomeE].tipos[tipo] = (porEmpresa[nomeE].tipos[tipo]||0) + (Number(q)||0);
+          porEmpresa[chaveE].tipos[tipo] = (porEmpresa[chaveE].tipos[tipo]||0) + (Number(q)||0);
         });
       });
       const margemMes = fatMes - custoMes;
       const margemMesPct = fatMes > 0 ? (margemMes/fatMes*100) : 0;
-      const empresasOrdenadas = Object.entries(porEmpresa).sort((a,b) => b[1].fat - a[1].fat);
-      const linhasEmpresa = empresasOrdenadas.map(([nome, info]) => {
+      const empresasOrdenadas = Object.values(porEmpresa).sort((a,b) => b.fat - a.fat);
+      const linhasEmpresa = empresasOrdenadas.map((info) => {
+        const nome = info.nome;
         const margemEmp = info.fat - info.custo;
         const detalheTipos = Object.entries(info.tipos).map(([t,q]) => `<li>${t}: ${q}</li>`).join('');
         return `<tr><td>${nome}</td><td>${info.qtd}</td><td>${fmtR(info.fat)}</td><td>${fmtR(info.custo)}</td><td>${fmtR(margemEmp)}</td></tr>
@@ -3420,7 +3425,18 @@ function repartirValorPorTipo(detalhes, valorReal){
     tipo, qtd: Number(qtd)||0, bruto: precoEnsaio(tipo).venda * (Number(qtd)||0)
   }));
   const brutoTotal = entradas.reduce((s,e) => s + e.bruto, 0);
-  const fator = brutoTotal > 0 ? valorReal / brutoTotal : 0;
+  // Se algum tipo não tem preço configurado agora (ex.: foi renomeado ou
+  // removido de Preços & Custos depois da medição ser lançada), o rateio por
+  // preço fica furado: esse tipo "some" com R$0,00 e o valor real dele é
+  // silenciosamente empurrado pros outros — cai pra rateio igual por unidade,
+  // que sempre soma certinho e nunca zera um tipo que realmente foi cobrado.
+  const semPrecoConfigurado = entradas.some(e => e.qtd > 0 && precoEnsaio(e.tipo).venda <= 0);
+  if(brutoTotal <= 0 || semPrecoConfigurado){
+    const totalQtd = entradas.reduce((s,e) => s + e.qtd, 0);
+    const valorPorUnidade = totalQtd > 0 ? valorReal / totalQtd : 0;
+    return entradas.map(e => ({ tipo: e.tipo, qtd: e.qtd, valor: e.qtd * valorPorUnidade }));
+  }
+  const fator = valorReal / brutoTotal;
   return entradas.map(e => ({ tipo: e.tipo, qtd: e.qtd, valor: e.bruto * fator }));
 }
 
