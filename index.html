@@ -3883,10 +3883,24 @@ function openMedicao(id, preset){
 
 function medicaoCustoLab(m){
   if(!m.detalhes) return 0;
-  return Object.entries(m.detalhes).reduce((s,[nome,qtd]) => {
+  const entradas = Object.entries(m.detalhes).map(([nome,qtd]) => {
     const t = TIPOS_AVALIACAO.find(x => x.nome === nome);
-    return s + (t ? (Number(t.custo)||0) * (Number(qtd)||0) : 0);
-  }, 0);
+    return { qtd: Number(qtd)||0, custo: t ? Number(t.custo)||0 : null };
+  });
+  // Se o tipo foi removido de Preços & Custos depois da medição ser lançada,
+  // o custo dele não pode mais ser lido do cadastro — em vez de tratar como
+  // R$0,00 (o que infla a Margem artificialmente), estima pelo custo médio
+  // por unidade dos demais tipos da mesma medição.
+  const semCustoConhecido = entradas.some(e => e.qtd > 0 && e.custo === null);
+  if(semCustoConhecido){
+    const conhecidas = entradas.filter(e => e.custo !== null);
+    const qtdConhecida = conhecidas.reduce((s,e) => s + e.qtd, 0);
+    const custoMedioPorUnidade = qtdConhecida > 0
+      ? conhecidas.reduce((s,e) => s + e.custo * e.qtd, 0) / qtdConhecida
+      : 0;
+    return entradas.reduce((s,e) => s + e.qtd * (e.custo !== null ? e.custo : custoMedioPorUnidade), 0);
+  }
+  return entradas.reduce((s,e) => s + e.qtd * e.custo, 0);
 }
 
 function medicaoDescHtml(m){
@@ -4784,15 +4798,23 @@ function setupEvents(){
     const empresa = $('#med-empresa').value;
     const tipo = $('#med-tipo').value;
     const data = $('#med-data').value;
+    const id = $('#med-id').value || 'med'+uid();
+    const existente = $('#med-id').value ? state.medicoes.find(m=>m.id===id) : null;
     let detalhes = {};
     if(tipo === 'LTCAT'){
-      TIPOS_AVALIACAO.forEach(t => { const q = parseInt($('#med-ens-'+t.key)?.value) || 0; if(q > 0) detalhes[t.nome] = q; });
+      // Começa do registro existente pra não perder ensaios que saíram de
+      // TIPOS_AVALIACAO (removidos de Preços & Custos depois da medição ser
+      // lançada) — só os tipos que ainda existem no cadastro são atualizados
+      // pelo formulário abaixo; os demais ficam intactos.
+      detalhes = { ...(existente?.detalhes || {}) };
+      TIPOS_AVALIACAO.forEach(t => {
+        const q = parseInt($('#med-ens-'+t.key)?.value) || 0;
+        if(q > 0) detalhes[t.nome] = q; else delete detalhes[t.nome];
+      });
       if(!Object.keys(detalhes).length){ toast('Informe a quantidade de ao menos um ensaio', 'danger'); return; }
     }
     const valor = parseFloat($('#med-valor').value);
     if(!empresa || !valor || valor <= 0 || !data){ toast('Preencha empresa, valor e data', 'danger'); return; }
-    const id = $('#med-id').value || 'med'+uid();
-    const existente = $('#med-id').value ? state.medicoes.find(m=>m.id===id) : null;
     const descAuto = tipo === 'LTCAT' ? Object.entries(detalhes).map(([n,q]) => `${n}: ${q}`).join(', ') : $('#med-desc').value;
     const registro = {id, empresa, obra:$('#med-obra').value, tipo, valor, data, desc:descAuto, detalhes, doc: existente?.doc || '', origem: existente?.origem || 'manual'};
     try {
