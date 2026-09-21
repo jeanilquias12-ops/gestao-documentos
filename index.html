@@ -3195,7 +3195,10 @@ function montarRelatorio(){
     let ltcatChart = '';
     if(mesesKeys.length){
       const fatPorMes = mesesKeys.map(mm => mesesMap[mm].reduce((s,m)=>s+(Number(m.valor)||0),0));
-      const chW = 900, chH = 260, chPadL = 60, chPadR = 20, chPadT = 24, chPadB = 40;
+      // chPadL precisa caber o maior rótulo de valor (ex.: "R$ 21.380,00") sem
+      // estourar a borda esquerda do SVG — se o texto vazar de x=0, o SVG corta
+      // os primeiros caracteres (o "R" some, sobra só parte do "$").
+      const chW = 900, chH = 260, chPadL = 90, chPadR = 20, chPadT = 24, chPadB = 40;
       const chChartW = chW-chPadL-chPadR, chChartH = chH-chPadT-chPadB;
       const chGap = chChartW/mesesKeys.length, chBarW = Math.min(chGap*0.5, 46);
       const maxFat = Math.max(...fatPorMes, 1);
