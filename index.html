@@ -1947,7 +1947,7 @@ function nomeObra(id){ const o = state.obras.find(x => x.id === id); return o ? 
 function docLabel(docId){
   const d = state.docs.find(x => x.id === docId);
   if(!d) return 'Documento não encontrado';
-  return `${d.tipo}${d.numero ? ' nº '+d.numero : ''}`;
+  return `${d.tipo}${d.numero ? ' nº '+escapeHtml(d.numero) : ''}`;
 }
 
 function alertasART(){
@@ -2501,7 +2501,7 @@ function renderIndDetalhe(meses, mesIdx){
       sit = '<span class="pill danger" style="font-size:11px">Fase atrasada</span>';
     }
     return `<tr>
-      <td>${e.doc.obra ? `<b>${nomeObra(e.doc.obra)}</b><br><small style="color:var(--ink-muted)">${e.empresa}</small>` : `<b>${e.empresa}</b>`}</td>
+      <td>${e.doc.obra ? `<b>${escapeHtml(nomeObra(e.doc.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(e.empresa)}</small>` : `<b>${escapeHtml(e.empresa)}</b>`}</td>
       <td>${e.doc.nome || e.doc.tipo}</td>
       <td><span class="pill" style="font-size:11px;background:${e.doc.tipo==='PGR'?'#E3F2FD':'#F3E5F5'};color:${e.doc.tipo==='PGR'?'#1565C0':'#7B1FA2'}">${e.doc.tipo}</span></td>
       <td>${fmtDate(e.doc.inicioElaboracao)}</td>
@@ -2540,7 +2540,7 @@ function renderDashboard(){
     .slice(0,8);
   const tb = $('#tbl-acoes tbody');
   tb.innerHTML = acoes.length ? acoes.map(({d,s}) => `<tr>
-    <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
+    <td>${d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`}</td>
     <td><b>${d.tipo}</b> <small style="color:var(--ink-muted)">${d.numero||''}</small></td>
     <td class="tight">${fmtDate(d.validade)}</td>
     <td><span class="pill ${s.key}">${s.label}</span></td>
@@ -2556,7 +2556,7 @@ function renderDashboard(){
   sb.innerHTML = saldos.length ? saldos.map(({c, r, pct}) => `
     <div>
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span>${c.obra ? `<b>${nomeObra(c.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(c.empresa)}</small>` : `<b>${nomeEmpresa(c.empresa)}</b><br><small style="color:var(--ink-muted)">${c.desc||'—'}</small>`}</span>
+        <span>${c.obra ? `<b>${escapeHtml(nomeObra(c.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(c.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(c.empresa))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(c.desc)||'—'}</small>`}</span>
         <span class="pill ${pct>=1?'danger':'warn'}">${r}/${c.qtd}</span>
       </div>
       <div class="progress"><div class="progress-bar ${pct>=1?'danger':'warn'}" style="width:${Math.min(pct*100,100)}%"></div></div>
@@ -2575,10 +2575,10 @@ function renderDashboard(){
       const cfg = STATUS_PSI[p.status] || {cls:'muted', label:p.status};
       const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
       return `<tr>
-        <td><b>${p.empresaLivre || nomeEmpresa(p.empresa)}</b>${p.empresaLivre ? ' <span style="font-size:10px;color:var(--ink-muted);font-weight:400">(externa)</span>' : ''}</td>
+        <td><b>${escapeHtml(p.empresaLivre || nomeEmpresa(p.empresa))}</b>${p.empresaLivre ? ' <span style="font-size:10px;color:var(--ink-muted);font-weight:400">(externa)</span>' : ''}</td>
         <td class="tight">${dataFmt}</td>
-        <td class="tight">${p.hora || '—'}</td>
-        <td>${p.local || '—'}</td>
+        <td class="tight">${escapeHtml(p.hora) || '—'}</td>
+        <td>${escapeHtml(p.local) || '—'}</td>
         <td><span class="pill ${cfg.cls}">${cfg.label}</span></td>
       </tr>`;
     }).join('') + `</tbody></table></div>`
@@ -2597,7 +2597,7 @@ function renderDashboard(){
       const faseTxt = f.fase === 1 ? 'Seg. do Trabalho (10d)' : 'Assessoria de Saúde (5d)';
       const atrasoHtml = (d.atrasoFase1 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F1: +${d.atrasoFase1}d</span> ` : '') + (d.atrasoFase2 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>` : '');
       return `<tr>
-        <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
+        <td>${d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`}</td>
         <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
         <td style="font-size:12.5px;color:var(--ink-soft)">${faseTxt}</td>
         <td colspan="2"><span class="pill ${f.key}">${f.label}</span>${atrasoHtml ? '<br>'+atrasoHtml : ''}</td>
@@ -2637,7 +2637,7 @@ function renderEmpresas(){
   const q = normalizeTexto($('#f-empresa-q').value);
 
   const segOpts = [...new Set(state.empresas.map(e => e.segmento).filter(Boolean))];
-  $('#f-empresa-seg').innerHTML = '<option value="">Todos</option>' + segOpts.map(s => `<option ${s===seg?'selected':''}>${s}</option>`).join('');
+  $('#f-empresa-seg').innerHTML = '<option value="">Todos</option>' + segOpts.map(s => `<option ${s===seg?'selected':''}>${escapeHtml(s)}</option>`).join('');
 
   let list = state.empresas.filter(e =>
     (!status || e.status === status) &&
@@ -2659,10 +2659,10 @@ function renderEmpresas(){
     const obras = state.obras.filter(o => o.empresa === e.id).length;
     const docs = state.docs.filter(d => d.empresa === e.id).length;
     return `<tr>
-      <td><b>${e.nome}</b></td>
-      <td class="tight"><span class="mono">${e.cnpj}</span></td>
-      <td>${e.segmento||'—'}</td>
-      <td>${e.contato||'—'}<br><small style="color:var(--ink-muted)">${e.telefone||''}</small></td>
+      <td><b>${escapeHtml(e.nome)}</b></td>
+      <td class="tight"><span class="mono">${escapeHtml(e.cnpj)}</span></td>
+      <td>${escapeHtml(e.segmento)||'—'}</td>
+      <td>${escapeHtml(e.contato)||'—'}<br><small style="color:var(--ink-muted)">${escapeHtml(e.telefone)||''}</small></td>
       <td>${obras}</td>
       <td>${docs}</td>
       <td><span class="pill ${e.status==='ativa'?'solid-green':'muted'}">${e.status==='ativa'?'Ativa':'Inativa'}</span></td>
@@ -2677,7 +2677,7 @@ function renderObras(){
   const statusF = $('#f-obra-status').value;
   const q = normalizeTexto($('#f-obra-q').value);
 
-  $('#f-obra-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresaF?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-obra-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresaF?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
 
   let list = state.obras.filter(o =>
     (!empresaF || o.empresa === empresaF) &&
@@ -2698,10 +2698,10 @@ function renderObras(){
   tb.innerHTML = list.length ? list.map(o => {
     const docs = state.docs.filter(d => d.obra === o.id).length;
     return `<tr>
-      <td><b>${o.nome}</b></td>
-      <td>${nomeEmpresa(o.empresa)}</td>
-      <td>${o.endereco||'—'}</td>
-      <td>${o.contato||'—'}<br><small style="color:var(--ink-muted)">${o.telefone||''}</small></td>
+      <td><b>${escapeHtml(o.nome)}</b></td>
+      <td>${escapeHtml(nomeEmpresa(o.empresa))}</td>
+      <td>${escapeHtml(o.endereco)||'—'}</td>
+      <td>${escapeHtml(o.contato)||'—'}<br><small style="color:var(--ink-muted)">${escapeHtml(o.telefone)||''}</small></td>
       <td>${docs}</td>
       <td><span class="pill ${o.status==='ativa'?'solid-green':'muted'}">${o.status==='ativa'?'Ativa':'Inativa'}</span></td>
       <td><button class="btn sm" onclick="openObra('${o.id}')">Editar</button></td>
@@ -2718,7 +2718,7 @@ function renderDocs(){
   const q = normalizeTexto($('#f-doc-q').value);
   const incluirInativas = $('#f-doc-inativas').checked;
 
-  $('#f-doc-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-doc-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
 
   let list = state.docs.filter(d => {
     const s = statusDoc(d);
@@ -2755,11 +2755,11 @@ function renderDocs(){
       return `<span class="pill muted" style="color:var(--ink-muted)">— Pendente</span>`;
     })();
     return `<tr>
-      <td>${d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`}</td>
+      <td>${d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`}</td>
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
-      <td><span class="pill ${s.key}">${s.label}</span>${d.reprovado ? '<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px" title="'+(d.motivoReprovacao||'').replace(/"/g,'&quot;')+'">⛔ Reprovado p/ assessoria</span>' : ''}</td>
+      <td><span class="pill ${s.key}">${s.label}</span>${d.reprovado ? `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px" title="${escapeHtml(d.motivoReprovacao)}">⛔ Reprovado p/ assessoria</span>` : ''}</td>
       <td>${(()=>{ const f = faseDoc(d); let html = f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>';
         if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
         if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
@@ -2813,7 +2813,7 @@ function renderAvaliacoes(){
   const empresa = $('#f-av-empresa').value;
   const saldo = $('#f-av-saldo').value;
 
-  $('#f-av-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-av-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empresa?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
 
   const list = state.contratos.filter(c => {
     if(empresa && c.empresa !== empresa) return false;
@@ -2881,7 +2881,7 @@ function renderAvaliacoes(){
         const gnome = a.ghe ? gheName(a.ghe) : '';
         return `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
-          <span><b>${a.agente}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${gnome}</span>` : ''}${a.foraDoContrato ? ` <span class="pill warn" style="font-size:10.5px;padding:1px 6px" title="Esse tipo de ensaio não consta no contrato desta empresa/obra">⚠ fora do contrato</span>` : ''}</span>
+          <span><b>${escapeHtml(a.agente)}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${escapeHtml(gnome)}</span>` : ''}${a.foraDoContrato ? ` <span class="pill warn" style="font-size:10.5px;padding:1px 6px" title="Esse tipo de ensaio não consta no contrato desta empresa/obra">⚠ fora do contrato</span>` : ''}</span>
           <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
           <span style="display:flex;align-items:center;gap:8px">
             ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
@@ -2899,7 +2899,7 @@ function renderAvaliacoes(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px">
           ${gheList.map(g => {
             const qtd = gheQtd[g.id] || 0;
-            return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:${qtd?'var(--green-50,#f0fdf4)':'#FFF8E1'};border:1px solid ${qtd?'var(--line)':'#FFE082'};border-radius:6px;padding:3px 8px">${g.nome} <span style="color:var(--ink-muted);font-weight:600">(${qtd})</span>${PAPEL === 'financeiro' ? '' : `<button class="btn sm danger" style="padding:0 6px;font-size:11px;line-height:1.6" title="Excluir GHE" onclick="excluirGhe('${g.id}')">✕</button>`}</span>`;
+            return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:${qtd?'var(--green-50,#f0fdf4)':'#FFF8E1'};border:1px solid ${qtd?'var(--line)':'#FFE082'};border-radius:6px;padding:3px 8px">${escapeHtml(g.nome)} <span style="color:var(--ink-muted);font-weight:600">(${qtd})</span>${PAPEL === 'financeiro' ? '' : `<button class="btn sm danger" style="padding:0 6px;font-size:11px;line-height:1.6" title="Excluir GHE" onclick="excluirGhe('${g.id}')">✕</button>`}</span>`;
           }).join('')}
         </div>
       </details>` : '';
@@ -2933,8 +2933,8 @@ function renderAvaliacoes(){
     return `<div class="card">
       <div class="card-h">
         <div>
-          <h3>${c.obra ? `${nomeObra(c.obra)} <small style="font-weight:400;color:var(--ink-muted)">· ${nomeEmpresa(c.empresa)}</small>` : nomeEmpresa(c.empresa)}</h3>
-          <p>${c.desc || ''}${docInfo ? `${c.desc?' · ':''}vinculado a ${docInfo.tipo} ${docInfo.numero||''}` : ''}</p>
+          <h3>${c.obra ? `${escapeHtml(nomeObra(c.obra))} <small style="font-weight:400;color:var(--ink-muted)">· ${escapeHtml(nomeEmpresa(c.empresa))}</small>` : escapeHtml(nomeEmpresa(c.empresa))}</h3>
+          <p>${escapeHtml(c.desc) || ''}${docInfo ? `${c.desc?' · ':''}vinculado a ${docInfo.tipo} ${escapeHtml(docInfo.numero)||''}` : ''}</p>
           ${c.tipos ? `<p style="margin:4px 0 0;font-size:12px;color:var(--ink-muted)">${TIPOS_AVALIACAO.filter(t=>(c.tipos[t.key]||0)>0).map(t=>`<span style="display:inline-block;background:var(--green-100);border-radius:4px;padding:1px 6px;margin:1px 2px 1px 0">${t.nome.split(' ')[0] === 'Particulado' ? 'Part. Total' : t.nome.split(' ')[0] === 'Varreduras' ? (t.key==='metais'?'Metais':'Vapores') : t.nome.split(' ')[0]}: ${c.tipos[t.key]}</span>`).join('')}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px">
@@ -3034,7 +3034,7 @@ function montarRelatorio(){
 
     // Alertas
     const alertas = [];
-    const rotuloUnidade = (empresa, obra) => obra ? `<b>${nomeObra(obra)}</b> — ${nomeEmpresa(empresa)}` : `<b>${nomeEmpresa(empresa)}</b>`;
+    const rotuloUnidade = (empresa, obra) => obra ? `<b>${escapeHtml(nomeObra(obra))}</b> — ${escapeHtml(nomeEmpresa(empresa))}` : `<b>${escapeHtml(nomeEmpresa(empresa))}</b>`;
     docsAtivosRel.filter(d => statusDoc(d).key === 'danger').forEach(d => {
       alertas.push({t:'danger', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
     });
@@ -3075,7 +3075,7 @@ function montarRelatorio(){
       const entrega = d.envCliente && d.envFinanceiro ? '<span class="pill ok" style="font-size:11px">Completo</span>'
         : d.envCliente ? '<span class="pill enviado-c" style="font-size:11px">Ag. financeiro</span>'
         : '<span class="pill muted" style="font-size:11px">Pendente</span>';
-      const empresaHtml = d.obra ? `<b>${nomeObra(d.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(d.empresa)}</small>` : `<b>${nomeEmpresa(d.empresa)}</b>`;
+      const empresaHtml = d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`;
       return `<tr><td>${empresaHtml}</td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
@@ -3109,7 +3109,7 @@ function montarRelatorio(){
       const hasVencido = docsE.some(d => statusDoc(d).key === 'danger');
       const hasVencendo = docsE.some(d => statusDoc(d).key === 'warn');
       const st = hasVencido ? {k:'danger',l:'Vencido'} : hasVencendo ? {k:'warn',l:'Vencendo'} : {k:'ok',l:'OK'};
-      return `<tr><td><b>${e.nome}</b></td><td style="text-align:center">${pgr}</td><td style="text-align:center">${ltcat}</td><td style="text-align:center">${avs||'—'}</td><td>${saldoHtml}</td><td>${faseHtml}</td><td><span class="pill ${st.k}" style="font-size:11px">${st.l}</span></td></tr>`;
+      return `<tr><td><b>${escapeHtml(e.nome)}</b></td><td style="text-align:center">${pgr}</td><td style="text-align:center">${ltcat}</td><td style="text-align:center">${avs||'—'}</td><td>${saldoHtml}</td><td>${faseHtml}</td><td><span class="pill ${st.k}" style="font-size:11px">${st.l}</span></td></tr>`;
     }).filter(Boolean).join('');
     html += `<div class="card rel-sec">
       <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${empresasAtivas.length}</span></h3><p>Documentos, avaliações e situação de cada empresa</p></div></div>
@@ -3126,7 +3126,7 @@ function montarRelatorio(){
       const nome = p.empresaLivre || nomeEmpresa(p.empresa);
       const stMap = {pendente:{l:'Pendente',k:'warn'},realizado:{l:'Realizado',k:'ok'},reagendado:{l:'Reagendado',k:'muted'},cancelado:{l:'Cancelado',k:'danger'}};
       const st = stMap[p.status]||{l:p.status,k:'muted'};
-      return `<tr><td><b>${nome}</b></td><td class="tight">${fmtDate(p.data)}${p.hora?' '+p.hora:''}</td><td>${p.responsavel||'—'}</td><td><span class="pill ${st.k}">${st.l}</span></td></tr>`;
+      return `<tr><td><b>${escapeHtml(nome)}</b></td><td class="tight">${fmtDate(p.data)}${p.hora?' '+escapeHtml(p.hora):''}</td><td>${escapeHtml(p.responsavel)||'—'}</td><td><span class="pill ${st.k}">${st.l}</span></td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
       <div class="card-h"><div><h3>Psicossociais <span class="rel-count">${ps.length}</span></h3><p>${realizados} realizada${realizados!==1?'s':''}</p></div></div>
@@ -3144,7 +3144,7 @@ function montarRelatorio(){
       const nome = e.empresaLivre || nomeEmpresa(e.empresa);
       const stCfg = EV_STATUS_CFG[e.status]||{cls:'muted',label:e.status};
       const part = `${e.presentes!=null?e.presentes:'—'} / ${e.previstos!=null?e.previstos:'—'}`;
-      return `<tr><td><b>${nome}</b></td><td>${e.tema||'—'}</td><td class="tight">${fmtDate(e.data)}${e.hora?' '+e.hora:''}</td><td>${e.responsavel||'—'}</td><td class="tight">${part}</td><td><span class="pill ${stCfg.cls}">${stCfg.label}</span></td></tr>`;
+      return `<tr><td><b>${escapeHtml(nome)}</b></td><td>${escapeHtml(e.tema)||'—'}</td><td class="tight">${fmtDate(e.data)}${e.hora?' '+escapeHtml(e.hora):''}</td><td>${escapeHtml(e.responsavel)||'—'}</td><td class="tight">${part}</td><td><span class="pill ${stCfg.cls}">${stCfg.label}</span></td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
       <div class="card-h"><div><h3>${titulo} <span class="rel-count">${evs.length}</span></h3><p>${totalPresentes} participante${totalPresentes!==1?'s':''}</p></div></div>
@@ -3163,7 +3163,7 @@ function montarRelatorio(){
     const medsLtcat = state.medicoes.filter(m => m.tipo === 'LTCAT' && inRange(m.data))
       .sort((a,b) => (a.data||'').localeCompare(b.data||''));
     const qtdDetalhes = (m) => Object.values(m.detalhes||{}).reduce((s,q) => s + (Number(q)||0), 0);
-    const unidadeMedicao = (m) => (m.obra && nomeObra(m.obra)) || nomeEmpresa(m.empresa) || '—';
+    const unidadeMedicao = (m) => escapeHtml((m.obra && nomeObra(m.obra)) || nomeEmpresa(m.empresa) || '—');
 
     // Avaliações faturadas no período (via medição vinculada) que foram lançadas
     // fora do que estava no contrato — vale o alerta aqui também, pois é o
@@ -3418,7 +3418,7 @@ function popularRelClienteEmpresas(){
   if(!sel) return;
   const atual = sel.value;
   sel.innerHTML = [...state.empresas].filter(e => e.status !== 'inativa').sort((a,b)=>a.nome.localeCompare(b.nome,'pt'))
-    .map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+    .map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   if(atual && [...sel.options].some(o => o.value === atual)) sel.value = atual;
   populateObraSelectGeneric('rel-cli-obra', sel.value, '');
   // Neste seletor (relatório do cliente) a opção em branco significa "todas as
@@ -3467,8 +3467,8 @@ function montarRelatorioCliente(){
     return;
   }
 
-  const empNome = nomeEmpresa(empresaId);
-  const obraNome = obraId ? nomeObra(obraId) : '';
+  const empNome = escapeHtml(nomeEmpresa(empresaId));
+  const obraNome = obraId ? escapeHtml(nomeObra(obraId)) : '';
 
   // obraId em branco = "Todas as obras" (não "somente sem obra") — senão o
   // relatório do cliente fica zerado sempre que a empresa fatura por obra e o
@@ -3567,13 +3567,13 @@ function closeModal(id){ $('#'+id).classList.remove('show'); }
 function populateObraSelect(empresaId, selectedObraId){
   const obras = empresaId ? state.obras.filter(o => o.empresa === empresaId && o.status === 'ativa') : [];
   $('#md-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
-    obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${o.nome}</option>`).join('');
+    obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${escapeHtml(o.nome)}</option>`).join('');
 }
 
 function populateObraSelectGeneric(selectId, empresaId, selectedObraId){
   const obras = empresaId ? state.obras.filter(o => o.empresa === empresaId) : [];
   $('#'+selectId).innerHTML = '<option value="">— nenhuma (nível empresa) —</option>' +
-    obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${o.nome}</option>`).join('');
+    obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selectedObraId?'selected':''}>${escapeHtml(o.nome)}</option>`).join('');
 }
 
 function recalcMoContratoTotal(){
@@ -3586,7 +3586,7 @@ function openObra(id){
   $('#mo-title').textContent = o ? 'Editar obra' : 'Nova obra';
   $('#mo-id').value = o?.id || '';
   $('#mo-empresa').innerHTML = (o ? '' : '<option value="">— Selecione a empresa —</option>') +
-    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#mo-empresa').value = o?.empresa || '';
   $('#mo-nome').value = o?.nome || '';
   $('#mo-endereco').value = o?.endereco || '';
@@ -3735,7 +3735,7 @@ function openDoc(id){
   $('#md-title').textContent = d ? 'Editar documento' : 'Novo documento';
   $('#md-id').value = d?.id || '';
   $('#md-empresa').innerHTML = (d ? '' : '<option value="">— Selecione a empresa —</option>') +
-    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#md-empresa').value = d?.empresa || '';
   populateObraSelect(d?.empresa || '', d?.obra || '');
   $('#md-tipo').value = d?.tipo || 'PGR';
@@ -3800,7 +3800,7 @@ function openContrato(id){
   const c = id ? state.contratos.find(x => x.id === id) : null;
   $('#mc-title').textContent = c ? 'Editar contrato' : 'Novo contrato de avaliações';
   $('#mc-id').value = c?.id || '';
-  $('#mc-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#mc-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#mc-empresa').value = c?.empresa || state.empresas[0]?.id || '';
   renderMcTiposGrid();
 
@@ -3814,7 +3814,7 @@ function openContrato(id){
       if(obraInativa) obras = [...obras, obraInativa];
     }
     $('#mc-obra').innerHTML = '<option value="">— Sem obra vinculada —</option>' +
-      obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${o.nome}${o.status==='inativa'?' (inativa)':''}</option>`).join('');
+      obras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(o => `<option value="${o.id}" ${o.id===selObraId?'selected':''}>${escapeHtml(o.nome)}${o.status==='inativa'?' (inativa)':''}</option>`).join('');
   }
   atualizarObraContrato(c?.obra || '');
   $('#mc-empresa').onchange = () => { atualizarObraContrato(''); };
@@ -3873,7 +3873,7 @@ function openMedicao(id, preset){
   const m = id ? state.medicoes.find(x => x.id === id) : null;
   $('#medicao-modal-title').textContent = m ? 'Editar medição' : (preset ? 'Nova medição — pendência de faturamento' : 'Nova medição');
   $('#med-id').value = m?.id || '';
-  $('#med-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#med-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#med-empresa').value = m?.empresa || preset?.empresa || state.empresas[0]?.id || '';
   populateObraSelectGeneric('med-obra', $('#med-empresa').value, m?.obra || preset?.obra || '');
   const tipo = m?.tipo || preset?.tipo || 'PGR';
@@ -3910,14 +3910,14 @@ function medicaoCustoLab(m){
 
 function medicaoDescHtml(m){
   if(m.tipo === 'LTCAT' && m.detalhes && Object.keys(m.detalhes).length){
-    return Object.entries(m.detalhes).map(([n,q]) => `<span class="pill muted" style="font-size:10.5px;margin:1px 3px 1px 0">${n}: ${q}</span>`).join('');
+    return Object.entries(m.detalhes).map(([n,q]) => `<span class="pill muted" style="font-size:10.5px;margin:1px 3px 1px 0">${escapeHtml(n)}: ${q}</span>`).join('');
   }
-  return m.desc || '—';
+  return escapeHtml(m.desc) || '—';
 }
 
 function renderMedicoes(){
   const fEmp = $('#f-med-empresa').value, fTipo = $('#f-med-tipo').value, fMes = $('#f-med-mes').value;
-  $('#f-med-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===fEmp?'selected':''}>${e.nome}</option>`).join('');
+  $('#f-med-empresa').innerHTML = '<option value="">Todas</option>' + [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===fEmp?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
   const filtrados = state.medicoes.filter(m => {
     if(fEmp && m.empresa !== fEmp) return false;
     if(fTipo && m.tipo !== fTipo) return false;
@@ -3937,8 +3937,8 @@ function renderMedicoes(){
 
   $('#tbl-medicoes tbody').innerHTML = filtrados.map(m => `<tr>
     <td class="tight">${fmtDate(m.data)}</td>
-    <td>${nomeEmpresa(m.empresa)}</td>
-    <td>${m.obra ? nomeObra(m.obra) : '—'}</td>
+    <td>${escapeHtml(nomeEmpresa(m.empresa))}</td>
+    <td>${m.obra ? escapeHtml(nomeObra(m.obra)) : '—'}</td>
     <td><span class="pill ${m.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${m.tipo}</span></td>
     <td>${medicaoDescHtml(m)}</td>
     <td><b>${fmtReal(m.valor)}</b></td>
@@ -3991,7 +3991,7 @@ function openContratoPgr(id){
   const c = id ? state.contratosPgr.find(x => x.id === id) : null;
   $('#cpgr-modal-title').textContent = c ? 'Editar contrato PGR' : 'Novo contrato PGR';
   $('#cpgr-id').value = c?.id || '';
-  $('#cpgr-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+  $('#cpgr-empresa').innerHTML = [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#cpgr-empresa').value = c?.empresa || state.empresas[0]?.id || '';
   populateObraSelectGeneric('cpgr-obra', $('#cpgr-empresa').value, c?.obra || '');
   const produtos = c?.produtos || {};
@@ -4008,11 +4008,11 @@ function renderContratosPgr(){
     const produtosTxt = PRODUTOS_PGR.filter(p => (c.produtos||{})[p.key] > 0)
       .map(p => `<span class="pill muted" style="font-size:11px;margin:1px 3px 1px 0">${p.nome} ${fmtReal(c.produtos[p.key])}</span>`).join('') || '—';
     return `<tr>
-    <td>${nomeEmpresa(c.empresa)}</td>
-    <td>${c.obra ? nomeObra(c.obra) : '<span style="color:var(--ink-muted)">— nível empresa —</span>'}</td>
+    <td>${escapeHtml(nomeEmpresa(c.empresa))}</td>
+    <td>${c.obra ? escapeHtml(nomeObra(c.obra)) : '<span style="color:var(--ink-muted)">— nível empresa —</span>'}</td>
     <td>${produtosTxt}</td>
     <td><b>${fmtReal(c.valor)}</b></td>
-    <td>${c.obs || '—'}</td>
+    <td>${escapeHtml(c.obs) || '—'}</td>
     <td><button class="btn ghost sm" onclick="openContratoPgr('${c.id}')">Editar</button></td>
   </tr>`;
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum contrato PGR cadastrado</td></tr>';
@@ -4049,7 +4049,7 @@ function openAval(cId, aId){
   $('#ma-data').value = '';
   // Popula select de GHE do contrato
   const gheList = state.ghe.filter(g => g.contrato === cId);
-  $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+  $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(g => `<option value="${g.id}">${escapeHtml(g.nome)}</option>`).join('');
   $('#ma-ghe').value = a?.ghe || '';
   $('#ma-linhas').innerHTML = '';
   maAddLinha(a?.agente || '', a?.data || todayISO(), 1, a?.envio_lab || '');
@@ -4082,7 +4082,7 @@ function renderPendenciasFaturamento(){
     const temMedicao = state.medicoes.some(m => m.tipo === 'PGR' && m.empresa === d.empresa && (m.obra || '') === (d.obra || ''));
     if(!temMedicao){
       itens.push({
-        texto: `PGR de ${d.obra ? `<b>${nomeObra(d.obra)}</b> — ${nomeEmpresa(d.empresa)}` : `<b>${nomeEmpresa(d.empresa)}</b>`} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`,
+        texto: `PGR de ${d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b> — ${escapeHtml(nomeEmpresa(d.empresa))}` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`} foi enviado ao financeiro em ${d.envFinanceiroData ? fmtDate(d.envFinanceiroData) : '—'} e ainda não tem nenhuma medição lançada.`,
         preset: {empresa: d.empresa, obra: d.obra || '', tipo: 'PGR'}
       });
     }
@@ -4113,12 +4113,12 @@ function renderPendenciasFaturamento(){
       const obraKey = empId + '|' + obraId;
       if(!pendPorObra[obraKey]) pendPorObra[obraKey] = {empresa: empId, obra: obraId, detalhes: {}, partes: []};
       pendPorObra[obraKey].detalhes[agente] = (pendPorObra[obraKey].detalhes[agente] || 0) + faltam;
-      pendPorObra[obraKey].partes.push(`${faltam} de "${agente}"`);
+      pendPorObra[obraKey].partes.push(`${faltam} de "${escapeHtml(agente)}"`);
     }
   });
   Object.values(pendPorObra).forEach(p => {
     itens.push({
-      texto: `${p.obra ? `<b>${nomeObra(p.obra)}</b> — ${nomeEmpresa(p.empresa)}` : `<b>${nomeEmpresa(p.empresa)}</b>`}: ${p.partes.join(', ')} sem medição correspondente.`,
+      texto: `${p.obra ? `<b>${escapeHtml(nomeObra(p.obra))}</b> — ${escapeHtml(nomeEmpresa(p.empresa))}` : `<b>${escapeHtml(nomeEmpresa(p.empresa))}</b>`}: ${p.partes.join(', ')} sem medição correspondente.`,
       preset: {empresa: p.empresa, obra: p.obra, tipo: 'LTCAT', detalhes: p.detalhes}
     });
   });
@@ -4163,8 +4163,8 @@ function openNotifyModal(){
   let resumo = '';
   if(!venc.length && !venciendo.length){ resumo = '✅ Sem pendências no momento.'; }
   else {
-    if(venc.length){ resumo += `<b style="color:var(--danger-fg)">🚨 ${venc.length} documento(s) vencido(s):</b><br>`; resumo += venc.slice(0,5).map(d => `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''}`).join('<br>') + '<br><br>'; }
-    if(venciendo.length){ resumo += `<b style="color:var(--warn-fg)">⏰ ${venciendo.length} vencendo:</b><br>`; resumo += venciendo.slice(0,5).map(d => `• ${nomeEmpresa(d.empresa)} — ${d.tipo} ${d.numero||''} (vence ${fmtDate(d.validade)})`).join('<br>'); }
+    if(venc.length){ resumo += `<b style="color:var(--danger-fg)">🚨 ${venc.length} documento(s) vencido(s):</b><br>`; resumo += venc.slice(0,5).map(d => `• ${escapeHtml(nomeEmpresa(d.empresa))} — ${d.tipo} ${escapeHtml(d.numero)||''}`).join('<br>') + '<br><br>'; }
+    if(venciendo.length){ resumo += `<b style="color:var(--warn-fg)">⏰ ${venciendo.length} vencendo:</b><br>`; resumo += venciendo.slice(0,5).map(d => `• ${escapeHtml(nomeEmpresa(d.empresa))} — ${d.tipo} ${escapeHtml(d.numero)||''} (vence ${fmtDate(d.validade)})`).join('<br>'); }
   }
   $('#nf-resumo').innerHTML = resumo;
   const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -4319,9 +4319,9 @@ function setupGlobalSearch(){
     const obr = state.obras.filter(o => normalizeTexto(o.nome).includes(q)).slice(0,5);
     const docs = state.docs.filter(d => normalizeTexto(d.numero).includes(q) || normalizeTexto(d.responsavel).includes(q)).slice(0,5);
     let html = '';
-    if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${e.nome}</b></span><small>${e.cnpj}</small></div>`).join(''); }
-    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${o.nome}</b></span><small>${nomeEmpresa(o.empresa)}</small></div>`).join(''); }
-    if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${d.numero||''} <small>${nomeEmpresa(d.empresa)}</small></span></div>`).join(''); }
+    if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(e.nome)}</b></span><small>${escapeHtml(e.cnpj)}</small></div>`).join(''); }
+    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(o.nome)}</b></span><small>${escapeHtml(nomeEmpresa(o.empresa))}</small></div>`).join(''); }
+    if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${escapeHtml(d.numero)||''} <small>${escapeHtml(nomeEmpresa(d.empresa))}</small></span></div>`).join(''); }
     if(!html) html = '<div class="sr-empty">Nenhum resultado</div>';
     res.innerHTML = html;
     res.classList.add('show');
@@ -4520,7 +4520,7 @@ function setupEvents(){
     const outras = state.empresas.filter(e => e.id !== id);
     if(!outras.length){ toast('Cadastre ao menos uma empresa-mãe antes de converter', 'danger'); return; }
     $('#me-converter-empresa').innerHTML = '<option value="">— Selecione a empresa-mãe —</option>' +
-      outras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
+      outras.sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
     $('#me-converter-section').style.display = '';
   };
   $('#me-converter-confirmar').onclick = async () => {
@@ -4886,7 +4886,7 @@ function setupEvents(){
       await salvarGheNuvem(g);
       state.ghe.push(g);
       const gheList = state.ghe.filter(x => x.contrato === cId);
-      $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+      $('#ma-ghe').innerHTML = '<option value="">Sem GHE</option>' + gheList.map(x => `<option value="${x.id}">${escapeHtml(x.nome)}</option>`).join('');
       $('#ma-ghe').value = g.id;
       toast('✅ GHE criado', 'ok');
     } catch(err) {
@@ -5360,7 +5360,7 @@ function renderInsumos(){
     const s = i._status;
     const diasTxt = i._dias === null ? '—' : i._dias < 0 ? `${Math.abs(i._dias)} dias atrás` : i._dias === 0 ? 'Vence hoje!' : `${i._dias} dias`;
     return `<tr>
-      <td><b>${i.nome}</b></td>
+      <td><b>${escapeHtml(i.nome)}</b></td>
       <td class="mono">${fmtDate(i.chegada)}</td>
       <td>${i.qtd || '—'}</td>
       <td>${i.validade ? i.validade + ' dias' : '—'}</td>
@@ -5847,7 +5847,7 @@ function renderPsicossociais(){
   const statusFiltro = $('#f-psi-status').value;
 
   $('#f-psi-empresa').innerHTML = '<option value="">Todas</option>' +
-    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empFiltro?'selected':''}>${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===empFiltro?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
 
   const STATUS_CFG = {
     pendente:  {cls:'warn',    label:'Pendente'},
@@ -5883,9 +5883,9 @@ function renderPsicossociais(){
     return `<div class="card">
       <div class="card-h">
         <div>
-          <h3>${p.empresaLivre || (emp ? emp.nome : '—')}</h3>
-          <p>${dataFmt}${hora}${p.local ? ' · '+p.local : ''}</p>
-          ${p.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">Aplicador: ${p.responsavel}</p>` : ''}
+          <h3>${escapeHtml(p.empresaLivre || (emp ? emp.nome : '—'))}</h3>
+          <p>${dataFmt}${escapeHtml(hora)}${p.local ? ' · '+escapeHtml(p.local) : ''}</p>
+          ${p.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">Aplicador: ${escapeHtml(p.responsavel)}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:flex-start">
           <span class="pill ${cfg.cls}">${cfg.label}</span>
@@ -5947,7 +5947,7 @@ function renderCalendarioPsi(){
       const nomeEmp = a.empresaLivre || (state.empresas.find(e => e.id === a.empresa)?.nome) || '—';
       const cor     = COR_ST[a.status] || '#555';
       const label   = nomeEmp.length > 14 ? nomeEmp.slice(0,13)+'…' : nomeEmp;
-      return `<div class="psi-cal-badge" style="background:${cor}" title="${nomeEmp} · ${a.hora||''} · ${a.status}">${label}</div>`;
+      return `<div class="psi-cal-badge" style="background:${cor}" title="${escapeHtml(nomeEmp)} · ${escapeHtml(a.hora)||''} · ${escapeHtml(a.status)}">${escapeHtml(label)}</div>`;
     }).join('');
 
     const cls = ['psi-cal-day', temAval?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':''].filter(Boolean).join(' ');
@@ -6002,7 +6002,7 @@ function openPsi(id){
   $('#mp-empresa-livre').required        = isLivre;
   $('#mp-empresa-livre').value           = p?.empresaLivre || '';
   $('#mp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
-    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}"${p?.empresa===e.id?' selected':''}>${e.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}"${p?.empresa===e.id?' selected':''}>${escapeHtml(e.nome)}</option>`).join('');
   $('#mp-data').value          = p?.data          || todayISO();
   $('#mp-hora').value          = p?.hora          || '';
   $('#mp-status').value        = p?.status        || 'pendente';
@@ -6100,7 +6100,7 @@ function renderEventos(tipo){
   if(fEmp){
     const cur = fEmp.value;
     fEmp.innerHTML = '<option value="">Todas</option>' +
-      [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nome}</option>`).join('');
+      [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${escapeHtml(e.nome)}</option>`).join('');
   }
   renderCalendarioEvento(tipo);
   const cont = $('#evlist-'+tipo);
@@ -6124,9 +6124,9 @@ function renderEventos(tipo){
     return `<div class="card">
       <div class="card-h">
         <div>
-          <h3>${e.empresaLivre || (emp ? emp.nome : '—')}</h3>
-          <p>${e.tema ? '<b>'+e.tema+'</b> · ' : ''}${dataFmt}${hora}${e.local ? ' · '+e.local : ''}</p>
-          ${e.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">${EV_LABELS[tipo].resp}: ${e.responsavel}</p>` : ''}
+          <h3>${escapeHtml(e.empresaLivre || (emp ? emp.nome : '—'))}</h3>
+          <p>${e.tema ? '<b>'+escapeHtml(e.tema)+'</b> · ' : ''}${dataFmt}${escapeHtml(hora)}${e.local ? ' · '+escapeHtml(e.local) : ''}</p>
+          ${e.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">${EV_LABELS[tipo].resp}: ${escapeHtml(e.responsavel)}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           ${prevPres}
@@ -6173,7 +6173,7 @@ function renderCalendarioEvento(tipo){
       const nomeEmp=a.empresaLivre||(state.empresas.find(e=>e.id===a.empresa)?.nome)||'—';
       const cor=EV_COR_ST[a.status]||'#555';
       const label=nomeEmp.length>14?nomeEmp.slice(0,13)+'…':nomeEmp;
-      return `<div class="psi-cal-badge" style="background:${cor}" title="${nomeEmp} · ${a.hora||''} · ${a.status}">${label}</div>`;
+      return `<div class="psi-cal-badge" style="background:${cor}" title="${escapeHtml(nomeEmp)} · ${escapeHtml(a.hora)||''} · ${escapeHtml(a.status)}">${escapeHtml(label)}</div>`;
     }).join('');
     const cls=['psi-cal-day',temAval?'tem-aval':'',isHoje?'hoje':'',isAtivo?'ativo':''].filter(Boolean).join(' ');
     const click=temAval?`onclick="evCalFiltrar('${tipo}','${isoDate}')"`:'';
@@ -6224,7 +6224,7 @@ function openEvento(tipo,id){
   $('#mev-empresa-livre').required = isLivre;
   $('#mev-empresa-livre').value = e?.empresaLivre || '';
   $('#mev-empresa').innerHTML = '<option value="">— Selecione —</option>' +
-    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(x=>`<option value="${x.id}"${e?.empresa===x.id?' selected':''}>${x.nome}</option>`).join('');
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(x=>`<option value="${x.id}"${e?.empresa===x.id?' selected':''}>${escapeHtml(x.nome)}</option>`).join('');
   $('#mev-tema').value = isAuditoria ? (e?.empresaLivre || e?.tema || '') : (e?.tema || '');
   $('#mev-data').value = e?.data || todayISO();
   $('#mev-hora').value = e?.hora || '';
