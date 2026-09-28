@@ -140,6 +140,11 @@ function gerarHtml({ semanaLabel, dias, totalAgendamentos, hoje }) {
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
+  // Só a Vercel Cron deve chamar esta rota (ver mesma checagem em cron-email.js).
+  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
   const notifyEmail = process.env.NOTIFY_EMAIL_AGENDA || process.env.NOTIFY_EMAIL;
   const apiKey      = process.env.BREVO_API_KEY;
 

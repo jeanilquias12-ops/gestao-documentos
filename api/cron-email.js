@@ -80,6 +80,15 @@ async function sendBrevo(recipients, subject, html, apiKey) {
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
+  // Só a Vercel Cron deve chamar esta rota — ela injeta automaticamente este
+  // header quando CRON_SECRET está configurado no projeto (Settings > Env
+  // Vars). Sem essa checagem, qualquer pessoa na internet podia disparar
+  // e-mail em nome da SECONCI (inclusive com HTML arbitrário no branch
+  // _trigger=doc-save, que hoje não é chamado por nenhuma tela do app).
+  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
   const notifyEmail = process.env.NOTIFY_EMAIL;
   const apiKey      = process.env.BREVO_API_KEY;
 

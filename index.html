@@ -5443,13 +5443,26 @@ function initApp(){
 }
 
 /* ================== ENVIO DE E-MAIL (Resend) ================== */
+// Todo POST para /api/send-email exige uma sessão Supabase válida — o
+// servidor confere o token contra o Auth do projeto antes de disparar
+// qualquer e-mail. Sem isso, o endpoint fica aberto pra qualquer pessoa na
+// internet mandar e-mail em nome da SECONCI (era exatamente o caso).
+async function apiFetchAutenticado(path, body){
+  const { data: { session } } = await db.auth.getSession();
+  return fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? {'Authorization': 'Bearer ' + session.access_token} : {})
+    },
+    body: JSON.stringify(body)
+  });
+}
+
 // Aviso de fluxo entre setores (Segurança <-> Saúde). Destino é travado no servidor.
 function notificarFluxoDoc(destino, subject, message){
-  return fetch('/api/send-email', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ subject, message, destino })
-  }).then(r => r.json()).catch(() => ({}));
+  return apiFetchAutenticado('/api/send-email', { subject, message, destino })
+    .then(r => r.json()).catch(() => ({}));
 }
 
 function emailDeveEnviar(){
@@ -5475,11 +5488,8 @@ function alertarEmailDoc(doc, st){
     + `Documento: ${doc.tipo} ${doc.numero || ''}\n`
     + `Validade: ${fmtDate(doc.validade)}\n`
     + `Status: ${st.label}`;
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({subject: assunto, message})
-  }).then(r => r.json()).then(d => {
+  apiFetchAutenticado('/api/send-email', {subject: assunto, message})
+  .then(r => r.json()).then(d => {
     if(d.success) toast('📧 Alerta enviado por e-mail', 'ok');
     else toast('Erro e-mail: ' + (d.error || 'verifique Vercel'), 'danger');
   }).catch(() => toast('Erro ao enviar alerta por e-mail', 'danger'));
@@ -5498,11 +5508,8 @@ function alertarEmailARTPendentes(){
   arts.forEach(({doc, contrato, realizadas, pendentes, diasRestantes}) => {
     message += `• ${nomeEmpresa(doc.empresa)} — LTCAT ${doc.numero||''} — ART vence em ${diasRestantes} dias (${fmtDate(doc.validade)})\n${emailDetalheContrato(contrato, realizadas, pendentes)}\n`;
   });
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({subject: assunto, message})
-  }).then(r => r.json()).then(d => {
+  apiFetchAutenticado('/api/send-email', {subject: assunto, message})
+  .then(r => r.json()).then(d => {
     if(d.success) toast('📧 Alerta de avaliações pendentes enviado', 'ok');
   }).catch(() => {});
 }
@@ -5521,11 +5528,8 @@ function enviarEmailResend(forcado){
         ? `SECONCI — ⚠️ ${arts.length} LTCAT(s) com avaliações pendentes`
         : 'SECONCI — Sem pendências';
 
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({subject: assunto, message: buildEmailBody()})
-  }).then(r => r.json()).then(data => {
+  apiFetchAutenticado('/api/send-email', {subject: assunto, message: buildEmailBody()})
+  .then(r => r.json()).then(data => {
     if(data.success){
       localStorage.setItem('seconci_email_last', todayISO());
       toast('✅ E-mail enviado', 'ok');

@@ -40,8 +40,28 @@ function htmlEmailSimples({ titulo, subtitulo, corHeader, icone, corFundo, corBo
 </html>`;
 }
 
+const SUPABASE_URL = 'https://jpmhnlorbrtjeesknwbl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbWhubG9yYnJ0amVlc2tud2JsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MDgyNTQsImV4cCI6MjA5MzQ4NDI1NH0.wvD6GIoQqnLp95kjVGCNg23aNYQTJeurp2Lic65uoXw';
+
+// Sem isto, qualquer pessoa na internet que descobrisse esta URL conseguia
+// mandar e-mail arbitrário em nome da SECONCI usando a conta Brevo real
+// (fosse spam, phishing interno, ou só esgotar a cota). Exige um token de
+// sessão Supabase válido — o mesmo que o app já usa pra tudo mais.
+async function usuarioAutenticado(req) {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` }
+    });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+  if (!(await usuarioAutenticado(req))) return res.status(401).json({ error: 'unauthorized' });
 
   const { subject, message, destino } = req.body || {};
   if (!subject || !message) {
@@ -72,9 +92,11 @@ module.exports = async function handler(req, res) {
   const corTexto   = isVencido ? '#9B2A1A' : isVencendo ? '#8A5A00' : (isEnviado || isDevolvido) ? '#155E9C' : '#2E7D32';
   const icone      = isVencido ? '🚨' : isVencendo ? '⏰' : isEnviado ? '📤' : isDevolvido ? '📥' : '📋';
 
-  // Converter texto simples em linhas HTML
+  // Converter texto simples em linhas HTML — escapa antes de envolver em <b>,
+  // já que o texto de origem (nomes de empresa/obra etc.) não é confiável.
+  const escHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const linhas = message.split('\n').filter(l => l.trim()).map(l =>
-    l.startsWith('•') ? l.replace('•', '').trim() : `<b>${l}</b>`
+    l.startsWith('•') ? escHtml(l.replace('•', '').trim()) : `<b>${escHtml(l)}</b>`
   );
 
   const html = htmlEmailSimples({
