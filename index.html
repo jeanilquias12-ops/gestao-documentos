@@ -274,7 +274,7 @@
   .ltcat-table tr.detalhe-row td{padding:10px 20px;font-size:12.5px}
   .ltcat-table tr.detalhe-row ul{margin:6px 0 0 18px;padding:0}
   .ltcat-table tr.detalhe-row li{margin-bottom:2px}
-  .ltcat-table tfoot td{font-weight:bold;background:#dfe6e9}
+  .ltcat-table tr.total-row td{font-weight:bold;background:#dfe6e9}
   .ltcat-toc{background:#fff;padding:14px 18px;border-radius:6px;margin:20px 0;border:1px solid #ecf0f1}
   .ltcat-toc a{color:#2c3e50;text-decoration:none;margin-right:12px;font-weight:bold;display:inline-block;margin-bottom:6px;font-size:13px}
   .ltcat-mes-section{margin-bottom:36px;padding-top:16px;border-top:3px solid #3498db}
@@ -3268,8 +3268,7 @@ function montarRelatorio(){
         </div>
         <table class="ltcat-table">
           <thead><tr><th>Empresa</th><th>Qtd. Ensaios</th><th>Faturamento (R$)</th><th>Custo Lab (R$)</th><th>Margem (R$)</th></tr></thead>
-          <tbody>${linhasEmpresa}</tbody>
-          <tfoot><tr><td>TOTAL</td><td>${qtdMes}</td><td>${fmtR(fatMes)}</td><td>${fmtR(custoMes)}</td><td>${fmtR(margemMes)}</td></tr></tfoot>
+          <tbody>${linhasEmpresa}<tr class="total-row"><td>TOTAL</td><td>${qtdMes}</td><td>${fmtR(fatMes)}</td><td>${fmtR(custoMes)}</td><td>${fmtR(margemMes)}</td></tr></tbody>
         </table>
       </section>`;
     }).join('');
@@ -3512,8 +3511,7 @@ function montarRelatorioCliente(){
       <h2>${labelMes(mm)}</h2>
       <table class="ltcat-table">
         <thead><tr><th>Ensaio realizado</th><th>Data</th><th style="text-align:right">Valor (R$)</th></tr></thead>
-        <tbody>${linhas || '<tr><td colspan="3" style="text-align:center;color:#7f8c8d">Sem detalhamento</td></tr>'}</tbody>
-        <tfoot><tr><td colspan="2">TOTAL DO MÊS</td><td style="text-align:right">${fmtR(valorMes)}</td></tr></tfoot>
+        <tbody>${linhas || '<tr><td colspan="3" style="text-align:center;color:#7f8c8d">Sem detalhamento</td></tr>'}<tr class="total-row"><td colspan="2">TOTAL DO MÊS</td><td style="text-align:right">${fmtR(valorMes)}</td></tr></tbody>
       </table>
     </section>`;
   }).join('');
