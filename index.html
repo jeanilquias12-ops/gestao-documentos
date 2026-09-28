@@ -3422,6 +3422,10 @@ function popularRelClienteEmpresas(){
     .map(e => `<option value="${e.id}">${e.nome}</option>`).join('');
   if(atual && [...sel.options].some(o => o.value === atual)) sel.value = atual;
   populateObraSelectGeneric('rel-cli-obra', sel.value, '');
+  // Neste seletor (relatório do cliente) a opção em branco significa "todas as
+  // obras", não "nível empresa" — rótulo do helper genérico não se aplica aqui.
+  const _optTodas = $('#rel-cli-obra')?.querySelector('option[value=""]');
+  if(_optTodas) _optTodas.textContent = 'Todas as obras';
 }
 
 // Divide o valor real da medição (o que foi de fato faturado) entre os tipos de
@@ -3467,7 +3471,10 @@ function montarRelatorioCliente(){
   const empNome = nomeEmpresa(empresaId);
   const obraNome = obraId ? nomeObra(obraId) : '';
 
-  const meds = state.medicoes.filter(m => m.tipo === 'LTCAT' && m.empresa === empresaId && (m.obra||'') === (obraId||'') && inRange(m.data))
+  // obraId em branco = "Todas as obras" (não "somente sem obra") — senão o
+  // relatório do cliente fica zerado sempre que a empresa fatura por obra e o
+  // usuário não escolhe manualmente cada obra uma por uma.
+  const meds = state.medicoes.filter(m => m.tipo === 'LTCAT' && m.empresa === empresaId && (!obraId || m.obra === obraId) && inRange(m.data))
     .sort((a,b) => (a.data||'').localeCompare(b.data||''));
 
   const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -5054,7 +5061,11 @@ function setupEvents(){
     document.title = titulo;
   };
   const relCliEmpresa = $('#rel-cli-empresa');
-  if(relCliEmpresa) relCliEmpresa.onchange = () => { populateObraSelectGeneric('rel-cli-obra', relCliEmpresa.value, ''); };
+  if(relCliEmpresa) relCliEmpresa.onchange = () => {
+    populateObraSelectGeneric('rel-cli-obra', relCliEmpresa.value, '');
+    const _optTodas = $('#rel-cli-obra')?.querySelector('option[value=""]');
+    if(_optTodas) _optTodas.textContent = 'Todas as obras';
+  };
 
   // Notificações
   $('#notifyBtn').onclick = openNotifyModal;
