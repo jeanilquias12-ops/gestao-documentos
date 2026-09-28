@@ -4984,7 +4984,13 @@ function setupEvents(){
             state.avaliacoes.push(obj);
             total++;
             const rMed = await registrarMedicaoAvaliacaoAutomatica(obj.id);
-            if(rMed?.status === 'ok') valorMedicaoAutomatica += rMed.preco;
+            if(rMed?.status === 'ok'){
+              valorMedicaoAutomatica += rMed.preco;
+              // O RPC já gravou avaliacoes.medicao_id no banco — sem isto, o objeto
+              // local fica sem o vínculo até o próximo F5, e some do relatório
+              // "Avaliações & Faturamento" (que filtra por a.medicaoId).
+              obj.medicaoId = rMed.medicao_id;
+            }
           }
           _agentesTocados.add(item.agente);
         }
@@ -4994,6 +5000,20 @@ function setupEvents(){
       // edição (não conta a própria avaliação em dobro) e ordem cronológica real.
       for(const _agente of _agentesTocados){
         await recalcularForaDoContrato(contrato, _agente);
+      }
+      // A medição automática (nova ou atualizada pelo RPC acima) só existe no
+      // banco — busca de novo pra refletir no state local, senão o valor
+      // faturado recém-lançado não aparece na Medição Mensal nem no relatório
+      // até a página ser recarregada.
+      if(valorMedicaoAutomatica > 0){
+        const { data: medicoesRows, error: errMed } = await db.from('medicoes').select('*').order('data', { ascending: false });
+        if(!errMed){
+          state.medicoes = (medicoesRows||[]).map(m => ({
+            id: m.id, empresa: m.cliente_id, obra: m.obra_id || '', doc: m.doc_id || '',
+            tipo: m.tipo, desc: m.descricao || '', valor: Number(m.valor) || 0, data: m.data,
+            origem: m.origem || 'manual', detalhes: m.detalhes || {}
+          }));
+        }
       }
       save(); closeModal('modal-aval'); renderAll();
       const total2 = isEdit ? 0 : items.reduce((s,i)=>s+i.qty,0);
