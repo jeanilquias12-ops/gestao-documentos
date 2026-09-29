@@ -1267,6 +1267,11 @@ async function handleLogin(e){
       return false;
     }
     PAPEL = await carregarPapel();
+    if(PAPEL === 'sem-acesso'){
+      err.textContent = '❌ Não foi possível confirmar suas permissões. Tente novamente em instantes.';
+      await db.auth.signOut().catch(()=>{});
+      return false;
+    }
     aplicarPermissoes();
     document.getElementById('loginScreen').classList.remove('show');
     document.getElementById('appContainer').classList.add('authenticated');
@@ -1292,14 +1297,22 @@ async function logout(){
 // 'admin' = acesso total | 'assessoria' = só documentos + registrar devolução
 // 'coordenador' = também vê Medição Mensal + Contratos PGR
 // 'financeiro' = só Relatórios (interno + cliente) + Medição Mensal
-let PAPEL = 'admin';
+let PAPEL = 'sem-acesso';
+// Se a busca do papel falhar (rede, linha ausente em perfis, erro do Supabase),
+// o padrão tem que ser o MENOS privilegiado ('sem-acesso', que bloqueia o app
+// inteiro), nunca 'admin' — falhar aberto pro papel mais poderoso é o padrão
+// errado, mesmo sabendo que o RLS no servidor não confia nesse valor (ele
+// refaz a mesma consulta do lado do banco). Isso evita só a UI mostrar seções
+// confidenciais (Contratos PGR, Medição Mensal) pra quem não deveria nem ver
+// que elas existem.
 async function carregarPapel(){
   try {
     const { data: { user } } = await db.auth.getUser();
-    if(!user) return 'admin';
-    const { data } = await db.from('perfis').select('papel').eq('id', user.id).limit(1);
-    return (data && data[0] && data[0].papel) || 'admin';
-  } catch(e){ return 'admin'; }
+    if(!user) return 'sem-acesso';
+    const { data, error } = await db.from('perfis').select('papel').eq('id', user.id).limit(1);
+    if(error || !data?.[0]?.papel) return 'sem-acesso';
+    return data[0].papel;
+  } catch(e){ return 'sem-acesso'; }
 }
 function aplicarPermissoes(){
   document.body.classList.toggle('papel-assessoria', PAPEL === 'assessoria');
@@ -6552,9 +6565,19 @@ window.addEventListener('load', async () => {
       // Esconde a tela de login assim que confirmamos a sessão — antes de
       // buscar papel/permissões e carregar dados, pra reduzir a piscada
       // visual do login aparecendo e sumindo a cada F5.
+      PAPEL = await carregarPapel();
+      if(PAPEL === 'sem-acesso'){
+        // Falha ao confirmar o papel (rede, linha ausente em perfis) — não dá
+        // pra saber o que essa pessoa pode ver, então volta pro login em vez
+        // de arriscar mostrar navegação/seções que ela não deveria ver.
+        await db.auth.signOut().catch(()=>{});
+        mostrarLogin();
+        const err = document.getElementById('loginError');
+        if(err) err.textContent = '❌ Não foi possível confirmar suas permissões. Faça login novamente.';
+        return;
+      }
       $('#loginScreen').classList.remove('show');
       $('#appContainer').classList.add('authenticated');
-      PAPEL = await carregarPapel();
       aplicarPermissoes();
       // initApp()/carregarDaNuvem() cada um no seu try — se um deles falhar (erro de
       // rede, bug num render específico), a página não pode ficar em branco: sempre
