@@ -1061,6 +1061,16 @@
   <div class="modal-h"><div><h2 id="mtp-title">Participantes</h2><p id="mtp-sub">Adicione os participantes desta turma</p></div><button class="btn ghost sm" data-close>✕</button></div>
   <div class="modal-b">
     <input type="hidden" id="mtp-turma-id" />
+    <div style="margin-bottom:14px">
+      <button type="button" class="btn ghost sm" id="mtp-import-btn">📄 Importar certificado do SOC (PDF)</button>
+      <input type="file" id="mtp-pdf-input" accept="application/pdf" style="display:none" />
+      <div id="mtp-import-raw" style="display:none;margin-top:8px;background:var(--bg-soft,#f7f7f7);border:1px solid var(--line);border-radius:6px;padding:10px">
+        <p style="margin:0 0 6px;font-size:12px;color:var(--ink-muted)">
+          Ainda não sei o layout exato do certificado do SOC, então só preenchi o CPF (formato fixo). Copie nome/curso/data abaixo pra completar manualmente:
+        </p>
+        <textarea id="mtp-import-texto" readonly style="width:100%;box-sizing:border-box;height:90px;font-size:11px;font-family:monospace"></textarea>
+      </div>
+    </div>
     <div class="form-grid" style="margin-bottom:14px">
       <div class="field-block full">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -1072,6 +1082,7 @@
         <select id="mtp-empresa"><option value="">— Selecione —</option></select>
         <input id="mtp-empresa-livre" type="text" placeholder="Digite o nome da empresa…" style="display:none;width:100%;box-sizing:border-box" />
       </div>
+      <div class="field-block full"><label>Obra</label><select id="mtp-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
       <div class="field-block"><label>Nome do participante *</label><input id="mtp-nome" placeholder="Nome completo" /></div>
       <div class="field-block"><label>CPF</label><input id="mtp-cpf" placeholder="000.000.000-00" /></div>
       <div class="field-block full"><label>Função</label><input id="mtp-funcao" placeholder="Ex: Pedreiro, Eletricista…" /></div>
@@ -1525,6 +1536,34 @@ function recalcTotalContrato(){
   $('#mc-qtd').value = total;
 }
 
+/* ================== LEITURA DE PDF (PDF.js) ================== */
+// Carrega a lib uma única vez (usado por importação de contrato, contrato PGR
+// e certificado do SOC) e devolve o texto de todas as páginas concatenado.
+async function carregarPdfJs(){
+  if(!window.pdfjsLib){
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  }
+}
+async function extrairTextoPdf(file){
+  await carregarPdfJs();
+  const ab = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({data: ab}).promise;
+  let fullText = '';
+  for(let i = 1; i <= pdf.numPages; i++){
+    const pg = await pdf.getPage(i);
+    const tc = await pg.getTextContent();
+    fullText += tc.items.map(it => it.str).join(' ') + '\n';
+  }
+  return fullText;
+}
+
 /* ================== IMPORTAR CONTRATO PDF ================== */
 async function importarContratoPDF(file){
   if(!file) return;
@@ -1534,18 +1573,7 @@ async function importarContratoPDF(file){
   btn.disabled = true;
 
   try {
-    // Carrega PDF.js do CDN se ainda não estiver disponível
-    if(!window.pdfjsLib){
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    }
-
+    await carregarPdfJs();
     const ab = await file.arrayBuffer();
     const pdf = await window.pdfjsLib.getDocument({data: ab}).promise;
 
@@ -1653,19 +1681,8 @@ async function importarContratoPgrPDF(file){
   btn.disabled = true;
 
   try {
-    // Carrega PDF.js do CDN se ainda não estiver disponível
-    if(!window.pdfjsLib){
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    }
-
-    const ab = await file.arrayBuffer();
+    await carregarPdfJs();
+  const ab = await file.arrayBuffer();
     const pdf = await window.pdfjsLib.getDocument({data: ab}).promise;
 
     let fullText = '';
@@ -5606,6 +5623,8 @@ function abrirParticipantes(turmaId){
   $('#mtp-empresa').style.display = '';
   $('#mtp-empresa-livre').style.display = 'none';
   $('#mtp-empresa-livre').value = '';
+  $('#mtp-empresa').value = '';
+  populateObraSelectGeneric('mtp-obra', '', '');
   $('#mtp-nome').value = '';
   $('#mtp-cpf').value = '';
   $('#mtp-funcao').value = '';
@@ -5624,6 +5643,7 @@ function renderParticipantesTabela(turmaId){
   }
   tbody.innerHTML = lista.map(p => {
     const nomeEmp = p.empresaLivre || (p.empresa ? nomeEmpresa(p.empresa) : '—');
+    const empObra = p.obra ? nomeObra(p.obra) : '';
     const podeEmitir = tipo && tipo.certificadoModelo;
     const btnCert = podeEmitir
       ? `<button class="btn sm ghost" onclick="emitirCertificado('${p.id}')">🎓 Certificado</button>`
@@ -5631,7 +5651,7 @@ function renderParticipantesTabela(turmaId){
     return `<tr>
       <td><b>${escapeHtml(p.nome)}</b></td>
       <td class="mono">${escapeHtml(p.cpf) || '—'}</td>
-      <td>${escapeHtml(nomeEmp)}</td>
+      <td>${escapeHtml(nomeEmp)}${empObra ? `<br><small style="color:var(--ink-muted)">${escapeHtml(empObra)}</small>` : ''}</td>
       <td>${escapeHtml(p.funcao) || '—'}</td>
       <td style="display:flex;gap:6px;justify-content:flex-end">${btnCert}<button class="btn sm danger" onclick="excluirTreinando('${p.id}','${turmaId}')">✕</button></td>
     </tr>`;
@@ -5642,6 +5662,13 @@ function setupParticipantesModal(){
   $('#mtp-empresa-livre-toggle').onchange = function(){
     $('#mtp-empresa').style.display = this.checked ? 'none' : '';
     $('#mtp-empresa-livre').style.display = this.checked ? '' : 'none';
+    populateObraSelectGeneric('mtp-obra', this.checked ? '' : $('#mtp-empresa').value, '');
+  };
+  // Cada participante pode ser de empresa/obra diferente dentro da mesma
+  // turma — por isso a obra recarrega a cada troca de empresa, igual ao
+  // resto do sistema (ver populateObraSelectGeneric).
+  $('#mtp-empresa').onchange = function(){
+    populateObraSelectGeneric('mtp-obra', this.value, '');
   };
 
   $('#mtp-add').onclick = async () => {
@@ -5651,9 +5678,10 @@ function setupParticipantesModal(){
     const livre = $('#mtp-empresa-livre-toggle').checked;
     const empresa = livre ? '' : $('#mtp-empresa').value;
     const empresaLivre = livre ? $('#mtp-empresa-livre').value.trim() : '';
+    const obra = livre ? '' : $('#mtp-obra').value;
     const funcao = $('#mtp-funcao').value.trim();
     if(!nome){ toast('Preencha o nome do participante', 'danger'); return; }
-    const obj = {id:'tp'+uid(), turma:turmaId, nome, cpf, empresa, empresaLivre, funcao};
+    const obj = {id:'tp'+uid(), turma:turmaId, nome, cpf, empresa, empresaLivre, obra, funcao};
     try {
       await salvarTreinandoNuvem(obj);
       state.treinandos.push(obj);
@@ -5664,6 +5692,32 @@ function setupParticipantesModal(){
       toast('✅ Participante adicionado', 'ok');
     } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); }
   };
+
+  $('#mtp-import-btn').onclick = () => $('#mtp-pdf-input').click();
+  $('#mtp-pdf-input').onchange = (e) => importarCertificadoSOC(e.target.files[0]);
+}
+
+/* ---- Importar certificado do SOC (PDF) — hoje só reconhece o CPF com
+   segurança (formato fixo); o resto do texto fica exposto pra copiar até eu
+   ter um exemplo real do layout do SOC e escrever a extração completa. ---- */
+async function importarCertificadoSOC(file){
+  if(!file) return;
+  const btn = $('#mtp-import-btn');
+  const origText = btn.textContent;
+  btn.textContent = 'Lendo...'; btn.disabled = true;
+  try {
+    const texto = await extrairTextoPdf(file);
+    const mCpf = texto.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/);
+    if(mCpf){ $('#mtp-cpf').value = mCpf[0]; }
+    $('#mtp-import-texto').value = texto.trim();
+    $('#mtp-import-raw').style.display = '';
+    toast(mCpf ? '✓ CPF encontrado — confira o restante no texto abaixo' : 'CPF não encontrado — confira o texto abaixo', mCpf ? 'ok' : 'danger');
+  } catch(err){
+    toast('Erro ao ler o PDF: ' + (err.message||err), 'danger');
+  } finally {
+    btn.textContent = origText; btn.disabled = false;
+    $('#mtp-pdf-input').value = '';
+  }
 }
 
 async function excluirTreinando(id, turmaId){
@@ -6679,7 +6733,7 @@ async function salvarTreinandoNuvem(p){
   const { error } = await db.from('treinamento_participantes').upsert({
     id: p.id, turma_id: p.turma, nome: p.nome, cpf: p.cpf || '',
     cliente_id: p.empresa || null, empresa_livre: p.empresaLivre || '',
-    funcao: p.funcao || ''
+    obra_id: p.obra || null, funcao: p.funcao || ''
   });
   if(error) throw new Error(error.message);
 }
@@ -6964,6 +7018,7 @@ async function carregarDaNuvem() {
       cpf:          p.cpf || '',
       empresa:      p.cliente_id || '',
       empresaLivre: p.empresa_livre || '',
+      obra:         p.obra_id || '',
       funcao:       p.funcao || ''
     }))
   }
