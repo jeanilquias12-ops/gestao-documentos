@@ -8,7 +8,7 @@
 :root{--background:#f1f3f3;--foreground:#172b2a;--surface:#fff;--paper:#f4f6f2;--muted:#667677;--border:#d1dbda;--primary:#116b58;--primary-hover:#0a5646;--paper-ink:#101418;--paper-line:#15191c;--table-band:#acb9ca;--table-light:#d5dce4;--shadow:0 16px 45px rgba(13,38,35,.12)}
 *{box-sizing:border-box}html{font-family:Calibri,Carlito,Arial,Helvetica,sans-serif}body{margin:0;background:var(--background);color:var(--foreground)}button,input{font:inherit}button{cursor:pointer}.workspace{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr)}.sidebar{display:none}.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px;letter-spacing:.04em;text-transform:uppercase}.brand-mark{width:30px;height:30px;display:grid;place-items:center;color:var(--surface);background:var(--primary);border-radius:4px;font-size:17px}.side-title{font-size:24px;line-height:1.12;margin:36px 0 8px;letter-spacing:0}.side-description{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 30px}.section-label{color:var(--primary);text-transform:uppercase;font-weight:800;font-size:10px;letter-spacing:.12em;margin:0 0 17px}.fields{display:grid;gap:16px}.field{display:grid;gap:7px;font-size:12px;font-weight:700}.field input{width:100%;height:39px;border:1px solid var(--border);border-radius:4px;padding:0 11px;color:var(--foreground);background:var(--surface);outline:none;font-size:13px}.field input:focus{border-color:var(--primary);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 15%,transparent)}.field input::placeholder{color:var(--muted);font-weight:400}.actions{display:grid;gap:9px;margin-top:28px}.action{border:1px solid var(--primary);background:var(--primary);color:var(--surface);height:42px;border-radius:4px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px}.action:hover{background:var(--primary-hover)}.action.secondary{color:var(--primary);background:transparent}.action.secondary:hover{background:color-mix(in srgb,var(--primary) 8%,transparent)}.action svg{width:16px;height:16px}.note{font-size:11px;color:var(--muted);line-height:1.5;margin:22px 0 0}.main{min-width:0;padding:28px 34px 70px}.topline{max-width:1123px;margin:0 auto 19px;display:flex;align-items:center;justify-content:space-between;gap:12px}.topline h1{font-size:16px;margin:0}.topline span{color:var(--muted);font-size:12px}.sheet-list{display:flex;flex-direction:column;align-items:center;gap:30px}.sheet-wrap{width:min(100%,1123px)}.sheet-caption{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}.page{position:relative;width:100%;aspect-ratio:297 / 210;background:var(--paper);color:var(--paper-ink);box-shadow:var(--shadow);overflow:hidden;font-family:Calibri,Carlito,Arial,Helvetica,sans-serif;font-size:1.11vw}.page-inner{position:absolute;inset:0;width:297mm;height:210mm;transform-origin:top left;transform:scale(var(--page-scale,1));}
 /* Original landscape A4 positioning is retained in millimetres on both sides. */
-.front-copy{position:absolute;left:50.7mm;top:60.8mm;width:196mm;font-size:14pt;font-style:italic;line-height:30pt;text-align:justify}.front-copy strong{font-weight:700}.front-signatures{position:absolute;left:51.7mm;top:122.9mm;width:193.2mm;display:grid;grid-template-columns:1fr 1fr;gap:6.4mm;text-align:center;font-size:13pt;font-weight:700;line-height:1.38}.signature-line{height:1px;background:var(--paper-line);margin-bottom:4mm}.front-participant{position:absolute;left:100.5mm;top:174.1mm;width:96mm;text-align:center;font-size:13pt;font-weight:700}.front-participant .signature-line{margin-bottom:4.1mm}
+.front-copy{position:absolute;left:50.7mm;top:60.8mm;width:196mm;font-size:14pt;font-style:italic;line-height:30pt;text-align:justify}.front-copy strong{font-weight:700}.front-signatures{position:absolute;left:51.7mm;top:122.9mm;width:193.2mm;display:grid;grid-template-columns:1fr 1fr;gap:6.4mm;text-align:center;font-size:13pt;font-weight:700;line-height:1.38}.signature-line{height:1px;background:var(--paper-line);margin-bottom:4mm}.signature-img{display:none;max-height:11mm;max-width:90%;margin:0 auto;object-fit:contain}.front-participant{position:absolute;left:100.5mm;top:174.1mm;width:96mm;text-align:center;font-size:13pt;font-weight:700}.front-participant .signature-line{margin-bottom:4.1mm}
 .back-table{position:absolute;left:29.2mm;top:28.4mm;width:239.8mm;border-collapse:collapse;table-layout:fixed;font-size:8.8pt;line-height:1.17}.back-table col.ref{width:14mm}.back-table col.topic{width:112.9mm}.back-table col.employer{width:112.9mm}.back-table th,.back-table td{border:1.4px solid var(--paper-line);padding:1.3mm 1.7mm;vertical-align:top}.back-table .heading{height:11mm;background:var(--table-band);font-size:15.5pt;font-weight:700;text-align:center;vertical-align:middle;padding:0}.back-table .column-head{background:var(--table-light);text-align:center;font-size:10pt;height:7.1mm;vertical-align:middle;padding:0 1mm}.back-table .ref-cell{text-align:center;vertical-align:middle;font-style:italic;font-weight:700}.back-table .nr1 td{height:23.6mm}.back-table .nr18 td{height:19.5mm}.back-table .topic-text{font-style:italic}.back-table .topic-text strong{font-weight:700}.back-table ul{margin:.5mm 0 0;padding:0;list-style:none}.back-table li{padding-left:6mm;position:relative}.back-table li:before{content:'➢';position:absolute;left:1.5mm;font-size:9pt;font-style:normal}
 .declaration{position:absolute;left:29.2mm;top:104mm;width:239.8mm;height:53mm;border:1.4px solid var(--paper-line);font-size:9.2pt}.declaration-title{background:var(--table-band);height:7.2mm;border-bottom:1px solid var(--paper-line);display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:700;font-style:italic}.declaration-body{padding:2mm 2mm 0;line-height:1.72;text-align:justify}.write-line{display:inline-block;border-bottom:1px solid var(--paper-line);height:.9em;vertical-align:baseline}.write-line.long{width:100%}.declaration-signatures{position:absolute;bottom:2.3mm;left:14mm;right:14mm;display:grid;grid-template-columns:1fr 1fr;gap:31mm;text-align:center;font-size:8.9pt}.declaration-signatures div:before{content:'';display:block;border-top:1px solid var(--paper-line);margin-bottom:1mm}.revision{position:absolute;left:206mm;top:171.4mm;width:63mm;border-collapse:collapse;font-size:8.1pt;line-height:1.05}.revision td{border:1px solid #777;padding:.5mm 1mm;width:50%}.revision strong{display:block;text-align:center;font-size:8pt}
 @media(max-width:900px){.workspace{display:block}.sidebar{height:auto;position:static;padding:18px 20px}.brand{font-size:12px}.brand-mark{height:26px;width:26px}.side-title{margin:15px 0 5px;font-size:20px}.side-description{margin-bottom:14px}.section-label{margin-bottom:10px}.fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.actions{display:flex;margin-top:16px}.actions .action{flex:1}.note{margin-top:12px}.main{padding:22px 14px 40px}}@media(max-width:520px){.fields{grid-template-columns:1fr 1fr}.field{font-size:11px}.field input{font-size:12px}.side-description,.note{display:none}.topline{margin-bottom:12px}.topline span{display:none}.sheet-list{gap:20px}}@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff;margin:0;padding:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}.workspace{display:block}.sidebar,.topline,.sheet-caption{display:none!important}.main{padding:0;margin:0}.sheet-list{display:block}.sheet-wrap{width:297mm;margin:0;padding:0}.page{width:297mm;height:210mm;aspect-ratio:auto;box-shadow:none;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.page-inner{transform:none!important}}
@@ -40,7 +40,7 @@
  <div class="sheet-list">
   <div class="sheet-wrap"><div class="sheet-caption"><span>01 / Frente</span><span>A4 horizontal</span></div><section class="page" aria-label="Frente do certificado"><div class="page-inner">
    <div class="front-copy">Certificamos <strong data-field="nome">Aldemir Gonçalves Soares dos Santos</strong>, portador do CPF <strong data-field="cpf">075.549.044-42</strong>, participou do <strong>Treinamento Inicial Básico em Segurança do Trabalho</strong>, conforme as Normas Regulamentadoras 01 e 18, realizado no dia <strong data-field="data">28/09/2026</strong>, nas dependências do <strong data-field="local">Seconci Goiás</strong>, com carga horária total de <strong data-field="horas">04 (quatro) horas</strong>, apresentando o aproveitamento necessário para esta certificação.</div>
-   <div class="front-signatures"><div><div class="signature-line"></div>Responsável Técnico<br><span data-field="instituicao">Seconci Goiás</span></div><div><div class="signature-line"></div>Instrutor do Treinamento<br><span data-field="instituicao">Seconci Goiás</span></div></div>
+   <div class="front-signatures"><div><img class="signature-img" data-signature="responsavel" alt=""><div class="signature-line"></div>Responsável Técnico<br><span data-field="instituicao">Seconci Goiás</span></div><div><img class="signature-img" data-signature="instrutor" alt=""><div class="signature-line"></div>Instrutor do Treinamento<br><span data-field="instituicao">Seconci Goiás</span></div></div>
    <div class="front-participant"><div class="signature-line"></div>Participante</div>
   </div></section></div>
   <div class="sheet-wrap"><div class="sheet-caption"><span>02 / Verso</span><span>A4 horizontal</span></div><section class="page" aria-label="Verso do certificado"><div class="page-inner">
@@ -57,22 +57,40 @@
 </main>
 </div>
 <script>
-/* Integration: window.preencherCertificado({ nome, cpf, data, local, horas, instituicao });
-   data accepts YYYY-MM-DD or DD/MM/YYYY. Then window.imprimirCertificado().
+/* Integration: window.preencherCertificado({ nome, cpf, data, local, horas, instituicao,
+   instrutorAssinatura, responsavelAssinatura }). instrutorAssinatura/responsavelAssinatura
+   sao opcionais (data URI de imagem) - quando presentes, substituem a linha em branco
+   pela imagem da assinatura. data accepts YYYY-MM-DD or DD/MM/YYYY. Then
+   window.imprimirCertificado().
    Lote (par frente+verso por participante, tudo na mesma aba, pronto pra um
    unico trabalho de impressao em sequencia - pagina 1/2 = participante 1,
    3/4 = participante 2, etc., encaixando certinho num fluxo de impressao
    frente-e-verso automatica):
-   window.preencherCertificadosLote([{nome,cpf,data,local,horas,instituicao}, ...]) */
+   window.preencherCertificadosLote([{nome,cpf,data,local,horas,instituicao,
+     instrutorAssinatura,responsavelAssinatura}, ...]) */
 (function(){
  const ids=['nome','cpf','data','local','horas','instituicao'];
+ const assinaturaIds=['instrutorAssinatura','responsavelAssinatura'];
  function formatDate(value){if(!value)return '____/____/______';if(/^\d{4}-\d{2}-\d{2}$/.test(value)){const [y,m,d]=value.split('-');return `${d}/${m}/${y}`}return value}
  function campoTexto(id, raw){return id==='data'?formatDate(raw):(String(raw||'').trim()||({nome:'Nome do participante',cpf:'___.___.___-__',local:'________________',horas:'____ horas',instituicao:'________________'}[id]))}
  function refresh(){for(const id of ids){const input=document.getElementById(id);document.querySelectorAll(`[data-field="${id}"]`).forEach(el=>{el.textContent=campoTexto(id, input.value)})}}
+ // Aplica (ou esconde, se vazio) a imagem de assinatura dentro de um escopo
+ // (documento inteiro no modo unico, ou uma copia clonada no modo lote).
+ function aplicarAssinatura(root, papel, src){
+   const img=root.querySelector(`.signature-img[data-signature="${papel}"]`);
+   if(!img)return;
+   if(src){img.src=src;img.style.display='block'}
+   else{img.removeAttribute('src');img.style.display='none'}
+ }
  ids.forEach(id=>document.getElementById(id).addEventListener('input',refresh));
  document.getElementById('cpf').addEventListener('input',e=>{const input=e.target;const digits=input.value.replace(/\D/g,'').slice(0,11);input.value=digits.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1-$2');refresh()});
  document.getElementById('clear').addEventListener('click',()=>{ids.forEach(id=>document.getElementById(id).value='');refresh();document.getElementById('nome').focus()});
- window.preencherCertificado=function(data){for(const id of ids){if(data[id]!==undefined){let value=String(data[id]);if(id==='data'&&/^\d{2}\/\d{2}\/\d{4}$/.test(value)){const [d,m,y]=value.split('/');value=`${y}-${m}-${d}`}document.getElementById(id).value=value}}refresh()};
+ window.preencherCertificado=function(data){
+   for(const id of ids){if(data[id]!==undefined){let value=String(data[id]);if(id==='data'&&/^\d{2}\/\d{2}\/\d{4}$/.test(value)){const [d,m,y]=value.split('/');value=`${y}-${m}-${d}`}document.getElementById(id).value=value}}
+   refresh();
+   aplicarAssinatura(document, 'instrutor', data.instrutorAssinatura);
+   aplicarAssinatura(document, 'responsavel', data.responsavelAssinatura);
+ };
  window.imprimirCertificado=function(){window.print()};
 
  // Modo lote: clona o par frente+verso (os dois .sheet-wrap originais) uma
@@ -97,6 +115,8 @@
        const text=campoTexto(id, raw);
        frente.querySelectorAll(`[data-field="${id}"]`).forEach(el=>{el.textContent=text});
      });
+     aplicarAssinatura(frente, 'instrutor', dados.instrutorAssinatura);
+     aplicarAssinatura(frente, 'responsavel', dados.responsavelAssinatura);
      sheetList.appendChild(frente);
      sheetList.appendChild(verso);
    });

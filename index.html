@@ -1050,10 +1050,33 @@
       <div class="field-block"><label>Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
       <div class="field-block"><label>Validade do treinamento</label><input id="mt-validade" type="date" /></div>
       <div class="field-block full"><label>Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
-      <div class="field-block full"><label>Instrutor</label><input id="mt-instrutor" placeholder="Nome do instrutor responsável" /></div>
+      <div class="field-block"><label>Instrutor</label><input id="mt-instrutor" placeholder="Nome do instrutor responsável" /></div>
+      <div class="field-block"><label>Responsável Técnico</label><input id="mt-responsavel" placeholder="Nome do responsável técnico" /></div>
+      <div class="field-block">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label style="margin:0">Assinatura do Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar assinaturas</button></div>
+        <select id="mt-instrutor-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select>
+      </div>
+      <div class="field-block"><label>Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
+</div></div>
+
+<!-- MODAL ASSINATURAS (banco de assinaturas de instrutor/responsável técnico) -->
+<div class="modal-bg" id="modal-assinaturas"><div class="modal">
+  <div class="modal-h"><div><h2>Assinaturas cadastradas</h2><p>Guarde a assinatura de quem costuma assinar certificados — evita depender da pessoa estar presente pra assinar na hora.</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field-block"><label>Nome</label><input id="ma2-nome" placeholder="Nome de quem assina" /></div>
+      <div class="field-block">
+        <label>Imagem da assinatura (PNG/JPG, fundo transparente fica melhor)</label>
+        <input type="file" id="ma2-imagem" accept="image/png,image/jpeg" />
+      </div>
+      <div class="field-block full"><button type="button" class="btn primary" id="ma2-add" style="width:100%">+ Adicionar assinatura</button></div>
+    </div>
+    <div class="table-wrap"><table id="tbl-assinaturas"><thead><tr><th>Nome</th><th>Assinatura</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Fechar</button></div>
 </div></div>
 
 <!-- MODAL PARTICIPANTES DA TURMA -->
@@ -1877,7 +1900,7 @@ async function importarObraPDF(file){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[], turmas:[], treinandos:[]};
+let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[], turmas:[], treinandos:[], assinaturas:[]};
 let _psiCalMes = new Date().getMonth();
 let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
@@ -5559,6 +5582,14 @@ function renderTreinamentos(){
   }).join('');
 }
 
+function popularSelectsAssinatura(){
+  const opts = '<option value="">— sem assinatura cadastrada (linha em branco) —</option>' +
+    [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join('');
+  const selInstrutor = $('#mt-instrutor-assinatura'), selResp = $('#mt-responsavel-assinatura');
+  if(selInstrutor){ const cur = selInstrutor.value; selInstrutor.innerHTML = opts; selInstrutor.value = cur; }
+  if(selResp){ const cur = selResp.value; selResp.innerHTML = opts; selResp.value = cur; }
+}
+
 function openTurma(id){
   const t = id ? state.turmas.find(x => x.id === id) : null;
   $('#mt-title').textContent = t ? 'Editar turma' : 'Nova turma';
@@ -5572,6 +5603,10 @@ function openTurma(id){
   $('#mt-validade').value = t?.validade || '';
   $('#mt-local').value = t?.local || '';
   $('#mt-instrutor').value = t?.instrutor || '';
+  $('#mt-responsavel').value = t?.responsavelTecnico || '';
+  popularSelectsAssinatura();
+  $('#mt-instrutor-assinatura').value = t?.instrutorAssinatura || '';
+  $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || '';
   $('#mt-delete').style.display = t ? '' : 'none';
   openModal('modal-turma');
 }
@@ -5591,7 +5626,10 @@ function setupTreinamentos(){
       id, tipo, data, cargaHoraria,
       validade: $('#mt-validade').value || '',
       local: $('#mt-local').value.trim(),
-      instrutor: $('#mt-instrutor').value.trim()
+      instrutor: $('#mt-instrutor').value.trim(),
+      responsavelTecnico: $('#mt-responsavel').value.trim(),
+      instrutorAssinatura: $('#mt-instrutor-assinatura').value,
+      responsavelAssinatura: $('#mt-responsavel-assinatura').value
     };
     try {
       await salvarTurmaNuvem(obj);
@@ -5614,7 +5652,73 @@ function setupTreinamentos(){
     } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
   };
 
+  $('#mt-assinaturas-btn').onclick = () => { renderAssinaturasTabela(); openModal('modal-assinaturas'); };
+
   setupParticipantesModal();
+  setupAssinaturas();
+}
+
+/* ---- Banco de assinaturas (instrutor / responsável técnico) ---- */
+function renderAssinaturasTabela(){
+  const tbody = $('#tbl-assinaturas tbody');
+  if(!tbody) return;
+  const lista = [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--ink-muted);padding:20px">Nenhuma assinatura cadastrada ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(a => `<tr>
+    <td><b>${escapeHtml(a.nome)}</b></td>
+    <td><img src="${a.imagem}" alt="" style="max-height:24px;max-width:120px;object-fit:contain"></td>
+    <td style="text-align:right"><button class="btn sm danger" onclick="excluirAssinatura('${a.id}')">✕</button></td>
+  </tr>`).join('');
+}
+
+function setupAssinaturas(){
+  $('#ma2-add').onclick = async () => {
+    const nome = $('#ma2-nome').value.trim();
+    const file = $('#ma2-imagem').files[0];
+    if(!nome || !file){ toast('Preencha o nome e escolha um arquivo de imagem', 'danger'); return; }
+    if(file.size > 500*1024){ toast('Imagem muito grande — use um arquivo de até 500KB', 'danger'); return; }
+    try {
+      const imagem = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const obj = {id:'sig'+uid(), nome, imagem};
+      await salvarAssinaturaNuvem(obj);
+      state.assinaturas.push(obj);
+      save();
+      $('#ma2-nome').value = ''; $('#ma2-imagem').value = '';
+      renderAssinaturasTabela();
+      popularSelectsAssinatura();
+      toast('✅ Assinatura cadastrada', 'ok');
+    } catch(err){ toast('Erro ao salvar: ' + (err.message||err), 'danger'); }
+  };
+}
+
+async function excluirAssinatura(id){
+  const emUso = state.turmas.some(t => t.instrutorAssinatura === id || t.responsavelAssinatura === id);
+  if(!confirm(emUso
+    ? 'Essa assinatura está em uso em alguma turma — excluir vai deixar a linha em branco nela. Excluir mesmo assim?'
+    : 'Excluir essa assinatura?')) return;
+  try {
+    await excluirAssinaturaNuvem(id);
+    state.assinaturas = state.assinaturas.filter(x => x.id !== id);
+    // ON DELETE SET NULL no banco já desvincula das turmas — reflete o
+    // mesmo localmente, senão o state local ficaria com um id que não
+    // existe mais até o próximo F5.
+    state.turmas.forEach(t => {
+      if(t.instrutorAssinatura === id) t.instrutorAssinatura = '';
+      if(t.responsavelAssinatura === id) t.responsavelAssinatura = '';
+    });
+    save();
+    renderAssinaturasTabela();
+    popularSelectsAssinatura();
+    toast('Assinatura excluída', 'danger');
+  } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
 }
 
 /* ---- Participantes da turma ---- */
@@ -5753,13 +5857,17 @@ function numeroExtenso(n){
 
 function dadosCertificadoParticipante(p, t){
   const cargaFmt = `${String(Math.round(t.cargaHoraria)).padStart(2,'0')} (${numeroExtenso(t.cargaHoraria)}) hora${t.cargaHoraria===1?'':'s'}`;
+  const assinaturaInstrutor = t.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura) : null;
+  const assinaturaResponsavel = t.responsavelAssinatura ? state.assinaturas.find(a => a.id === t.responsavelAssinatura) : null;
   return {
     nome: p.nome,
     cpf: p.cpf || '',
     data: t.data,
     local: t.local || 'Seconci Goiás',
     horas: cargaFmt,
-    instituicao: 'Seconci Goiás'
+    instituicao: 'Seconci Goiás',
+    instrutorAssinatura: assinaturaInstrutor ? assinaturaInstrutor.imagem : '',
+    responsavelAssinatura: assinaturaResponsavel ? assinaturaResponsavel.imagem : ''
   };
 }
 
@@ -6683,8 +6791,22 @@ async function salvarTurmaNuvem(t){
   const { error } = await db.from('treinamento_turmas').upsert({
     id: t.id, tipo: t.tipo, data: t.data,
     carga_horaria: t.cargaHoraria || null, local: t.local || '',
-    instrutor: t.instrutor || '', validade: t.validade || null
+    instrutor: t.instrutor || '', validade: t.validade || null,
+    responsavel_tecnico: t.responsavelTecnico || '',
+    instrutor_assinatura_id: t.instrutorAssinatura || null,
+    responsavel_assinatura_id: t.responsavelAssinatura || null
   });
+  if(error) throw new Error(error.message);
+}
+
+async function salvarAssinaturaNuvem(a){
+  const { error } = await db.from('assinaturas_treinamento').upsert({
+    id: a.id, nome: a.nome, imagem: a.imagem
+  });
+  if(error) throw new Error(error.message);
+}
+async function excluirAssinaturaNuvem(id){
+  const { error } = await db.from('assinaturas_treinamento').delete().eq('id', id);
   if(error) throw new Error(error.message);
 }
 async function excluirTurmaNuvem(id){
@@ -6725,7 +6847,8 @@ async function carregarDaNuvem() {
     { data: contratosPgrRows, error: errContratosPgr },
     { data: demandasRows,   error: errDemandas },
     { data: turmasRows,     error: errTurmas },
-    { data: treinandosRows, error: errTreinandos }
+    { data: treinandosRows, error: errTreinandos },
+    { data: assinaturasRows, error: errAssinaturas }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -6743,7 +6866,8 @@ async function carregarDaNuvem() {
     db.from('contratos_pgr').select('*'),
     db.from('demandas').select('*').order('criado_em', { ascending: true }),
     db.from('treinamento_turmas').select('*').order('data', { ascending: false }),
-    db.from('treinamento_participantes').select('*')
+    db.from('treinamento_participantes').select('*'),
+    db.from('assinaturas_treinamento').select('*').order('nome', { ascending: true })
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
@@ -6762,6 +6886,7 @@ async function carregarDaNuvem() {
   if (errDemandas)    { console.error('Erro demandas:', errDemandas.message); toast('Erro ao carregar quadro de demandas', 'danger'); }
   if (errTurmas)      { console.error('Erro turmas:', errTurmas.message); toast('Erro ao carregar turmas de treinamento', 'danger'); }
   if (errTreinandos)  { console.error('Erro treinandos:', errTreinandos.message); toast('Erro ao carregar participantes de treinamento', 'danger'); }
+  if (errAssinaturas) { console.error('Erro assinaturas:', errAssinaturas.message); toast('Erro ao carregar assinaturas cadastradas', 'danger'); }
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
@@ -6971,7 +7096,10 @@ async function carregarDaNuvem() {
       cargaHoraria:  t.carga_horaria,
       local:         t.local || '',
       instrutor:     t.instrutor || '',
-      validade:      t.validade || ''
+      validade:      t.validade || '',
+      responsavelTecnico:    t.responsavel_tecnico || '',
+      instrutorAssinatura:   t.instrutor_assinatura_id || '',
+      responsavelAssinatura: t.responsavel_assinatura_id || ''
     }))
   }
 
@@ -6985,6 +7113,14 @@ async function carregarDaNuvem() {
       empresaLivre: p.empresa_livre || '',
       obra:         p.obra_id || '',
       funcao:       p.funcao || ''
+    }))
+  }
+
+  if (!errAssinaturas) {
+    state.assinaturas = (assinaturasRows||[]).map(a => ({
+      id:     a.id,
+      nome:   a.nome,
+      imagem: a.imagem
     }))
   }
 
