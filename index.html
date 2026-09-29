@@ -358,6 +358,7 @@
     <button class="navitem" data-route="demandas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>Demandas</button>
     <button class="navitem" data-route="avaliacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>Avaliações</button>
     <button class="navitem" data-route="insumos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Insumos<span class="badge" id="nav-insumos-badge" style="display:none">0</span></button>
+    <button class="navitem" data-route="treinamentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>Treinamentos</button>
     <button class="navitem nav-parent" id="agendaParent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda<span class="nav-caret">▾</span></button>
     <div class="nav-sub" id="agendaSub">
       <button class="navitem subitem" data-agenda-nav="psicossociais">🧠 Psicossociais</button>
@@ -675,6 +676,18 @@
           <div class="field" style="flex:1"><label>Busca</label><input id="f-ins-q" placeholder="Nome do material…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-insumos"><thead><tr><th>Material</th><th>Data de chegada</th><th>Quantidade</th><th>Validade</th><th>Dias restantes</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+      </section>
+
+      <!-- TREINAMENTOS -->
+      <section class="page" id="page-treinamentos">
+        <div class="page-h">
+          <div><h2>Treinamentos</h2><p>Turmas, participantes e emissão de certificado por norma (NR).</p></div>
+          <div class="page-h-actions"><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
+        </div>
+        <div class="filters">
+          <div class="field"><label>Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table id="tbl-turmas"><thead><tr><th>Norma</th><th>Data</th><th>Carga horária</th><th>Local</th><th>Participantes</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- RELATÓRIOS -->
@@ -1025,6 +1038,48 @@
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mi-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mi-save">Salvar</button></div>
+</div></div>
+
+<!-- MODAL TURMA -->
+<div class="modal-bg" id="modal-turma"><div class="modal">
+  <div class="modal-h"><div><h2 id="mt-title">Nova turma</h2><p>Preencha os dados da turma de treinamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b"><form id="form-turma"><input type="hidden" id="mt-id" />
+    <div class="form-grid">
+      <div class="field-block full"><label>Norma (NR) *</label><select id="mt-tipo" required></select></div>
+      <div class="field-block"><label>Data *</label><input id="mt-data" type="date" required /></div>
+      <div class="field-block"><label>Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
+      <div class="field-block"><label>Validade do treinamento</label><input id="mt-validade" type="date" /></div>
+      <div class="field-block full"><label>Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
+      <div class="field-block full"><label>Instrutor</label><input id="mt-instrutor" placeholder="Nome do instrutor responsável" /></div>
+    </div>
+  </form></div>
+  <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
+</div></div>
+
+<!-- MODAL PARTICIPANTES DA TURMA -->
+<div class="modal-bg" id="modal-participantes"><div class="modal">
+  <div class="modal-h"><div><h2 id="mtp-title">Participantes</h2><p id="mtp-sub">Adicione os participantes desta turma</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <input type="hidden" id="mtp-turma-id" />
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field-block full">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin:0">Empresa</label>
+          <label style="font-size:12px;color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:400">
+            <input type="checkbox" id="mtp-empresa-livre-toggle" style="cursor:pointer" /> Empresa não cadastrada
+          </label>
+        </div>
+        <select id="mtp-empresa"><option value="">— Selecione —</option></select>
+        <input id="mtp-empresa-livre" type="text" placeholder="Digite o nome da empresa…" style="display:none;width:100%;box-sizing:border-box" />
+      </div>
+      <div class="field-block"><label>Nome do participante *</label><input id="mtp-nome" placeholder="Nome completo" /></div>
+      <div class="field-block"><label>CPF</label><input id="mtp-cpf" placeholder="000.000.000-00" /></div>
+      <div class="field-block full"><label>Função</label><input id="mtp-funcao" placeholder="Ex: Pedreiro, Eletricista…" /></div>
+      <div class="field-block full" style="align-self:flex-end"><button type="button" class="btn primary" id="mtp-add" style="width:100%">+ Adicionar participante</button></div>
+    </div>
+    <div class="table-wrap"><table id="tbl-participantes"><thead><tr><th>Nome</th><th>CPF</th><th>Empresa</th><th>Função</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Fechar</button></div>
 </div></div>
 
 <!-- MODAL PSICOSSOCIAL -->
@@ -1805,7 +1860,7 @@ async function importarObraPDF(file){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[]};
+let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[], turmas:[], treinandos:[]};
 let _psiCalMes = new Date().getMonth();
 let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
@@ -2066,7 +2121,7 @@ function navigate(route){
   $$('.navitem').forEach(b => b.classList.remove('active'));
   const navBtn = $$('.navitem').find(b => b.dataset.route === route);
   if(navBtn) navBtn.classList.add('active');
-  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', demandas:'Demandas', avaliacoes:'Avaliações', insumos:'Insumos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
+  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', demandas:'Demandas', avaliacoes:'Avaliações', insumos:'Insumos', treinamentos:'Treinamentos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
   // Submenu lateral da Agenda
@@ -3849,6 +3904,22 @@ const PRODUTOS_PGR = [
   {key:'LTCAT', nome:'LTCAT'},
   {key:'OUTRO', nome:'Outro'}
 ];
+
+/* ================== TIPOS DE TREINAMENTO (NR) ================== */
+// certificadoModelo: identifica qual gerador de certificado usar em gerarCertificado().
+// Só NR-18 tem modelo pronto (RQ-116.01) por enquanto — os outros ficam
+// cadastráveis (pra já poder criar turma) mas emitem aviso "modelo ainda não
+// cadastrado" até o usuário mandar o RQ de cada um.
+const TIPOS_TREINAMENTO = [
+  {key:'nr06', nome:'NR-06 — Equipamento de Proteção Individual (EPI)', certificadoModelo:null},
+  {key:'nr10', nome:'NR-10 — Segurança em Instalações e Serviços em Eletricidade', certificadoModelo:null},
+  {key:'nr12', nome:'NR-12 — Segurança no Trabalho em Máquinas e Equipamentos', certificadoModelo:null},
+  {key:'nr18', nome:'NR-18 — Condições de Segurança e Saúde no Trabalho na Indústria da Construção', certificadoModelo:'nr18',
+    normasTexto:'01 e 18', treinamentoNome:'Treinamento Inicial Básico em Segurança do Trabalho'},
+  {key:'nr33', nome:'NR-33 — Segurança e Saúde em Espaços Confinados', certificadoModelo:null},
+  {key:'nr35', nome:'NR-35 — Trabalho em Altura', certificadoModelo:null},
+];
+function tipoTreinamento(key){ return TIPOS_TREINAMENTO.find(t => t.key === key); }
 function recalcTotalContratoPgr(){
   const total = PRODUTOS_PGR.reduce((s,p) => s + (parseFloat($('#cpgr-prod-'+p.key)?.value) || 0), 0);
   $('#cpgr-total').value = fmtReal(total);
@@ -4441,6 +4512,7 @@ function setupEvents(){
   // Fechar modal
   $$('[data-close]').forEach(b => b.onclick = () => b.closest('.modal-bg').classList.remove('show'));
   setupInsumos();
+  setupTreinamentos();
 
   // Filtros
   ['f-empresa-status','f-empresa-seg','f-empresa-q'].forEach(id => $('#'+id).oninput = renderEmpresas);
@@ -5429,6 +5501,289 @@ function setupInsumos(){
   };
 }
 
+/* ================== TREINAMENTOS (turmas + participantes + certificado) ================== */
+function renderTreinamentos(){
+  const fTipo = $('#f-turma-tipo');
+  if(fTipo && !fTipo.dataset.filled){
+    fTipo.innerHTML = '<option value="">Todas</option>' + TIPOS_TREINAMENTO.map(t => `<option value="${t.key}">${escapeHtml(t.nome)}</option>`).join('');
+    fTipo.dataset.filled = '1';
+  }
+  const filtroTipo = fTipo ? fTipo.value : '';
+  const lista = [...state.turmas]
+    .filter(t => !filtroTipo || t.tipo === filtroTipo)
+    .sort((a,b) => (b.data||'').localeCompare(a.data||''));
+
+  const tbody = $('#tbl-turmas tbody');
+  if(!tbody) return;
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:28px">Nenhuma turma cadastrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(t => {
+    const tipo = tipoTreinamento(t.tipo);
+    const qtdParticipantes = state.treinandos.filter(p => p.turma === t.id).length;
+    return `<tr>
+      <td><b>${escapeHtml(tipo ? tipo.nome : t.tipo)}</b></td>
+      <td class="tight">${fmtDate(t.data)}</td>
+      <td>${t.cargaHoraria ? t.cargaHoraria+'h' : '—'}</td>
+      <td>${escapeHtml(t.local) || '—'}</td>
+      <td><button class="btn sm ghost" onclick="abrirParticipantes('${t.id}')">${qtdParticipantes} participante${qtdParticipantes!==1?'s':''}</button></td>
+      <td><button class="btn sm" onclick="openTurma('${t.id}')">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openTurma(id){
+  const t = id ? state.turmas.find(x => x.id === id) : null;
+  $('#mt-title').textContent = t ? 'Editar turma' : 'Nova turma';
+  $('#mt-id').value = id || '';
+  if($('#mt-tipo').options.length === 0){
+    $('#mt-tipo').innerHTML = TIPOS_TREINAMENTO.map(x => `<option value="${x.key}">${escapeHtml(x.nome)}</option>`).join('');
+  }
+  $('#mt-tipo').value = t?.tipo || TIPOS_TREINAMENTO[0].key;
+  $('#mt-data').value = t?.data || todayISO();
+  $('#mt-carga').value = t?.cargaHoraria || '';
+  $('#mt-validade').value = t?.validade || '';
+  $('#mt-local').value = t?.local || '';
+  $('#mt-instrutor').value = t?.instrutor || '';
+  $('#mt-delete').style.display = t ? '' : 'none';
+  openModal('modal-turma');
+}
+
+function setupTreinamentos(){
+  $('#btnNewTurma').onclick = () => openTurma(null);
+  const fTipo = $('#f-turma-tipo');
+  if(fTipo) fTipo.onchange = renderTreinamentos;
+
+  $('#mt-save').onclick = async () => {
+    const tipo = $('#mt-tipo').value;
+    const data = $('#mt-data').value;
+    const cargaHoraria = parseFloat($('#mt-carga').value) || 0;
+    if(!tipo || !data || !cargaHoraria){ toast('Preencha norma, data e carga horária', 'danger'); return; }
+    const id = $('#mt-id').value || ('tt'+uid());
+    const obj = {
+      id, tipo, data, cargaHoraria,
+      validade: $('#mt-validade').value || '',
+      local: $('#mt-local').value.trim(),
+      instrutor: $('#mt-instrutor').value.trim()
+    };
+    try {
+      await salvarTurmaNuvem(obj);
+      const idx = state.turmas.findIndex(x => x.id === id);
+      if(idx >= 0) state.turmas[idx] = obj; else state.turmas.push(obj);
+      save(); closeModal('modal-turma'); renderAll();
+      toast('✅ Turma salva', 'ok');
+    } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); }
+  };
+
+  $('#mt-delete').onclick = async () => {
+    const id = $('#mt-id').value;
+    if(!id || !confirm('Excluir esta turma? Os participantes cadastrados nela também serão removidos.')) return;
+    try {
+      await excluirTurmaNuvem(id);
+      state.turmas = state.turmas.filter(x => x.id !== id);
+      state.treinandos = state.treinandos.filter(x => x.turma !== id);
+      save(); closeModal('modal-turma'); renderAll();
+      toast('Turma excluída', 'danger');
+    } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
+  };
+
+  setupParticipantesModal();
+}
+
+/* ---- Participantes da turma ---- */
+function abrirParticipantes(turmaId){
+  const t = state.turmas.find(x => x.id === turmaId);
+  if(!t) return;
+  const tipo = tipoTreinamento(t.tipo);
+  $('#mtp-turma-id').value = turmaId;
+  $('#mtp-sub').textContent = `${tipo ? tipo.nome : t.tipo} · ${fmtDate(t.data)}`;
+  if($('#mtp-empresa').options.length <= 1){
+    $('#mtp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
+      [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
+  }
+  $('#mtp-empresa-livre-toggle').checked = false;
+  $('#mtp-empresa').style.display = '';
+  $('#mtp-empresa-livre').style.display = 'none';
+  $('#mtp-empresa-livre').value = '';
+  $('#mtp-nome').value = '';
+  $('#mtp-cpf').value = '';
+  $('#mtp-funcao').value = '';
+  renderParticipantesTabela(turmaId);
+  openModal('modal-participantes');
+}
+
+function renderParticipantesTabela(turmaId){
+  const t = state.turmas.find(x => x.id === turmaId);
+  const tipo = t ? tipoTreinamento(t.tipo) : null;
+  const lista = state.treinandos.filter(p => p.turma === turmaId);
+  const tbody = $('#tbl-participantes tbody');
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:20px">Nenhum participante ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(p => {
+    const nomeEmp = p.empresaLivre || (p.empresa ? nomeEmpresa(p.empresa) : '—');
+    const podeEmitir = tipo && tipo.certificadoModelo;
+    const btnCert = podeEmitir
+      ? `<button class="btn sm ghost" onclick="emitirCertificado('${p.id}')">🎓 Certificado</button>`
+      : `<button class="btn sm ghost" disabled title="Modelo de certificado desta norma ainda não cadastrado">🎓 Certificado</button>`;
+    return `<tr>
+      <td><b>${escapeHtml(p.nome)}</b></td>
+      <td class="mono">${escapeHtml(p.cpf) || '—'}</td>
+      <td>${escapeHtml(nomeEmp)}</td>
+      <td>${escapeHtml(p.funcao) || '—'}</td>
+      <td style="display:flex;gap:6px;justify-content:flex-end">${btnCert}<button class="btn sm danger" onclick="excluirTreinando('${p.id}','${turmaId}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function setupParticipantesModal(){
+  $('#mtp-empresa-livre-toggle').onchange = function(){
+    $('#mtp-empresa').style.display = this.checked ? 'none' : '';
+    $('#mtp-empresa-livre').style.display = this.checked ? '' : 'none';
+  };
+
+  $('#mtp-add').onclick = async () => {
+    const turmaId = $('#mtp-turma-id').value;
+    const nome = $('#mtp-nome').value.trim();
+    const cpf = $('#mtp-cpf').value.trim();
+    const livre = $('#mtp-empresa-livre-toggle').checked;
+    const empresa = livre ? '' : $('#mtp-empresa').value;
+    const empresaLivre = livre ? $('#mtp-empresa-livre').value.trim() : '';
+    const funcao = $('#mtp-funcao').value.trim();
+    if(!nome){ toast('Preencha o nome do participante', 'danger'); return; }
+    const obj = {id:'tp'+uid(), turma:turmaId, nome, cpf, empresa, empresaLivre, funcao};
+    try {
+      await salvarTreinandoNuvem(obj);
+      state.treinandos.push(obj);
+      save();
+      $('#mtp-nome').value = ''; $('#mtp-cpf').value = ''; $('#mtp-funcao').value = '';
+      renderParticipantesTabela(turmaId);
+      renderTreinamentos();
+      toast('✅ Participante adicionado', 'ok');
+    } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); }
+  };
+}
+
+async function excluirTreinando(id, turmaId){
+  if(!confirm('Remover este participante da turma?')) return;
+  try {
+    await excluirTreinandoNuvem(id);
+    state.treinandos = state.treinandos.filter(x => x.id !== id);
+    save();
+    renderParticipantesTabela(turmaId);
+    renderTreinamentos();
+    toast('Participante removido', 'danger');
+  } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
+}
+
+/* ---- Emissão de certificado ---- */
+// Números por extenso só até o que realmente aparece em carga horária de
+// treinamento (raramente passa de um turno) — não é um conversor genérico.
+const NUM_EXTENSO_PT = ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez',
+  'onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte'];
+function numeroExtenso(n){
+  const i = Math.round(n);
+  return NUM_EXTENSO_PT[i] || String(i);
+}
+
+function emitirCertificado(participanteId){
+  const p = state.treinandos.find(x => x.id === participanteId);
+  if(!p) return;
+  const t = state.turmas.find(x => x.id === p.turma);
+  if(!t) return;
+  const tipo = tipoTreinamento(t.tipo);
+  if(!tipo || tipo.certificadoModelo !== 'nr18'){
+    toast('Modelo de certificado desta norma ainda não cadastrado', 'danger');
+    return;
+  }
+  const html = gerarCertificadoNR18Html(p, t, tipo);
+  const win = window.open('', '_blank');
+  if(!win){ toast('O navegador bloqueou a abertura da janela do certificado — permita pop-ups', 'danger'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+function gerarCertificadoNR18Html(p, t, tipo){
+  const cargaFmt = `${String(Math.round(t.cargaHoraria)).padStart(2,'0')} (${numeroExtenso(t.cargaHoraria)}) hora${t.cargaHoraria===1?'':'s'}`;
+  const local = escapeHtml(t.local) || 'nas dependências do Seconci Goiás';
+  const nome = escapeHtml(p.nome);
+  const cpf = escapeHtml(p.cpf) || '—';
+  const dataFmt = fmtDate(t.data);
+
+  // Layout fiel ao RQ-116.01 (frente = certificado, verso = conteúdo
+  // programático + campo de preenchimento do participante/empregador).
+  // Assinatura ainda é a linha física do modelo original — quando a coleta
+  // biométrica do SOC estiver disponível, a imagem entra no lugar da linha.
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Certificado — ${nome}</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  body{font-family:'Times New Roman',serif;color:#111;margin:0}
+  .pagina{page-break-after:always;padding:10mm 0}
+  .pagina:last-child{page-break-after:auto}
+  h1{text-align:center;font-size:22px;letter-spacing:.05em;margin-bottom:36px}
+  .corpo{font-size:15px;line-height:1.9;text-align:justify}
+  .rodape-doc{margin-top:60px;font-size:10px;color:#666;display:flex;justify-content:space-between;border-top:1px solid #ccc;padding-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+  th,td{border:1px solid #999;padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:#eee;text-align:center}
+  .assinaturas{display:flex;justify-content:space-between;margin-top:50px;gap:30px}
+  .assinaturas div{flex:1;text-align:center;font-size:12px}
+  .linha-assinatura{border-top:1px solid #111;margin-bottom:6px;padding-top:34px}
+  .preenchimento{font-size:11px;line-height:2}
+  @media print{ .no-print{display:none} }
+</style></head><body>
+
+<div class="pagina">
+  <h1>CERTIFICADO</h1>
+  <div class="corpo">
+    Certificamos que <b>${nome}</b>, portador do CPF <b>${cpf}</b>, participou do
+    ${escapeHtml(tipo.treinamentoNome)}, conforme as Normas Regulamentadoras
+    ${escapeHtml(tipo.normasTexto)}, realizado no dia <b>${dataFmt}</b>, ${local},
+    com carga horária total de <b>${cargaFmt}</b>, apresentando o aproveitamento
+    necessário para esta certificação.
+  </div>
+  <div class="rodape-doc"><span>SECONCI Goiás · Sistema de Gestão SST</span><span>Emitido em ${fmtDate(todayISO())}</span></div>
+</div>
+
+<div class="pagina">
+  <table>
+    <tr><th colspan="3">CONTEÚDO PROGRAMÁTICO</th></tr>
+    <tr><th>REF.</th><th>MINISTRADO PELO SECONCI GOIÁS</th><th>A SER MINISTRADO PELO EMPREGADOR*</th></tr>
+    <tr>
+      <td>NR-01</td>
+      <td>Itens 1.4.4 (alíneas "a", "b" e "e"), 1.4.3 e 1.4.3.1: os riscos ocupacionais que existam ou possam originar-se nos locais de trabalho; os meios para prevenir e controlar tais riscos; procedimentos a serem adotados em caso de risco grave e iminente.</td>
+      <td>Itens 1.4.4 (alíneas "c", "d" e "e"), 1.4.3, 1.4.3.1: as medidas adotadas pela organização; os procedimentos a serem adotados em situação de emergência; os procedimentos a serem adotados em conformidade com os itens 1.4.3 e 1.4.3.1.</td>
+    </tr>
+    <tr>
+      <td>NR-18</td>
+      <td>Anexo I, item 2.1, alínea "a", parágrafos I, II e IV: as condições e meio ambiente de trabalho; os riscos inerentes às atividades desenvolvidas; o uso adequado dos equipamentos de proteção individual.</td>
+      <td>Anexo I, item 2.1, alínea "a", parágrafos III e V: os equipamentos de proteção coletiva e individual existentes no canteiro de obras; o PGR do canteiro de obras.</td>
+    </tr>
+  </table>
+
+  <div class="preenchimento">
+    <b>PREENCHIMENTO OBRIGATÓRIO PELO PARTICIPANTE E EMPREGADOR</b><br>
+    Completei o ${escapeHtml(tipo.treinamentoNome)}, com o conteúdo ministrado pela empresa* onde irei exercer
+    minhas atividades profissionais, o qual foi realizado no dia ____/____/______, com duração de ____:____ horas,
+    ministrado no endereço ______________________________________________________________________, pelo profissional
+    ______________________________________________, que exerce a função de ______________________________________.
+  </div>
+
+  <div class="assinaturas">
+    <div><div class="linha-assinatura"></div>Assinatura do Instrutor por Extenso</div>
+    <div><div class="linha-assinatura"></div>Assinatura do Participante por Extenso</div>
+  </div>
+
+  <div class="rodape-doc"><span>Identificação: RQ-116.01</span><span>Relacionado: PO-38</span></div>
+</div>
+
+<div class="no-print" style="text-align:center;padding:16px"><button onclick="window.print()" style="padding:10px 24px;font-size:14px;cursor:pointer">🖨 Imprimir / Salvar PDF</button></div>
+</body></html>`;
+}
+
 function renderAll(){
   renderDashboard();
   renderEmpresas();
@@ -5436,6 +5791,7 @@ function renderAll(){
   renderDocs();
   renderAvaliacoes();
   renderInsumos();
+  renderTreinamentos();
   renderPsicossociais();
   renderEventos('treinamento');
   renderEventos('palestra');
@@ -6304,6 +6660,34 @@ async function excluirInsumoNuvem(id){
   if(error) throw new Error(error.message);
 }
 
+async function salvarTurmaNuvem(t){
+  const { error } = await db.from('treinamento_turmas').upsert({
+    id: t.id, tipo: t.tipo, data: t.data,
+    carga_horaria: t.cargaHoraria || null, local: t.local || '',
+    instrutor: t.instrutor || '', validade: t.validade || null
+  });
+  if(error) throw new Error(error.message);
+}
+async function excluirTurmaNuvem(id){
+  // ON DELETE CASCADE em treinamento_participantes.turma_id — apaga os
+  // participantes vinculados junto, não fica lixo orfão no banco.
+  const { error } = await db.from('treinamento_turmas').delete().eq('id', id);
+  if(error) throw new Error(error.message);
+}
+
+async function salvarTreinandoNuvem(p){
+  const { error } = await db.from('treinamento_participantes').upsert({
+    id: p.id, turma_id: p.turma, nome: p.nome, cpf: p.cpf || '',
+    cliente_id: p.empresa || null, empresa_livre: p.empresaLivre || '',
+    funcao: p.funcao || ''
+  });
+  if(error) throw new Error(error.message);
+}
+async function excluirTreinandoNuvem(id){
+  const { error } = await db.from('treinamento_participantes').delete().eq('id', id);
+  if(error) throw new Error(error.message);
+}
+
 async function carregarDaNuvem() {
   const [
     { data: docs,           error: errDocs },
@@ -6320,7 +6704,9 @@ async function carregarDaNuvem() {
     { data: configGeralRows, error: errConfigGeral },
     { data: medicoesRows,   error: errMedicoes },
     { data: contratosPgrRows, error: errContratosPgr },
-    { data: demandasRows,   error: errDemandas }
+    { data: demandasRows,   error: errDemandas },
+    { data: turmasRows,     error: errTurmas },
+    { data: treinandosRows, error: errTreinandos }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -6336,7 +6722,9 @@ async function carregarDaNuvem() {
     db.from('config_geral').select('*').eq('id', 1).limit(1),
     db.from('medicoes').select('*').order('data', { ascending: false }),
     db.from('contratos_pgr').select('*'),
-    db.from('demandas').select('*').order('criado_em', { ascending: true })
+    db.from('demandas').select('*').order('criado_em', { ascending: true }),
+    db.from('treinamento_turmas').select('*').order('data', { ascending: false }),
+    db.from('treinamento_participantes').select('*')
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
@@ -6353,6 +6741,8 @@ async function carregarDaNuvem() {
   if (errMedicoes)    { console.error('Erro medições:', errMedicoes.message); toast('Erro ao carregar medições da nuvem', 'danger'); }
   if (errContratosPgr){ console.error('Erro contratos PGR:', errContratosPgr.message); toast('Erro ao carregar contratos PGR', 'danger'); }
   if (errDemandas)    { console.error('Erro demandas:', errDemandas.message); toast('Erro ao carregar quadro de demandas', 'danger'); }
+  if (errTurmas)      { console.error('Erro turmas:', errTurmas.message); toast('Erro ao carregar turmas de treinamento', 'danger'); }
+  if (errTreinandos)  { console.error('Erro treinandos:', errTreinandos.message); toast('Erro ao carregar participantes de treinamento', 'danger'); }
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
@@ -6551,6 +6941,30 @@ async function carregarDaNuvem() {
       status:     d.status || 'aguardando',
       criadoEm:   d.criado_em,
       iniciadoEm: d.iniciado_em || ''
+    }))
+  }
+
+  if (!errTurmas) {
+    state.turmas = (turmasRows||[]).map(t => ({
+      id:            t.id,
+      tipo:          t.tipo,
+      data:          t.data,
+      cargaHoraria:  t.carga_horaria,
+      local:         t.local || '',
+      instrutor:     t.instrutor || '',
+      validade:      t.validade || ''
+    }))
+  }
+
+  if (!errTreinandos) {
+    state.treinandos = (treinandosRows||[]).map(p => ({
+      id:           p.id,
+      turma:        p.turma_id,
+      nome:         p.nome,
+      cpf:          p.cpf || '',
+      empresa:      p.cliente_id || '',
+      empresaLivre: p.empresa_livre || '',
+      funcao:       p.funcao || ''
     }))
   }
 
