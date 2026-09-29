@@ -5544,13 +5544,17 @@ function renderTreinamentos(){
   tbody.innerHTML = lista.map(t => {
     const tipo = tipoTreinamento(t.tipo);
     const qtdParticipantes = state.treinandos.filter(p => p.turma === t.id).length;
+    const podeEmitirLote = tipo && tipo.certificadoModelo && qtdParticipantes > 0;
     return `<tr>
       <td><b>${escapeHtml(tipo ? tipo.nome : t.tipo)}</b></td>
       <td class="tight">${fmtDate(t.data)}</td>
       <td>${t.cargaHoraria ? t.cargaHoraria+'h' : '—'}</td>
       <td>${escapeHtml(t.local) || '—'}</td>
       <td><button class="btn sm ghost" onclick="abrirParticipantes('${t.id}')">${qtdParticipantes} participante${qtdParticipantes!==1?'s':''}</button></td>
-      <td><button class="btn sm" onclick="openTurma('${t.id}')">Editar</button></td>
+      <td style="display:flex;gap:6px;justify-content:flex-end">
+        ${podeEmitirLote ? `<button class="btn sm ghost" onclick="emitirCertificadosTurma('${t.id}')">🎓 Emitir todos</button>` : ''}
+        <button class="btn sm" onclick="openTurma('${t.id}')">Editar</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -5747,6 +5751,18 @@ function numeroExtenso(n){
   return NUM_EXTENSO_PT[i] || String(i);
 }
 
+function dadosCertificadoParticipante(p, t){
+  const cargaFmt = `${String(Math.round(t.cargaHoraria)).padStart(2,'0')} (${numeroExtenso(t.cargaHoraria)}) hora${t.cargaHoraria===1?'':'s'}`;
+  return {
+    nome: p.nome,
+    cpf: p.cpf || '',
+    data: t.data,
+    local: t.local || 'Seconci Goiás',
+    horas: cargaFmt,
+    instituicao: 'Seconci Goiás'
+  };
+}
+
 function emitirCertificado(participanteId){
   const p = state.treinandos.find(x => x.id === participanteId);
   if(!p) return;
@@ -5762,16 +5778,28 @@ function emitirCertificado(participanteId){
   // sem marca d'água nem cor de fundo, pra imprimir por cima dela.
   const win = window.open('certificado-nr18.html', '_blank');
   if(!win){ toast('O navegador bloqueou a abertura do certificado — permita pop-ups', 'danger'); return; }
-  const cargaFmt = `${String(Math.round(t.cargaHoraria)).padStart(2,'0')} (${numeroExtenso(t.cargaHoraria)}) hora${t.cargaHoraria===1?'':'s'}`;
   win.addEventListener('load', () => {
-    win.preencherCertificado({
-      nome: p.nome,
-      cpf: p.cpf || '',
-      data: t.data,
-      local: t.local || 'Seconci Goiás',
-      horas: cargaFmt,
-      instituicao: 'Seconci Goiás'
-    });
+    win.preencherCertificado(dadosCertificadoParticipante(p, t));
+  });
+}
+
+function emitirCertificadosTurma(turmaId){
+  const t = state.turmas.find(x => x.id === turmaId);
+  if(!t) return;
+  const tipo = tipoTreinamento(t.tipo);
+  if(!tipo || !tipo.certificadoModelo){
+    toast('Modelo de certificado desta norma ainda não cadastrado', 'danger');
+    return;
+  }
+  const participantes = state.treinandos.filter(p => p.turma === turmaId);
+  if(!participantes.length){ toast('Essa turma ainda não tem participantes', 'danger'); return; }
+  // Uma folha por participante, clonada na mesma aba (ver
+  // preencherCertificadosLote em certificado-nr18.html) — imprime tudo de
+  // uma vez, um trabalho de impressão só, uma folha pré-impressa por vez.
+  const win = window.open('certificado-nr18.html', '_blank');
+  if(!win){ toast('O navegador bloqueou a abertura do certificado — permita pop-ups', 'danger'); return; }
+  win.addEventListener('load', () => {
+    win.preencherCertificadosLote(participantes.map(p => dadosCertificadoParticipante(p, t)));
   });
 }
 

@@ -50,16 +50,44 @@
 </div>
 <script>
 /* Integration: window.preencherCertificado({ nome, cpf, data, local, horas, instituicao });
-   data accepts YYYY-MM-DD or DD/MM/YYYY. Then window.imprimirCertificado(). */
+   data accepts YYYY-MM-DD or DD/MM/YYYY. Then window.imprimirCertificado().
+   Lote (uma folha por participante, tudo na mesma aba pra imprimir em
+   sequencia num unico trabalho de impressao):
+   window.preencherCertificadosLote([{nome,cpf,data,local,horas,instituicao}, ...]) */
 (function(){
  const ids=['nome','cpf','data','local','horas','instituicao'];
  function formatDate(value){if(!value)return '____/____/______';if(/^\d{4}-\d{2}-\d{2}$/.test(value)){const [y,m,d]=value.split('-');return `${d}/${m}/${y}`}return value}
- function refresh(){for(const id of ids){const input=document.getElementById(id);const text=id==='data'?formatDate(input.value):(input.value.trim()||({nome:'Nome do participante',cpf:'___.___.___-__',local:'________________',horas:'____ horas',instituicao:'________________'}[id]));document.querySelectorAll(`[data-field="${id}"]`).forEach(el=>{el.textContent=text})}}
+ function campoTexto(id, raw){return id==='data'?formatDate(raw):(String(raw||'').trim()||({nome:'Nome do participante',cpf:'___.___.___-__',local:'________________',horas:'____ horas',instituicao:'________________'}[id]))}
+ function refresh(){for(const id of ids){const input=document.getElementById(id);document.querySelectorAll(`[data-field="${id}"]`).forEach(el=>{el.textContent=campoTexto(id, input.value)})}}
  ids.forEach(id=>document.getElementById(id).addEventListener('input',refresh));
  document.getElementById('cpf').addEventListener('input',e=>{const input=e.target;const digits=input.value.replace(/\D/g,'').slice(0,11);input.value=digits.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1-$2');refresh()});
  document.getElementById('clear').addEventListener('click',()=>{ids.forEach(id=>document.getElementById(id).value='');refresh();document.getElementById('nome').focus()});
  window.preencherCertificado=function(data){for(const id of ids){if(data[id]!==undefined){let value=String(data[id]);if(id==='data'&&/^\d{2}\/\d{2}\/\d{4}$/.test(value)){const [d,m,y]=value.split('/');value=`${y}-${m}-${d}`}document.getElementById(id).value=value}}refresh()};
  window.imprimirCertificado=function(){window.print()};
+
+ // Clona a folha (.sheet-wrap) uma vez por participante e preenche cada
+ // copia com seus proprios dados, direto no data-field (nao usa os campos
+ // da barra lateral, que so fazem sentido pra 1 certificado por vez).
+ window.preencherCertificadosLote=function(lista){
+   const sheetList=document.querySelector('.sheet-list');
+   const template=document.querySelector('.sheet-wrap');
+   if(!sheetList||!template||!lista||!lista.length)return;
+   sheetList.innerHTML='';
+   lista.forEach((dados,i)=>{
+     const wrap=template.cloneNode(true);
+     const caption=wrap.querySelector('.sheet-caption span');
+     if(caption)caption.textContent=`${i+1} / ${lista.length} — Frente`;
+     ids.forEach(id=>{
+       let raw=dados[id];
+       if(id==='data'&&/^\d{2}\/\d{2}\/\d{4}$/.test(String(raw||''))){const [d,m,y]=raw.split('/');raw=`${y}-${m}-${d}`}
+       const text=campoTexto(id, raw);
+       wrap.querySelectorAll(`[data-field="${id}"]`).forEach(el=>{el.textContent=text});
+     });
+     sheetList.appendChild(wrap);
+   });
+   scale();
+ };
+
  const paperColor=document.getElementById('paper-color');paperColor.addEventListener('input',()=>document.documentElement.style.setProperty('--paper',paperColor.value));
  document.getElementById('print').addEventListener('click',window.imprimirCertificado);
  function scale(){const page=document.querySelector('.page');if(page){document.documentElement.style.setProperty('--page-scale',page.clientWidth/1122.52)}}
