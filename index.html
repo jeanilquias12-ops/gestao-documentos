@@ -1056,7 +1056,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label style="margin:0">Assinatura do Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar assinaturas</button></div>
         <select id="mt-instrutor-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select>
       </div>
-      <div class="field-block"><label>Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
+      <div class="field-block" style="display:none"><label>Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
@@ -5684,11 +5684,18 @@ function renderTreinamentos(){
   }).join('');
 }
 
+// Responsável técnico é sempre o mesmo (Adriano): não aparece pra escolher, nem na lista do instrutor.
+function assinaturaResponsavelPadrao(){ return state.assinaturas.find(a => /^adriano augusto/i.test(a.nome)); }
+
 function popularSelectsAssinatura(){
-  const opts = '<option value="">— sem assinatura cadastrada (linha em branco) —</option>' +
-    [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join('');
+  const lista = [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  const cab = '<option value="">— sem assinatura cadastrada (linha em branco) —</option>';
+  const opt = a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`;
+  const opts = cab + lista.map(opt).join('');
+  const padraoId = assinaturaResponsavelPadrao()?.id;
+  const optsInstrutor = cab + lista.filter(a => a.id !== padraoId).map(opt).join('');
   const selInstrutor = $('#mt-instrutor-assinatura'), selResp = $('#mt-responsavel-assinatura');
-  if(selInstrutor){ const cur = selInstrutor.value; selInstrutor.innerHTML = opts; selInstrutor.value = cur; }
+  if(selInstrutor){ const cur = selInstrutor.value; selInstrutor.innerHTML = optsInstrutor; selInstrutor.value = cur; }
   if(selResp){ const cur = selResp.value; selResp.innerHTML = opts; selResp.value = cur; }
 }
 
@@ -5708,9 +5715,7 @@ function openTurma(id){
   $('#mt-responsavel').value = t?.responsavelTecnico || '';
   popularSelectsAssinatura();
   $('#mt-instrutor-assinatura').value = t?.instrutorAssinatura || '';
-  // Responsável técnico é sempre o mesmo: em turma nova já vem com a assinatura do Adriano marcada.
-  const respPadrao = t ? null : state.assinaturas.find(a => /^adriano augusto/i.test(a.nome));
-  $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || respPadrao?.id || '';
+  $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || assinaturaResponsavelPadrao()?.id || '';
   $('#mt-delete').style.display = t ? '' : 'none';
   openModal('modal-turma');
 }
@@ -5983,7 +5988,7 @@ function formatarCargaHoraria(horas){
 function dadosCertificadoParticipante(p, t){
   const cargaFmt = formatarCargaHoraria(t.cargaHoraria);
   const assinaturaInstrutor = t.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura) : null;
-  const assinaturaResponsavel = t.responsavelAssinatura ? state.assinaturas.find(a => a.id === t.responsavelAssinatura) : null;
+  const assinaturaResponsavel = (t.responsavelAssinatura ? state.assinaturas.find(a => a.id === t.responsavelAssinatura) : null) || assinaturaResponsavelPadrao();
   return {
     nome: p.nome,
     cpf: p.cpf || '',
