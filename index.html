@@ -687,7 +687,7 @@
         <div class="filters">
           <div class="field"><label>Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
         </div>
-        <div class="card"><div class="table-wrap"><table id="tbl-turmas"><thead><tr><th>Norma</th><th>Data</th><th>Carga horária</th><th>Local</th><th>Participantes</th><th></th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table id="tbl-turmas"><thead><tr><th>Norma</th><th>Data</th><th>Carga horária</th><th>Validade</th><th>Local</th><th>Participantes</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- RELATÓRIOS -->
@@ -4621,13 +4621,28 @@ function setupEvents(){
     }
   };
   $('#me-delete').onclick = async () => {
-    if(!confirm('Excluir empresa? Documentos e contratos vinculados também serão removidos.')) return;
     const id = $('#me-id').value;
+    const demIds = state.demandas.filter(d => d.empresa === id).map(d => d.id);
+    const medIds = state.medicoes.filter(m => m.empresa === id).map(m => m.id);
+    const cpgrIds = state.contratosPgr.filter(c => c.empresa === id).map(c => c.id);
+    const avisoExtra = [];
+    if(demIds.length) avisoExtra.push(`${demIds.length} demanda(s)`);
+    if(medIds.length) avisoExtra.push(`${medIds.length} medição(ões) de faturamento`);
+    if(cpgrIds.length) avisoExtra.push(`${cpgrIds.length} contrato(s) PGR`);
+    const msg = 'Excluir empresa? Documentos, obras, contratos e avaliações vinculados também serão removidos.'
+      + (avisoExtra.length ? `\n\n⚠️ Essa empresa também tem ${avisoExtra.join(', ')} que serão apagados junto — não tem como desfazer.` : '');
+    if(!confirm(msg)) return;
     const docIds = state.docs.filter(d => d.empresa === id).map(d => d.id);
     const obraIds = state.obras.filter(o => o.empresa === id).map(o => o.id);
     const cIds = state.contratos.filter(c => c.empresa === id).map(c => c.id);
     const aIds = state.avaliacoes.filter(a => cIds.includes(a.contrato)).map(a => a.id);
     try {
+      // Apaga explicitamente ANTES da empresa (em vez de confiar só no
+      // ON DELETE CASCADE do banco) — deixa claro no código o que está
+      // sendo apagado e mantém o state local em sincronia no mesmo passo.
+      await Promise.all(demIds.map(did => excluirDemandaNuvem(did)));
+      await Promise.all(medIds.map(mid => excluirMedicaoNuvem(mid)));
+      await Promise.all(cpgrIds.map(cid => excluirContratoPgrNuvem(cid)));
       await excluirEmpresaNuvem(id);
       await Promise.all(docIds.map(did => excluirDocumentoNuvem(did)));
       await Promise.all(obraIds.map(oid => excluirObraNuvem(oid)));
@@ -4638,6 +4653,14 @@ function setupEvents(){
       state.docs = state.docs.filter(d => d.empresa !== id);
       state.contratos = state.contratos.filter(c => c.empresa !== id);
       state.avaliacoes = state.avaliacoes.filter(a => !cIds.includes(a.contrato));
+      state.demandas = state.demandas.filter(d => d.empresa !== id);
+      state.medicoes = state.medicoes.filter(m => m.empresa !== id);
+      state.contratosPgr = state.contratosPgr.filter(c => c.empresa !== id);
+      // psicossociais e treinandos: ON DELETE SET NULL no banco — não são
+      // apagados, só ficam sem empresa. Reflete o mesmo localmente, senão
+      // a tela mostra um id de empresa que não existe mais até o F5.
+      state.psicossociais.forEach(p => { if(p.empresa === id) p.empresa = ''; });
+      state.treinandos.forEach(p => { if(p.empresa === id) p.empresa = ''; });
       save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
@@ -4670,9 +4693,12 @@ function setupEvents(){
         d.empresa = empresaId;
         await salvarDocumentoNuvem(d);
       }
-      // Atualizar contratos
+      // Atualizar contratos (empresa E obra — antes só migrava a empresa,
+      // e o contrato ficava "solto" no nível da mãe em vez de vinculado à
+      // obra recém-criada)
       const ctAfetados = state.contratos.filter(c => c.empresa === id);
       for(const c of ctAfetados){
+        c.obra = obraId;
         c.empresa = empresaId;
         await salvarContratoNuvem(c);
       }
@@ -4681,6 +4707,37 @@ function setupEvents(){
       for(const p of psiAfetados){
         p.empresa = empresaId;
         await salvarPsiNuvem(p);
+      }
+      // Atualizar demandas, medições (faturamento) e contratos PGR — essas
+      // 3 tabelas têm ON DELETE CASCADE em clientes no banco. Sem migrar
+      // antes de excluir a empresa, esses registros seriam apagados
+      // permanentemente e sem aviso nenhum junto com ela.
+      const demAfetadas = state.demandas.filter(d => d.empresa === id);
+      for(const d of demAfetadas){
+        d.obra = obraId;
+        d.empresa = empresaId;
+        await salvarDemandaNuvem(d);
+      }
+      const medAfetadas = state.medicoes.filter(m => m.empresa === id);
+      for(const m of medAfetadas){
+        m.obra = obraId;
+        m.empresa = empresaId;
+        await salvarMedicaoNuvem(m);
+      }
+      const cpgrAfetados = state.contratosPgr.filter(c => c.empresa === id);
+      for(const c of cpgrAfetados){
+        c.obra = obraId;
+        c.empresa = empresaId;
+        await salvarContratoPgrNuvem(c);
+      }
+      // Participantes de treinamento: cliente_id tem ON DELETE SET NULL (não
+      // apaga), mas sem migrar ficam "soltos" (sem empresa) mesmo já tendo
+      // pertencido a essa empresa.
+      const treinAfetados = state.treinandos.filter(p => p.empresa === id);
+      for(const p of treinAfetados){
+        p.obra = obraId;
+        p.empresa = empresaId;
+        await salvarTreinandoNuvem(p);
       }
       // Excluir a empresa antiga
       await excluirEmpresaNuvem(id);
@@ -5561,17 +5618,21 @@ function renderTreinamentos(){
   const tbody = $('#tbl-turmas tbody');
   if(!tbody) return;
   if(!lista.length){
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:28px">Nenhuma turma cadastrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:28px">Nenhuma turma cadastrada.</td></tr>';
     return;
   }
   tbody.innerHTML = lista.map(t => {
     const tipo = tipoTreinamento(t.tipo);
     const qtdParticipantes = state.treinandos.filter(p => p.turma === t.id).length;
     const podeEmitirLote = tipo && tipo.certificadoModelo && qtdParticipantes > 0;
+    const validadeHtml = t.validade
+      ? `<span style="${t.validade < todayISO() ? 'color:var(--danger-fg);font-weight:600' : ''}">${fmtDate(t.validade)}</span>`
+      : '—';
     return `<tr>
       <td><b>${escapeHtml(tipo ? tipo.nome : t.tipo)}</b></td>
       <td class="tight">${fmtDate(t.data)}</td>
       <td>${t.cargaHoraria ? t.cargaHoraria+'h' : '—'}</td>
+      <td class="tight">${validadeHtml}</td>
       <td>${escapeHtml(t.local) || '—'}</td>
       <td><button class="btn sm ghost" onclick="abrirParticipantes('${t.id}')">${qtdParticipantes} participante${qtdParticipantes!==1?'s':''}</button></td>
       <td style="display:flex;gap:6px;justify-content:flex-end">
@@ -5728,10 +5789,10 @@ function abrirParticipantes(turmaId){
   const tipo = tipoTreinamento(t.tipo);
   $('#mtp-turma-id').value = turmaId;
   $('#mtp-sub').textContent = `${tipo ? tipo.nome : t.tipo} · ${fmtDate(t.data)}`;
-  if($('#mtp-empresa').options.length <= 1){
-    $('#mtp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
-      [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
-  }
+  // Repopula sempre (não só na primeira vez) — senão uma empresa cadastrada
+  // depois de abrir esse modal uma vez não aparecia até recarregar a página.
+  $('#mtp-empresa').innerHTML = '<option value="">— Selecione —</option>' +
+    [...state.empresas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => `<option value="${e.id}">${escapeHtml(e.nome)}</option>`).join('');
   $('#mtp-empresa-livre-toggle').checked = false;
   $('#mtp-empresa').style.display = '';
   $('#mtp-empresa-livre').style.display = 'none';
@@ -5741,6 +5802,11 @@ function abrirParticipantes(turmaId){
   $('#mtp-nome').value = '';
   $('#mtp-cpf').value = '';
   $('#mtp-funcao').value = '';
+  // Texto extraído de um PDF importado pra outro participante/turma não
+  // pode continuar visível aqui — dava pra confundir com o participante
+  // atual.
+  $('#mtp-import-raw').style.display = 'none';
+  $('#mtp-import-texto').value = '';
   renderParticipantesTabela(turmaId);
   openModal('modal-participantes');
 }
@@ -5800,6 +5866,8 @@ function setupParticipantesModal(){
       state.treinandos.push(obj);
       save();
       $('#mtp-nome').value = ''; $('#mtp-cpf').value = ''; $('#mtp-funcao').value = '';
+      $('#mtp-import-raw').style.display = 'none';
+      $('#mtp-import-texto').value = '';
       renderParticipantesTabela(turmaId);
       renderTreinamentos();
       toast('✅ Participante adicionado', 'ok');
@@ -5850,13 +5918,26 @@ async function excluirTreinando(id, turmaId){
 // treinamento (raramente passa de um turno) — não é um conversor genérico.
 const NUM_EXTENSO_PT = ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez',
   'onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte'];
+NUM_EXTENSO_PT[30] = 'trinta'; // único valor de minuto possível com step="0.5" em carga horária
 function numeroExtenso(n){
   const i = Math.round(n);
   return NUM_EXTENSO_PT[i] || String(i);
 }
 
+// mt-carga aceita meia hora (step="0.5") — arredondar direto pro inteiro mais
+// próximo fazia uma turma de 4,5h virar "05 (cinco) horas" no certificado
+// (documento com valor legal, NR-01/18). Trata a parte fracionária como
+// minutos em vez de arredondar o total.
+function formatarCargaHoraria(horas){
+  const h = Math.floor(horas);
+  const min = Math.round((horas - h) * 60);
+  const hStr = String(h).padStart(2,'0');
+  if(min === 0) return `${hStr} (${numeroExtenso(h)}) hora${h===1?'':'s'}`;
+  return `${hStr}:${String(min).padStart(2,'0')} (${numeroExtenso(h)} hora${h===1?'':'s'} e ${numeroExtenso(min)} minutos)`;
+}
+
 function dadosCertificadoParticipante(p, t){
-  const cargaFmt = `${String(Math.round(t.cargaHoraria)).padStart(2,'0')} (${numeroExtenso(t.cargaHoraria)}) hora${t.cargaHoraria===1?'':'s'}`;
+  const cargaFmt = formatarCargaHoraria(t.cargaHoraria);
   const assinaturaInstrutor = t.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura) : null;
   const assinaturaResponsavel = t.responsavelAssinatura ? state.assinaturas.find(a => a.id === t.responsavelAssinatura) : null;
   return {
@@ -6918,7 +6999,7 @@ async function carregarDaNuvem() {
   if (!errEmps) state.empresas = (emps||[]).map(e => ({
     id:       e.id,
     nome:     e.nome,
-    cnpj:     e.cnpj,
+    cnpj:     e.cnpj || '',
     segmento: e.segmento,
     endereco: e.endereco,
     contato:  e.contato,
