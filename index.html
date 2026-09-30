@@ -5708,7 +5708,9 @@ function openTurma(id){
   $('#mt-responsavel').value = t?.responsavelTecnico || '';
   popularSelectsAssinatura();
   $('#mt-instrutor-assinatura').value = t?.instrutorAssinatura || '';
-  $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || '';
+  // Responsável técnico é sempre o mesmo: em turma nova já vem com a assinatura do Adriano marcada.
+  const respPadrao = t ? null : state.assinaturas.find(a => /^adriano augusto/i.test(a.nome));
+  $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || respPadrao?.id || '';
   $('#mt-delete').style.display = t ? '' : 'none';
   openModal('modal-turma');
 }
