@@ -3415,8 +3415,11 @@ function montarRelatorio(){
     // Respeita o período do relatório: se início/fim foram escolhidos, usa o
     // ano da data final (ou inicial) como referência, e ainda filtra cada
     // entrega pelas datas exatas — não só pelo ano batendo. Sem período
-    // selecionado ("todo o período"), mantém o padrão de mostrar o ano atual.
-    const anoAtual = fim ? fim.slice(0,4) : (ini ? ini.slice(0,4) : String(new Date().getFullYear()));
+    // selecionado ("todo o período"), usa o último ano com entregas (mesmo
+    // critério do painel de Indicadores) em vez do ano-calendário atual —
+    // senão a seção fica zerada sempre que não há entregas ainda neste ano.
+    const anosComDados = [...new Set(concluidos.map(d => dataEntrega(d).substring(0,4)))].sort();
+    const anoAtual = fim ? fim.slice(0,4) : (ini ? ini.slice(0,4) : (anosComDados[anosComDados.length-1] || String(new Date().getFullYear())));
     const docsAno = concluidos.filter(d => dataEntrega(d).substring(0,4) === anoAtual && inRange(dataEntrega(d)));
     const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -3607,14 +3610,17 @@ function montarRelatorioCliente(){
     const itensTipo = repartirValorPorTipo(detAgg, valorMes);
     const avsMes = state.avaliacoes.filter(a => a.medicaoId && medIds.includes(a.medicaoId));
 
-    // Uma linha por avaliação (com a data real dela). Se o tipo não tiver
-    // avaliação individual vinculada (medição antiga/lançada manualmente,
-    // sem o vínculo avaliacoes.medicao_id), cai numa linha agregada só
-    // pra não sumir com o item — mostrando a data de referência da medição.
+    // Uma linha por avaliação (com a data real dela). Só quebra em linhas
+    // individuais quando TODAS as avaliações do tipo estão vinculadas
+    // (avsTipo.length === it.qtd) — senão a soma das linhas mostradas fica
+    // menor que it.valor (vínculo parcial) e o relatório perde valor visível
+    // sem alterar o TOTAL DO MÊS. Com vínculo parcial ou nenhum, cai numa
+    // linha agregada só pra não sumir com o item — mostrando a data de
+    // referência da medição.
     const linhas = itensTipo.sort((a,b) => b.valor - a.valor).map(it => {
       const valorUnit = it.qtd > 0 ? it.valor / it.qtd : 0;
       const avsTipo = avsMes.filter(a => a.agente === it.tipo).sort((a,b) => (a.data||'').localeCompare(b.data||''));
-      if(avsTipo.length){
+      if(avsTipo.length && avsTipo.length === it.qtd){
         return avsTipo.map(a => `<tr><td>${it.tipo}</td><td class="tight">${fmtDate(a.data)}</td><td style="text-align:right">${fmtR(valorUnit)}</td></tr>`).join('');
       }
       return `<tr><td>${it.tipo} <small style="color:#7f8c8d">(${it.qtd}x)</small></td><td class="tight">${fmtDate(dataRef)}</td><td style="text-align:right">${fmtR(it.valor)}</td></tr>`;
@@ -4686,19 +4692,32 @@ function setupEvents(){
     const obra = {id:obraId, empresa:empresaId, nome:emp.nome, endereco:emp.endereco||'', contato:emp.contato||'', telefone:emp.telefone||'', status:emp.status||'ativa'};
     try {
       await salvarObraNuvem(obra);
+      // Obras que a empresa já tinha (ex.: "Canteiro 1") precisam mudar de
+      // dono ANTES de tudo o mais. obras.empresa_id é ON DELETE CASCADE —
+      // sem isso, elas seriam apagadas junto com a empresa (e, em cascata,
+      // qualquer medição/contrato PGR vinculado a elas por obra_id também).
+      const obrasAfetadas = state.obras.filter(o => o.empresa === id);
+      for(const o of obrasAfetadas){
+        o.empresa = empresaId;
+        await salvarObraNuvem(o);
+      }
+      // Reatribui empresa/obra de um registro: se ele já apontava pra uma
+      // obra específica da empresa antiga, essa obra continua valendo (só
+      // migrou de dono acima) — só cai na obra sintética nova quando não
+      // tinha obra nenhuma (era "nível empresa").
+      const novaObraSeVazio = x => x.obra || obraId;
+
       // Atualizar documentos no Supabase: setar obra_id
       const docsAfetados = state.docs.filter(d => d.empresa === id);
       for(const d of docsAfetados){
-        d.obra = obraId;
+        d.obra = novaObraSeVazio(d);
         d.empresa = empresaId;
         await salvarDocumentoNuvem(d);
       }
-      // Atualizar contratos (empresa E obra — antes só migrava a empresa,
-      // e o contrato ficava "solto" no nível da mãe em vez de vinculado à
-      // obra recém-criada)
+      // Atualizar contratos
       const ctAfetados = state.contratos.filter(c => c.empresa === id);
       for(const c of ctAfetados){
-        c.obra = obraId;
+        c.obra = novaObraSeVazio(c);
         c.empresa = empresaId;
         await salvarContratoNuvem(c);
       }
@@ -4714,19 +4733,19 @@ function setupEvents(){
       // permanentemente e sem aviso nenhum junto com ela.
       const demAfetadas = state.demandas.filter(d => d.empresa === id);
       for(const d of demAfetadas){
-        d.obra = obraId;
+        d.obra = novaObraSeVazio(d);
         d.empresa = empresaId;
         await salvarDemandaNuvem(d);
       }
       const medAfetadas = state.medicoes.filter(m => m.empresa === id);
       for(const m of medAfetadas){
-        m.obra = obraId;
+        m.obra = novaObraSeVazio(m);
         m.empresa = empresaId;
         await salvarMedicaoNuvem(m);
       }
       const cpgrAfetados = state.contratosPgr.filter(c => c.empresa === id);
       for(const c of cpgrAfetados){
-        c.obra = obraId;
+        c.obra = novaObraSeVazio(c);
         c.empresa = empresaId;
         await salvarContratoPgrNuvem(c);
       }
@@ -4735,7 +4754,7 @@ function setupEvents(){
       // pertencido a essa empresa.
       const treinAfetados = state.treinandos.filter(p => p.empresa === id);
       for(const p of treinAfetados){
-        p.obra = obraId;
+        p.obra = novaObraSeVazio(p);
         p.empresa = empresaId;
         await salvarTreinandoNuvem(p);
       }
@@ -4788,12 +4807,34 @@ function setupEvents(){
     }
   };
   $('#mo-delete').onclick = async () => {
-    if(!confirm('Excluir obra? Documentos vinculados perderão o vínculo com esta obra.')) return;
     const id = $('#mo-id').value;
+    // medicoes.obra_id e contratos_pgr.obra_id são ON DELETE CASCADE — sem
+    // apagar/avisar explicitamente, excluir a obra apaga faturamento e
+    // contrato PGR dela em silêncio (mesma classe de bug já corrigida pra
+    // exclusão de empresa).
+    const medIds = state.medicoes.filter(m => m.obra === id).map(m => m.id);
+    const cpgrIds = state.contratosPgr.filter(c => c.obra === id).map(c => c.id);
+    const avisoExtra = [];
+    if(medIds.length) avisoExtra.push(`${medIds.length} medição(ões) de faturamento`);
+    if(cpgrIds.length) avisoExtra.push(`${cpgrIds.length} contrato(s) PGR`);
+    const msg = 'Excluir obra? Documentos, contratos e demandas vinculados perderão o vínculo com esta obra.'
+      + (avisoExtra.length ? `\n\n⚠️ Essa obra também tem ${avisoExtra.join(', ')} que serão apagados junto — não tem como desfazer.` : '');
+    if(!confirm(msg)) return;
     try {
+      await Promise.all(medIds.map(mid => excluirMedicaoNuvem(mid)));
+      await Promise.all(cpgrIds.map(cid => excluirContratoPgrNuvem(cid)));
       await excluirObraNuvem(id);
       state.obras = state.obras.filter(o => o.id !== id);
+      state.medicoes = state.medicoes.filter(m => m.obra !== id);
+      state.contratosPgr = state.contratosPgr.filter(c => c.obra !== id);
+      // contratos, demandas, documentos e treinandos são ON DELETE SET NULL
+      // — sobrevivem, só perdem o vínculo com a obra. (psicossociais tem a
+      // mesma coluna no banco, mas o state local nunca leu obra_id dela —
+      // não há nada a limpar aqui até isso ser exposto no front também.)
       state.docs.forEach(d => { if(d.obra === id) d.obra = ''; });
+      state.contratos.forEach(c => { if(c.obra === id) c.obra = ''; });
+      state.demandas.forEach(d => { if(d.obra === id) d.obra = ''; });
+      state.treinandos.forEach(p => { if(p.obra === id) p.obra = ''; });
       save(); closeModal('modal-obra'); renderAll(); toast('Obra excluída', 'danger');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
@@ -5932,8 +5973,9 @@ function formatarCargaHoraria(horas){
   const h = Math.floor(horas);
   const min = Math.round((horas - h) * 60);
   const hStr = String(h).padStart(2,'0');
-  if(min === 0) return `${hStr} (${numeroExtenso(h)}) hora${h===1?'':'s'}`;
-  return `${hStr}:${String(min).padStart(2,'0')} (${numeroExtenso(h)} hora${h===1?'':'s'} e ${numeroExtenso(min)} minutos)`;
+  const hExtenso = h === 1 ? 'uma' : numeroExtenso(h); // "hora" é feminino: "uma hora", não "um hora"
+  if(min === 0) return `${hStr} (${hExtenso}) hora${h===1?'':'s'}`;
+  return `${hStr}:${String(min).padStart(2,'0')} (${hExtenso} hora${h===1?'':'s'} e ${numeroExtenso(min)} minutos)`;
 }
 
 function dadosCertificadoParticipante(p, t){
