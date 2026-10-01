@@ -5677,6 +5677,7 @@ function renderTreinamentos(){
       <td>${escapeHtml(t.local) || '—'}</td>
       <td><button class="btn sm ghost" onclick="abrirParticipantes('${t.id}')">${qtdParticipantes} participante${qtdParticipantes!==1?'s':''}</button></td>
       <td style="display:flex;gap:6px;justify-content:flex-end">
+        ${podeEmitirLote ? `<button class="btn sm ghost" onclick="imprimirListaPresenca('${t.id}')">📋 Lista de presença</button>` : ''}
         ${podeEmitirLote ? `<button class="btn sm ghost" onclick="emitirCertificadosTurma('${t.id}')">🎓 Emitir todos</button>` : ''}
         <button class="btn sm" onclick="openTurma('${t.id}')">Editar</button>
       </td>
@@ -6039,6 +6040,114 @@ function emitirCertificadosTurma(turmaId){
   win.addEventListener('load', () => {
     win.preencherCertificadosLote(participantes.map(p => dadosCertificadoParticipante(p, t)));
   });
+}
+
+/* ---- Lista de presença NR 18 (modelo oficial RQ.80): uma lista por obra.
+   Participantes de obras diferentes na mesma turma saem em listas separadas;
+   sem obra, agrupa por empresa. Cada lista tem 21 linhas por página. ---- */
+const LISTA_PRESENCA_LINHAS = 21;
+const LISTA_PRESENCA_PROGRAMA = 'NR-18, NR-18, item 18.28 – Informações sobre as Condições e Meio Ambiente de Trabalho, Riscos Inerentes à Função, NR -06 Uso adequado dos EPI’s – Equipamentos de Proteção Individual e dos EPC’s – Equipamentos de Proteção Coletiva, ART. 19- Lei. 8213/91 Noções sobre Acidentes de Trabalho e Doenças Profissionais e Doenças do Trabalho, etc.';
+
+function gruposPresenca(turmaId){
+  const grupos = new Map();
+  state.treinandos.filter(p => p.turma === turmaId).forEach(p => {
+    const key = p.obra ? 'o'+p.obra : p.empresa ? 'e'+p.empresa : 'l'+(p.empresaLivre||'').toLowerCase();
+    if(!grupos.has(key)){
+      const emp = p.empresa ? state.empresas.find(e => e.id === p.empresa) : null;
+      const obra = p.obra ? state.obras.find(o => o.id === p.obra) : null;
+      grupos.set(key, {
+        empresa: p.empresaLivre || (emp ? emp.nome : ''),
+        obra: obra ? obra.nome : '',
+        endereco: (obra && obra.endereco) || (emp && emp.endereco) || '',
+        fone: (obra && obra.telefone) || (emp && emp.telefone) || '',
+        cnpj: (emp && emp.cnpj) || '',
+        itens: []
+      });
+    }
+    grupos.get(key).itens.push(p);
+  });
+  grupos.forEach(g => g.itens.sort((a,b) => a.nome.localeCompare(b.nome,'pt')));
+  return [...grupos.values()].sort((a,b) => (a.obra||a.empresa).localeCompare(b.obra||b.empresa,'pt'));
+}
+
+function montarHtmlListaPresenca(t, grupos, logoUrl){
+  const h = escapeHtml;
+  const dataTurma = fmtDate(t.data);
+  const campo = (rot, val) => `<b>${rot}</b>${val ? ' ' + h(val) : ''}`;
+  const folhas = [];
+  grupos.forEach(g => {
+    const paginas = Math.max(1, Math.ceil(g.itens.length / LISTA_PRESENCA_LINHAS));
+    for(let pg = 0; pg < paginas; pg++){
+      const linhas = [];
+      for(let i = 0; i < LISTA_PRESENCA_LINHAS; i++){
+        const n = pg * LISTA_PRESENCA_LINHAS + i;
+        const p = g.itens[n];
+        linhas.push(`<tr><td class="c">${n+1}</td><td>${p ? h(p.nome) : ''}</td><td>${p ? h(p.cpf||'') : ''}</td><td>${p ? h(p.funcao||'') : ''}</td><td class="c">${p ? dataTurma : ''}</td><td></td></tr>`);
+      }
+      folhas.push(`<section class="page">
+  <div class="cab">
+    <div class="t1"><div><b>SISTEMA DE GESTÃO DA QUALIDADE - NBR ISO 9001:2015</b></div><div>RQ - REGISTRO DA QUALIDADE</div></div>
+    <div class="logo"><img src="${h(logoUrl)}" alt="SECONCI"></div>
+    <div class="t2"><b>LISTA DE PRESENÇA NR 18</b></div>
+    <div class="id"><div>Identificação: RQ.80<br>Página: ${String(pg+1).padStart(2,'0')}/${String(paginas).padStart(2,'0')}</div><div>Revisão: 11/11/2024<br>Versão: 01</div></div>
+  </div>
+  <div class="gap4"></div>
+  <div class="box tit"><b>Título do Treinamento: NR 18</b><b>ADMISSIONAL (&nbsp;&nbsp;&nbsp;)</b><b>PERIODICO (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</b></div>
+  <div class="par"><div>${campo('Instrutor :', t.instrutor)}</div><div>${campo('Visto:', '')}</div></div>
+  <div class="par"><div>${campo('Local:', t.local)}</div><div>${campo('Horário:', '')}</div></div>
+  <div class="gap1"></div>
+  <div class="par emp"><div>${campo('Empresa/Obra:', [g.empresa, g.obra].filter(Boolean).join(' / '))}</div><div>${campo('Fone:', g.fone)}</div></div>
+  <div class="par emp2"><div>${campo('Endereço:', g.endereco)}</div><div>${campo('CNPJ :', g.cnpj)}</div></div>
+  <div class="gap1"></div>
+  <div class="prog-h"><b>Programa (Principais Assuntos Abordados)</b></div>
+  <div class="prog">${h(LISTA_PRESENCA_PROGRAMA)}</div>
+  <div class="gap1"></div>
+  <table><thead><tr><th class="n">Nº</th><th class="nome">Nome do Participante</th><th class="cpf">CPF</th><th class="fun">Função</th><th class="dt">Data</th><th class="vis">Visto do Participante</th></tr></thead><tbody>${linhas.join('')}</tbody></table>
+</section>`);
+    }
+  });
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de presença NR 18</title><style>
+    @page{size:A4 landscape;margin:6mm 13mm}
+    :root{color-scheme:light}*{box-sizing:border-box}html,body{background:#fff}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#000;font-size:10pt}
+    .bar{padding:10px 14px;background:#f3f4f6;border-bottom:1px solid #ddd;display:flex;gap:10px;align-items:center;font-size:13px}
+    .bar button{padding:7px 14px;border:0;border-radius:6px;background:#1b6b32;color:#fff;font-weight:700;cursor:pointer}
+    .page{width:270mm;margin:6mm auto;break-after:page}.page:last-of-type{break-after:auto}
+    .cab{display:grid;grid-template-columns:1fr 43.9mm;grid-template-rows:16.6mm 14.5mm;border:1px solid #000}
+    .t1{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-size:14.5pt;line-height:1.35}
+    .logo{border-left:1px solid #000;display:flex;align-items:center;justify-content:center;padding:1mm}.logo img{width:100%;height:100%;object-fit:contain}
+    .t2{display:flex;align-items:center;justify-content:center;font-size:14.5pt;border-top:1px solid #000}
+    .id{border-left:1px solid #000;border-top:1px solid #000;display:grid;grid-template-rows:1fr 1fr;font-size:8pt;text-align:center}
+    .id>div{display:flex;align-items:center;justify-content:center;line-height:1.25}.id>div+div{border-top:1px solid #000}
+    .gap4{height:4.4mm}.gap1{height:1.5mm}
+    .box,.par>div,.prog-h,.prog{border:1px solid #000;padding:0 1mm;display:flex;align-items:center}
+    .tit{height:9.7mm;position:relative;padding:0 1.5mm}.tit b:nth-child(n+2){position:absolute;top:50%;transform:translateY(-50%)}.tit b:nth-child(2){left:34.8%}.tit b:nth-child(3){left:62.5%}
+    .par{display:grid;grid-template-columns:1fr 1fr;height:5.8mm}.par.emp{height:5.1mm}.par.emp2{height:6.2mm}.par>div+div{border-left:0}
+    .par:nth-of-type(n)>div{border-top:0}.tit+.par>div{border-top:1px solid #000}
+    .par b{margin-right:1.5mm;white-space:nowrap}.par>div{overflow:hidden;white-space:nowrap}
+    .par.emp,.par.emp2{height:auto}.par.emp{min-height:5.1mm}.par.emp2{min-height:6.2mm}.par.emp>div,.par.emp2>div{white-space:normal;line-height:1.1;padding-top:.5mm;padding-bottom:.5mm;font-size:9pt}.par.emp b,.par.emp2 b{font-size:10pt}
+    .prog-h{height:6mm;background:#c0c0c0;font-size:8pt}.prog{height:18.9mm;border-top:0;align-items:flex-start;padding:.6mm 1mm;font-size:10pt;line-height:1.25}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th,td{border:1px solid #000;height:4.4mm;padding:0 1.2mm;font-size:8pt;overflow:hidden;white-space:nowrap;text-align:left;line-height:1}
+    th{background:#c0c0c0;height:4.6mm;text-align:center}.c{text-align:center}
+    .n{width:6.2mm}.nome{width:68.8mm}.cpf{width:60.5mm}.fun{width:63.1mm}.dt{width:27.7mm}.vis{width:43.7mm}
+    @media print{.bar{display:none}.page{margin:0 auto}}
+  </style></head><body><div class="bar"><button onclick="window.print()">Imprimir</button><span>${grupos.length} lista(s): uma por obra · ${folhas.length} página(s)</span></div>${folhas.join('')}</body></html>`;
+}
+
+function imprimirListaPresenca(turmaId){
+  const t = state.turmas.find(x => x.id === turmaId);
+  if(!t) return;
+  const tipo = tipoTreinamento(t.tipo);
+  if(!tipo || tipo.certificadoModelo !== 'nr18'){
+    toast('Modelo de lista de presença desta norma ainda não cadastrado', 'danger');
+    return;
+  }
+  const grupos = gruposPresenca(turmaId);
+  if(!grupos.length){ toast('Essa turma ainda não tem participantes', 'danger'); return; }
+  const win = window.open('', '_blank');
+  if(!win){ toast('O navegador bloqueou a abertura da lista — permita pop-ups', 'danger'); return; }
+  win.document.write(montarHtmlListaPresenca(t, grupos, location.origin + '/logo-seconci-lista.png'));
+  win.document.close();
 }
 
 function renderAll(){
