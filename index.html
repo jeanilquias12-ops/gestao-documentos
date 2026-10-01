@@ -359,6 +359,7 @@
     <button class="navitem" data-route="avaliacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>Avaliações</button>
     <button class="navitem" data-route="insumos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Insumos<span class="badge" id="nav-insumos-badge" style="display:none">0</span></button>
     <button class="navitem" data-route="treinamentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>Treinamentos</button>
+    <button class="navitem" data-route="instrutores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Instrutores</button>
     <button class="navitem nav-parent" id="agendaParent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda<span class="nav-caret">▾</span></button>
     <div class="nav-sub" id="agendaSub">
       <button class="navitem subitem" data-agenda-nav="psicossociais">🧠 Psicossociais</button>
@@ -688,6 +689,15 @@
           <div class="field"><label>Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-turmas"><thead><tr><th>Norma</th><th>Data</th><th>Carga horária</th><th>Validade</th><th>Local</th><th>Participantes</th><th></th></tr></thead><tbody></tbody></table></div></div>
+      </section>
+
+      <!-- INSTRUTORES -->
+      <section class="page" id="page-instrutores">
+        <div class="page-h">
+          <div><h2>Instrutores</h2><p>Cadastre quem assina os certificados, com a assinatura de cada um. Na turma, basta escolher o instrutor.</p></div>
+          <div class="page-h-actions"><button class="btn primary" id="btnNewInstrutor">+ Novo instrutor</button></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table id="tbl-instrutores"><thead><tr><th>Nome</th><th>Assinatura</th><th>Turmas</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
 
       <!-- RELATÓRIOS -->
@@ -1050,11 +1060,11 @@
       <div class="field-block"><label>Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
       <div class="field-block"><label>Validade do treinamento</label><input id="mt-validade" type="date" /></div>
       <div class="field-block full"><label>Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
-      <div class="field-block"><label>Instrutor</label><input id="mt-instrutor" placeholder="Nome do instrutor responsável" /></div>
       <div class="field-block"><label>Responsável Técnico</label><input id="mt-responsavel" placeholder="Nome do responsável técnico" /></div>
       <div class="field-block">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label style="margin:0">Assinatura do Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar assinaturas</button></div>
-        <select id="mt-instrutor-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label style="margin:0">Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar instrutores</button></div>
+        <select id="mt-instrutor-assinatura"><option value="">— selecione o instrutor —</option></select>
+        <input id="mt-instrutor" type="hidden" />
       </div>
       <div class="field-block" style="display:none"><label>Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
     </div>
@@ -1062,21 +1072,20 @@
   <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
 </div></div>
 
-<!-- MODAL ASSINATURAS (banco de assinaturas de instrutor/responsável técnico) -->
-<div class="modal-bg" id="modal-assinaturas"><div class="modal">
-  <div class="modal-h"><div><h2>Assinaturas cadastradas</h2><p>Guarde a assinatura de quem costuma assinar certificados — evita depender da pessoa estar presente pra assinar na hora.</p></div><button class="btn ghost sm" data-close>✕</button></div>
-  <div class="modal-b">
-    <div class="form-grid" style="margin-bottom:14px">
-      <div class="field-block"><label>Nome</label><input id="ma2-nome" placeholder="Nome de quem assina" /></div>
-      <div class="field-block">
-        <label>Imagem da assinatura (PNG/JPG, fundo transparente fica melhor)</label>
-        <input type="file" id="ma2-imagem" accept="image/png,image/jpeg" />
+<!-- MODAL INSTRUTOR (nome + assinatura) -->
+<div class="modal-bg" id="modal-instrutor"><div class="modal">
+  <div class="modal-h"><div><h2 id="min-title">Novo instrutor</h2><p>A assinatura sai automaticamente em todo certificado das turmas desse instrutor.</p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b"><input type="hidden" id="min-id" />
+    <div class="form-grid">
+      <div class="field-block full"><label>Nome *</label><input id="min-nome" placeholder="Nome completo do instrutor" /></div>
+      <div class="field-block full">
+        <label>Imagem da assinatura (PNG/JPG até 500KB, fundo transparente fica melhor)</label>
+        <input type="file" id="min-imagem" accept="image/png,image/jpeg" />
       </div>
-      <div class="field-block full"><button type="button" class="btn primary" id="ma2-add" style="width:100%">+ Adicionar assinatura</button></div>
+      <div class="field-block full"><div id="min-preview" style="min-height:70px;background:#f3f4f6;border:1px dashed var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:12px">Sem assinatura selecionada</div></div>
     </div>
-    <div class="table-wrap"><table id="tbl-assinaturas"><thead><tr><th>Nome</th><th>Assinatura</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
-  <div class="modal-f"><button class="btn" data-close>Fechar</button></div>
+  <div class="modal-f"><button class="btn danger" id="min-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="min-save">Salvar</button></div>
 </div></div>
 
 <!-- MODAL PARTICIPANTES DA TURMA -->
@@ -2166,7 +2175,7 @@ function navigate(route){
   $$('.navitem').forEach(b => b.classList.remove('active'));
   const navBtn = $$('.navitem').find(b => b.dataset.route === route);
   if(navBtn) navBtn.classList.add('active');
-  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', demandas:'Demandas', avaliacoes:'Avaliações', insumos:'Insumos', treinamentos:'Treinamentos', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
+  const titles = {dashboard:'Dashboard', empresas:'Empresas', obras:'Obras', documentos:'Documentos', demandas:'Demandas', avaliacoes:'Avaliações', insumos:'Insumos', treinamentos:'Treinamentos', instrutores:'Instrutores', agenda:'Agenda', psicossociais:'Psicossociais', relatorios:'Relatórios', indicadores:'Indicadores', medicoes:'Medição Mensal', contratospgr:'Contratos PGR'};
   $('#pageTitle').textContent = titles[route] || 'Dashboard';
   $('#crumbs').textContent = 'SECONCI · ' + (titles[route] || '');
   // Submenu lateral da Agenda
@@ -5690,7 +5699,7 @@ function assinaturaResponsavelPadrao(){ return state.assinaturas.find(a => /^adr
 
 function popularSelectsAssinatura(){
   const lista = [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
-  const cab = '<option value="">— sem assinatura cadastrada (linha em branco) —</option>';
+  const cab = '<option value="">— selecione o instrutor —</option>';
   const opt = a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`;
   const opts = cab + lista.map(opt).join('');
   const padraoId = assinaturaResponsavelPadrao()?.id;
@@ -5715,7 +5724,10 @@ function openTurma(id){
   $('#mt-instrutor').value = t?.instrutor || '';
   $('#mt-responsavel').value = t?.responsavelTecnico || '';
   popularSelectsAssinatura();
-  $('#mt-instrutor-assinatura').value = t?.instrutorAssinatura || '';
+  // Turma antiga só tem o nome em texto: tenta casar com um instrutor cadastrado; se não achar, o texto é mantido ao salvar.
+  const instrCad = t?.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura)
+    : (t?.instrutor ? state.assinaturas.find(a => normalizeTexto(a.nome) === normalizeTexto(t.instrutor)) : null);
+  $('#mt-instrutor-assinatura').value = instrCad ? instrCad.id : '';
   $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || assinaturaResponsavelPadrao()?.id || '';
   $('#mt-delete').style.display = t ? '' : 'none';
   openModal('modal-turma');
@@ -5762,72 +5774,114 @@ function setupTreinamentos(){
     } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
   };
 
-  $('#mt-assinaturas-btn').onclick = () => { renderAssinaturasTabela(); openModal('modal-assinaturas'); };
+  $('#mt-instrutor-assinatura').onchange = function(){
+    const a = state.assinaturas.find(x => x.id === this.value);
+    $('#mt-instrutor').value = a ? a.nome : '';
+  };
+  $('#mt-assinaturas-btn').onclick = () => { closeModal('modal-turma'); navigate('instrutores'); };
 
   setupParticipantesModal();
-  setupAssinaturas();
+  setupInstrutores();
 }
 
-/* ---- Banco de assinaturas (instrutor / responsável técnico) ---- */
-function renderAssinaturasTabela(){
-  const tbody = $('#tbl-assinaturas tbody');
+/* ---- Instrutores (nome + assinatura; guardados em assinaturas_treinamento) ---- */
+function lerArquivoDataUrl(file){
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderInstrutores(){
+  const tbody = $('#tbl-instrutores tbody');
   if(!tbody) return;
+  const padraoId = assinaturaResponsavelPadrao()?.id;
   const lista = [...state.assinaturas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
   if(!lista.length){
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--ink-muted);padding:20px">Nenhuma assinatura cadastrada ainda.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:28px">Nenhum instrutor cadastrado ainda.</td></tr>';
     return;
   }
-  tbody.innerHTML = lista.map(a => `<tr>
-    <td><b>${escapeHtml(a.nome)}</b></td>
-    <td><img src="${a.imagem}" alt="" style="max-height:24px;max-width:120px;object-fit:contain"></td>
-    <td style="text-align:right"><button class="btn sm danger" onclick="excluirAssinatura('${a.id}')">✕</button></td>
-  </tr>`).join('');
+  tbody.innerHTML = lista.map(a => {
+    const qtd = state.turmas.filter(t => t.instrutorAssinatura === a.id || t.responsavelAssinatura === a.id).length;
+    return `<tr>
+      <td><b>${escapeHtml(a.nome)}</b>${a.id === padraoId ? ' <span class="pill ok" style="font-size:10.5px">Responsável técnico (padrão)</span>' : ''}</td>
+      <td><img src="${a.imagem}" alt="" style="max-height:34px;max-width:160px;object-fit:contain"></td>
+      <td>${qtd} turma${qtd !== 1 ? 's' : ''}</td>
+      <td style="text-align:right"><button class="btn sm" onclick="openInstrutor('${a.id}')">Editar</button></td>
+    </tr>`;
+  }).join('');
 }
 
-function setupAssinaturas(){
-  $('#ma2-add').onclick = async () => {
-    const nome = $('#ma2-nome').value.trim();
-    const file = $('#ma2-imagem').files[0];
-    if(!nome || !file){ toast('Preencha o nome e escolha um arquivo de imagem', 'danger'); return; }
-    if(file.size > 500*1024){ toast('Imagem muito grande — use um arquivo de até 500KB', 'danger'); return; }
+function previewInstrutor(src){
+  $('#min-preview').innerHTML = src
+    ? `<img src="${src}" alt="" style="max-height:90px;max-width:100%;object-fit:contain">`
+    : 'Sem assinatura selecionada';
+}
+
+function openInstrutor(id){
+  const a = id ? state.assinaturas.find(x => x.id === id) : null;
+  $('#min-title').textContent = a ? 'Editar instrutor' : 'Novo instrutor';
+  $('#min-id').value = id || '';
+  $('#min-nome').value = a ? a.nome : '';
+  $('#min-imagem').value = '';
+  previewInstrutor(a ? a.imagem : '');
+  $('#min-delete').style.display = a ? '' : 'none';
+  openModal('modal-instrutor');
+}
+
+function setupInstrutores(){
+  $('#btnNewInstrutor').onclick = () => openInstrutor(null);
+  $('#min-imagem').onchange = async function(){
+    const f = this.files[0];
+    if(f && f.size <= 500*1024) previewInstrutor(await lerArquivoDataUrl(f));
+  };
+
+  $('#min-save').onclick = async () => {
+    const id = $('#min-id').value;
+    const atual = id ? state.assinaturas.find(x => x.id === id) : null;
+    const nome = $('#min-nome').value.trim();
+    const file = $('#min-imagem').files[0];
+    if(!nome){ toast('Preencha o nome do instrutor', 'danger'); return; }
+    if(!atual && !file){ toast('Escolha a imagem da assinatura', 'danger'); return; }
+    if(file && file.size > 500*1024){ toast('Imagem muito grande — use um arquivo de até 500KB', 'danger'); return; }
     try {
-      const imagem = await new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const obj = {id:'sig'+uid(), nome, imagem};
+      const imagem = file ? await lerArquivoDataUrl(file) : atual.imagem;
+      const obj = {id: id || 'sig'+uid(), nome, imagem};
       await salvarAssinaturaNuvem(obj);
-      state.assinaturas.push(obj);
-      save();
-      $('#ma2-nome').value = ''; $('#ma2-imagem').value = '';
-      renderAssinaturasTabela();
-      popularSelectsAssinatura();
-      toast('✅ Assinatura cadastrada', 'ok');
+      if(atual) Object.assign(atual, obj); else state.assinaturas.push(obj);
+      // A turma guarda o nome do instrutor em texto (aparece na lista de presença): acompanha o nome novo.
+      for(const t of state.turmas.filter(x => x.instrutorAssinatura === obj.id && x.instrutor !== nome)){
+        t.instrutor = nome;
+        await salvarTurmaNuvem(t);
+      }
+      save(); closeModal('modal-instrutor'); renderAll();
+      toast('✅ Instrutor salvo', 'ok');
     } catch(err){ toast('Erro ao salvar: ' + (err.message||err), 'danger'); }
   };
+
+  $('#min-delete').onclick = () => excluirInstrutor($('#min-id').value);
 }
 
-async function excluirAssinatura(id){
+async function excluirInstrutor(id){
+  const a = state.assinaturas.find(x => x.id === id);
+  if(!a) return;
   const emUso = state.turmas.some(t => t.instrutorAssinatura === id || t.responsavelAssinatura === id);
-  if(!confirm(emUso
-    ? 'Essa assinatura está em uso em alguma turma — excluir vai deixar a linha em branco nela. Excluir mesmo assim?'
-    : 'Excluir essa assinatura?')) return;
+  const padrao = assinaturaResponsavelPadrao()?.id === id;
+  if(!confirm(`Excluir "${a.nome}"?` +
+    (padrao ? '\n\nEssa é a assinatura do responsável técnico padrão: os certificados ficam sem a assinatura dele.' : '') +
+    (emUso ? '\n\nHá turmas usando essa assinatura: a linha de assinatura fica em branco nelas.' : ''))) return;
   try {
     await excluirAssinaturaNuvem(id);
     state.assinaturas = state.assinaturas.filter(x => x.id !== id);
-    // ON DELETE SET NULL no banco já desvincula das turmas — reflete o
-    // mesmo localmente, senão o state local ficaria com um id que não
-    // existe mais até o próximo F5.
+    // ON DELETE SET NULL no banco já desvincula das turmas — reflete o mesmo localmente.
     state.turmas.forEach(t => {
       if(t.instrutorAssinatura === id) t.instrutorAssinatura = '';
       if(t.responsavelAssinatura === id) t.responsavelAssinatura = '';
     });
-    save();
-    renderAssinaturasTabela();
-    popularSelectsAssinatura();
-    toast('Assinatura excluída', 'danger');
+    save(); closeModal('modal-instrutor'); renderAll();
+    toast('Instrutor excluído', 'danger');
   } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
 }
 
@@ -6158,6 +6212,7 @@ function renderAll(){
   renderAvaliacoes();
   renderInsumos();
   renderTreinamentos();
+  renderInstrutores();
   renderPsicossociais();
   renderEventos('treinamento');
   renderEventos('palestra');
