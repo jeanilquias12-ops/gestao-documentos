@@ -6045,7 +6045,7 @@ function emitirCertificadosTurma(turmaId){
 /* ---- Lista de presença NR 18 (modelo oficial RQ.80): uma lista por obra.
    Participantes de obras diferentes na mesma turma saem em listas separadas;
    sem obra, agrupa por empresa. Cada lista tem 21 linhas por página. ---- */
-const LISTA_PRESENCA_LINHAS = 21;
+const LISTA_PRESENCA_LINHAS = 25;
 const LISTA_PRESENCA_PROGRAMA = 'NR-18, NR-18, item 18.28 – Informações sobre as Condições e Meio Ambiente de Trabalho, Riscos Inerentes à Função, NR -06 Uso adequado dos EPI’s – Equipamentos de Proteção Individual e dos EPC’s – Equipamentos de Proteção Coletiva, ART. 19- Lei. 8213/91 Noções sobre Acidentes de Trabalho e Doenças Profissionais e Doenças do Trabalho, etc.';
 
 function gruposPresenca(turmaId){
@@ -6107,29 +6107,29 @@ function montarHtmlListaPresenca(t, grupos, logoUrl){
     }
   });
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de presença NR 18</title><style>
-    @page{size:A4 landscape;margin:6mm 13mm}
+    @page{size:A4 portrait;margin:8mm 10mm}
     :root{color-scheme:light}*{box-sizing:border-box}html,body{background:#fff}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#000;font-size:10pt}
     .bar{padding:10px 14px;background:#f3f4f6;border-bottom:1px solid #ddd;display:flex;gap:10px;align-items:center;font-size:13px}
     .bar button{padding:7px 14px;border:0;border-radius:6px;background:#1b6b32;color:#fff;font-weight:700;cursor:pointer}
-    .page{width:270mm;margin:6mm auto;break-after:page}.page:last-of-type{break-after:auto}
-    .cab{display:grid;grid-template-columns:1fr 43.9mm;grid-template-rows:16.6mm 14.5mm;border:1px solid #000}
-    .t1{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-size:14.5pt;line-height:1.35}
+    .page{width:190mm;margin:6mm auto;break-after:page}.page:last-of-type{break-after:auto}
+    .cab{display:grid;grid-template-columns:1fr 40mm;grid-template-rows:16.6mm 14.5mm;border:1px solid #000}
+    .t1{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-size:11pt;line-height:1.4}
     .logo{border-left:1px solid #000;display:flex;align-items:center;justify-content:center;padding:1mm}.logo img{width:100%;height:100%;object-fit:contain}
-    .t2{display:flex;align-items:center;justify-content:center;font-size:14.5pt;border-top:1px solid #000}
+    .t2{display:flex;align-items:center;justify-content:center;font-size:13pt;border-top:1px solid #000}
     .id{border-left:1px solid #000;border-top:1px solid #000;display:grid;grid-template-rows:1fr 1fr;font-size:8pt;text-align:center}
     .id>div{display:flex;align-items:center;justify-content:center;line-height:1.25}.id>div+div{border-top:1px solid #000}
     .gap4{height:4.4mm}.gap1{height:1.5mm}
     .box,.par>div,.prog-h,.prog{border:1px solid #000;padding:0 1mm;display:flex;align-items:center}
-    .tit{height:9.7mm;position:relative;padding:0 1.5mm}.tit b:nth-child(n+2){position:absolute;top:50%;transform:translateY(-50%)}.tit b:nth-child(2){left:34.8%}.tit b:nth-child(3){left:62.5%}
+    .tit{height:9.7mm;position:relative;padding:0 1.5mm}.tit b:nth-child(n+2){position:absolute;top:50%;transform:translateY(-50%)}.tit b:nth-child(2){left:36%}.tit b:nth-child(3){left:64%}
     .par{display:grid;grid-template-columns:1fr 1fr;height:5.8mm}.par.emp{height:5.1mm}.par.emp2{height:6.2mm}.par>div+div{border-left:0}
     .par:nth-of-type(n)>div{border-top:0}.tit+.par>div{border-top:1px solid #000}
     .par b{margin-right:1.5mm;white-space:nowrap}.par>div{overflow:hidden;white-space:nowrap}
     .par.emp,.par.emp2{height:auto}.par.emp{min-height:5.1mm}.par.emp2{min-height:6.2mm}.par.emp>div,.par.emp2>div{white-space:normal;line-height:1.1;padding-top:.5mm;padding-bottom:.5mm;font-size:9pt}.par.emp b,.par.emp2 b{font-size:10pt}
-    .prog-h{height:6mm;background:#c0c0c0;font-size:8pt}.prog{height:18.9mm;border-top:0;align-items:flex-start;padding:.6mm 1mm;font-size:10pt;line-height:1.25}
+    .prog-h{height:6mm;background:#c0c0c0;font-size:8pt}.prog{height:22mm;border-top:0;align-items:flex-start;padding:.6mm 1mm;font-size:10pt;line-height:1.25}
     table{width:100%;border-collapse:collapse;table-layout:fixed}
-    th,td{border:1px solid #000;height:4.4mm;padding:0 1.2mm;font-size:8pt;overflow:hidden;white-space:nowrap;text-align:left;line-height:1}
-    th{background:#c0c0c0;height:4.6mm;text-align:center}.c{text-align:center}
-    .n{width:6.2mm}.nome{width:68.8mm}.cpf{width:60.5mm}.fun{width:63.1mm}.dt{width:27.7mm}.vis{width:43.7mm}
+    th,td{border:1px solid #000;height:6.5mm;padding:0 1.2mm;font-size:8pt;overflow:hidden;text-align:left;line-height:1.05}
+    th{background:#c0c0c0;height:5mm;text-align:center;white-space:nowrap}.c{text-align:center}
+    .n{width:8mm}.nome{width:50mm}.cpf{width:34mm}.fun{width:38mm}.dt{width:22mm}.vis{width:38mm}
     @media print{.bar{display:none}.page{margin:0 auto}}
   </style></head><body><div class="bar"><button onclick="window.print()">Imprimir</button><span>${grupos.length} lista(s): uma por obra · ${folhas.length} página(s)</span></div>${folhas.join('')}</body></html>`;
 }
