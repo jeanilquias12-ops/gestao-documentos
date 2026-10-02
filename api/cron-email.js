@@ -85,7 +85,8 @@ module.exports = async function handler(req, res) {
   // Vars). Sem essa checagem, qualquer pessoa na internet podia disparar
   // e-mail em nome da SECONCI (inclusive com HTML arbitrário no branch
   // _trigger=doc-save, que hoje não é chamado por nenhuma tela do app).
-  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Sem CRON_SECRET configurado, recusa tudo (senão "Bearer undefined" passaria).
+  if (!process.env.CRON_SECRET || req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 

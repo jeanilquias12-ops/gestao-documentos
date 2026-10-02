@@ -141,7 +141,8 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   // Só a Vercel Cron deve chamar esta rota (ver mesma checagem em cron-email.js).
-  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Sem CRON_SECRET configurado, recusa tudo (senão "Bearer undefined" passaria).
+  if (!process.env.CRON_SECRET || req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 

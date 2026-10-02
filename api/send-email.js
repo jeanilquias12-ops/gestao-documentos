@@ -46,16 +46,22 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Sem isto, qualquer pessoa na internet que descobrisse esta URL conseguia
 // mandar e-mail arbitrário em nome da SECONCI usando a conta Brevo real
 // (fosse spam, phishing interno, ou só esgotar a cota). Exige um token de
-// sessão Supabase válido — o mesmo que o app já usa pra tudo mais.
+// sessão Supabase válida E um perfil cadastrado em `perfis` — só a sessão não
+// basta, porque o cadastro público do Auth permite criar conta sem perfil.
 async function usuarioAutenticado(req) {
   const auth = req.headers['authorization'] || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!token) return false;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` };
   try {
-    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` }
-    });
-    return r.ok;
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers });
+    if (!r.ok) return false;
+    const { id } = await r.json();
+    if (!id) return false;
+    const p = await fetch(`${SUPABASE_URL}/rest/v1/perfis?select=papel&id=eq.${encodeURIComponent(id)}`, { headers });
+    if (!p.ok) return false;
+    const rows = await p.json();
+    return Array.isArray(rows) && rows.length === 1 && !!rows[0].papel;
   } catch (e) { return false; }
 }
 

@@ -24,7 +24,9 @@ Este diretório é o projeto **Gestão de Documentos** (controle de PGR, LTCAT e
 
 ## Regras do banco
 - `documentos.cliente_id` tem FK → `clientes.id` com ON DELETE CASCADE.
-- Todas as tabelas têm RLS habilitado com política `Acesso livre` (anon pode ler/escrever).
+- Todas as tabelas têm RLS habilitado e as políticas são por papel (`perfis.papel`: admin, coordenador, assessoria, financeiro), só para `authenticated`. `anon` não acessa nada. Funções `papel_atual()` / `papel_full_access()` (admin+coordenador) são usadas nas políticas.
+- Usuário logado sem linha em `perfis` não enxerga nada (inclusive `psicossociais`, `demandas`, `config_geral`). Cadastro público do Auth ainda deve ser desligado no painel do Supabase.
+- `/api/send-email` exige sessão válida + perfil cadastrado; `/api/cron-email` e `/api/agenda-semanal` exigem `CRON_SECRET`.
 - Chave pública (anon): `sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy`
 - URL: `https://jpmhnlorbrtjeesknwbl.supabase.co`
 
