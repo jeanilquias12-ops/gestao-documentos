@@ -6236,6 +6236,11 @@ function formatarCargaHoraria(horas){
   return `${hStr}:${String(min).padStart(2,'0')} (${hExtenso} hora${h===1?'':'s'} e ${numeroExtenso(min)} minutos)`;
 }
 
+// Jurídico: a assinatura em imagem não tem validade. Enquanto não houver outra
+// opção, os certificados saem com as linhas de assinatura em branco (para assinar
+// à mão). Os cadastros em Instrutores continuam guardados; trocar para true reativa.
+const IMPRIMIR_ASSINATURA_IMAGEM = false;
+
 function dadosCertificadoParticipante(p, t){
   const cargaFmt = formatarCargaHoraria(t.cargaHoraria);
   const assinaturaInstrutor = t.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura) : null;
@@ -6247,8 +6252,8 @@ function dadosCertificadoParticipante(p, t){
     local: t.local || 'Seconci Goiás',
     horas: cargaFmt,
     instituicao: 'Seconci Goiás',
-    instrutorAssinatura: assinaturaInstrutor ? assinaturaInstrutor.imagem : '',
-    responsavelAssinatura: assinaturaResponsavel ? assinaturaResponsavel.imagem : ''
+    instrutorAssinatura: IMPRIMIR_ASSINATURA_IMAGEM && assinaturaInstrutor ? assinaturaInstrutor.imagem : '',
+    responsavelAssinatura: IMPRIMIR_ASSINATURA_IMAGEM && assinaturaResponsavel ? assinaturaResponsavel.imagem : ''
   };
 }
 
