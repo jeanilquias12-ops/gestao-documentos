@@ -691,7 +691,7 @@
       <section class="page" id="page-treinamentos">
         <div class="page-h">
           <div><h2>Treinamentos</h2><p>Turmas, participantes e emissão de certificado por norma (NR).</p></div>
-          <div class="page-h-actions"><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
+          <div class="page-h-actions"><button class="btn" id="btnImportSoc">📥 Importar do SOC</button><input type="file" id="soc-xlsx-input" accept=".xlsx,.xls" style="display:none" /><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
         </div>
         <div class="filters">
           <div class="field"><label>Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
@@ -1078,6 +1078,23 @@
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
+</div></div>
+
+<!-- MODAL IMPORTAR PLANILHA DO SOC -->
+<div class="modal-bg" id="modal-soc"><div class="modal">
+  <div class="modal-h"><div><h2>Importar do SOC</h2><p id="soc-resumo"></p></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="modal-b">
+    <div id="soc-avisos"></div>
+    <label style="font-weight:600;display:block;margin-bottom:6px">Obras da planilha</label>
+    <div class="table-wrap"><table><thead><tr><th>Obra no SOC</th><th>Part.</th><th>Obra no sistema</th></tr></thead><tbody id="soc-obras"></tbody></table></div>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field-block"><label>Instrutor *</label><select id="soc-instrutor"></select></div>
+      <div class="field-block"><label>Carga horária (h) *</label><input id="soc-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" /></div>
+      <div class="field-block"><label>Validade do treinamento</label><input id="soc-validade" type="date" /></div>
+      <div class="field-block full"><label>Local</label><input id="soc-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
+    </div>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="soc-confirmar">Importar</button></div>
 </div></div>
 
 <!-- MODAL INSTRUTOR (nome + assinatura) -->
@@ -5822,6 +5839,145 @@ function setupTreinamentos(){
 
   setupParticipantesModal();
   setupInstrutores();
+  setupImportSoc();
+}
+
+/* ---- Importar planilha do SOC (Relatório de Agenda): cria a turma e os participantes.
+   Reimportar a mesma planilha não duplica: a turma (norma + data) é reaproveitada e o CPF já presente é pulado. ---- */
+let socImport = null;
+// Nome de obra comparável: sem acento, pontuação, "SPE" e "LTDA" (o SOC e o cadastro variam nisso).
+const socNorm = s => normalizeTexto(s).replace(/\b(spe|ltda|s\/a|sa)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+
+async function carregarSheetJs(){
+  if(window.XLSX) return;
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function socData(v){
+  if(typeof v === 'number') return new Date(Math.round((v - 25569) * 864e5)).toISOString().slice(0,10);
+  const m = String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+}
+function socCpf(v){
+  const d = String(v||'').replace(/\D/g,'');
+  if(!d) return '';
+  const c = d.padStart(11,'0');
+  return c.length === 11 ? c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4') : String(v).trim();
+}
+function cpfValido(cpf){
+  const c = String(cpf||'').replace(/\D/g,'');
+  if(c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+  return [9,10].every(n => ((c.slice(0,n).split('').reduce((s,d,i) => s + d*(n+1-i), 0) * 10) % 11) % 10 === +c[n]);
+}
+
+async function lerPlanilhaSoc(file){
+  await carregarSheetJs();
+  const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+  const linhas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:''});
+  const chave = c => normalizeTexto(c).replace(/[^a-z]/g,'');
+  const iCab = linhas.findIndex(l => l.some(c => chave(c) === 'funcionario'));
+  if(iCab < 0) return null;
+  const col = {};
+  linhas[iCab].forEach((c,i) => { const k = chave(c); if(k && !(k in col)) col[k] = i; });
+  if(!('data' in col) || !('compromisso' in col)) return null;
+  const get = (l,k) => k in col ? String(l[col[k]] ?? '').replace(/\s+/g,' ').trim() : '';
+  return linhas.slice(iCab+1).filter(l => get(l,'funcionario')).map(l => {
+    const compromisso = get(l,'compromisso'), alvo = normalizeTexto(compromisso).replace(/[^a-z0-9]/g,'');
+    const tc = normalizeTexto(get(l,'tipocompromisso'));
+    return {
+      data: socData(l[col.data]),
+      compromisso,
+      norma: TIPOS_TREINAMENTO.find(t => alvo.includes(t.key))?.key || null,
+      tipo: tc.startsWith('admiss') ? 'admissional' : tc.startsWith('period') ? 'periodico' : '',
+      obraSoc: get(l,'razaosocial') || get(l,'unidade'),
+      nome: get(l,'funcionario'),
+      cpf: socCpf(l[col.cpf]),
+      cargo: get(l,'cargo')
+    };
+  });
+}
+
+async function abrirImportSoc(file){
+  if(!file) return;
+  let rows;
+  try { rows = await lerPlanilhaSoc(file); }
+  catch(err){ toast('Não consegui ler a planilha: ' + (err.message||err), 'danger'); return; }
+  if(!rows || !rows.length){ toast('Isso não parece a planilha de agenda do SOC (faltam as colunas Data, Compromisso e Funcionário)', 'danger'); return; }
+  const grupos = new Map();
+  rows.forEach(r => { const k = r.data+'|'+r.norma; if(!grupos.has(k)) grupos.set(k, {data:r.data, norma:r.norma, compromisso:r.compromisso, rows:[]}); grupos.get(k).rows.push(r); });
+  socImport = {rows, grupos:[...grupos.values()]};
+
+  $('#soc-resumo').textContent = socImport.grupos.map(g => `${g.rows.length} participante(s) · ${g.norma ? tipoTreinamento(g.norma).nome.split(' — ')[0] : g.compromisso} · ${fmtDate(g.data)}`).join('  |  ');
+  const avisos = [];
+  const semNorma = socImport.grupos.filter(g => !g.norma);
+  if(semNorma.length) avisos.push(`Norma não reconhecida (não será importada): ${semNorma.map(g => g.compromisso || '—').join(', ')}`);
+  const cpfRuim = rows.filter(r => r.norma && !cpfValido(r.cpf));
+  if(cpfRuim.length) avisos.push(`CPF inválido ou vazio: ${cpfRuim.map(r => r.nome).join(', ')}`);
+  $('#soc-avisos').innerHTML = avisos.map(a => `<div style="background:#FFF4E5;border:1px solid #F0B429;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:12.5px">⚠️ ${escapeHtml(a)}</div>`).join('');
+
+  const obras = [...state.obras].sort((a,b) => a.nome.localeCompare(b.nome,'pt'));
+  const opts = '<option value="">— escolha a obra —</option>' + obras.map(o => `<option value="${o.id}">${escapeHtml(o.nome)} — ${escapeHtml(nomeEmpresa(o.empresa))}</option>`).join('');
+  const nomesSoc = [...new Set(rows.filter(r => r.norma).map(r => r.obraSoc))];
+  $('#soc-obras').innerHTML = nomesSoc.map((n,i) => {
+    const qtd = rows.filter(r => r.norma && r.obraSoc === n).length;
+    const achada = obras.find(o => o.status !== 'inativa' && socNorm(o.nome) === socNorm(n)) || obras.find(o => socNorm(o.nome) === socNorm(n));
+    return `<tr><td>${escapeHtml(n)}</td><td>${qtd}</td><td><select class="soc-obra" data-soc="${escapeHtml(n)}" style="max-width:100%">${opts.replace(achada ? `value="${achada.id}"` : '@@', achada ? `value="${achada.id}" selected` : '')}</select></td></tr>`;
+  }).join('');
+
+  const padrao = assinaturaResponsavelPadrao()?.id;
+  $('#soc-instrutor').innerHTML = '<option value="">— selecione o instrutor —</option>' +
+    [...state.assinaturas].filter(a => a.id !== padrao).sort((a,b) => a.nome.localeCompare(b.nome,'pt')).map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join('');
+  $('#soc-carga').value = ''; $('#soc-validade').value = ''; $('#soc-local').value = '';
+  openModal('modal-soc');
+}
+
+function setupImportSoc(){
+  $('#btnImportSoc').onclick = () => $('#soc-xlsx-input').click();
+  $('#soc-xlsx-input').onchange = e => { const f = e.target.files[0]; e.target.value = ''; abrirImportSoc(f); };
+
+  $('#soc-confirmar').onclick = async () => {
+    if(!socImport) return;
+    const instrutor = state.assinaturas.find(a => a.id === $('#soc-instrutor').value);
+    const carga = parseFloat($('#soc-carga').value) || 0;
+    if(!instrutor || !carga){ toast('Escolha o instrutor e informe a carga horária', 'danger'); return; }
+    const mapa = {};
+    for(const sel of document.querySelectorAll('.soc-obra')){
+      if(!sel.value){ toast('Escolha a obra do sistema para: ' + sel.dataset.soc, 'danger'); return; }
+      mapa[sel.dataset.soc] = state.obras.find(o => o.id === sel.value);
+    }
+    let novos = 0, pulados = 0, turmasNovas = 0;
+    try {
+      for(const g of socImport.grupos.filter(g => g.norma)){
+        let turma = state.turmas.find(t => t.tipo === g.norma && t.data === g.data);
+        if(!turma){
+          turma = {id:'tt'+uid(), tipo:g.norma, data:g.data, cargaHoraria:carga, validade:$('#soc-validade').value || '',
+            local:$('#soc-local').value.trim(), instrutor:instrutor.nome, responsavelTecnico:'',
+            instrutorAssinatura:instrutor.id, responsavelAssinatura:assinaturaResponsavelPadrao()?.id || ''};
+          await salvarTurmaNuvem(turma);
+          state.turmas.push(turma); turmasNovas++;
+        }
+        for(const r of g.rows){
+          const cpfNum = r.cpf.replace(/\D/g,'');
+          const jaTem = state.treinandos.some(p => p.turma === turma.id && (cpfNum ? p.cpf.replace(/\D/g,'') === cpfNum : normalizeTexto(p.nome) === normalizeTexto(r.nome)));
+          if(jaTem){ pulados++; continue; }
+          const obra = mapa[r.obraSoc];
+          const p = {id:'tp'+uid(), turma:turma.id, nome:r.nome, cpf:r.cpf, empresa:obra.empresa, empresaLivre:'', obra:obra.id, funcao:r.cargo, tipoTreino:r.tipo};
+          await salvarTreinandoNuvem(p);
+          state.treinandos.push(p); novos++;
+        }
+      }
+      save(); closeModal('modal-soc'); renderAll();
+      toast(`✅ ${novos} participante(s) importado(s)${turmasNovas ? ' em '+turmasNovas+' turma(s) nova(s)' : ''}${pulados ? ' · '+pulados+' já existiam' : ''}`, 'ok');
+    } catch(err){
+      save(); renderAll();
+      toast(`Erro na importação (${novos} já salvos; reimporte para continuar): ` + (err.message||err), 'danger');
+    }
+  };
 }
 
 /* ---- Instrutores (nome + assinatura; guardados em assinaturas_treinamento) ---- */
@@ -5971,7 +6127,7 @@ function renderParticipantesTabela(turmaId){
       ? `<button class="btn sm ghost" onclick="emitirCertificado('${p.id}')">🎓 Certificado</button>`
       : `<button class="btn sm ghost" disabled title="Modelo de certificado desta norma ainda não cadastrado">🎓 Certificado</button>`;
     return `<tr>
-      <td><b>${escapeHtml(p.nome)}</b></td>
+      <td><b>${escapeHtml(p.nome)}</b>${p.tipoTreino ? `<br><small style="color:var(--ink-muted)">${p.tipoTreino === 'admissional' ? 'Admissional' : 'Periódico'}</small>` : ''}</td>
       <td class="mono">${escapeHtml(p.cpf) || '—'}</td>
       <td>${escapeHtml(nomeEmp)}${empObra ? `<br><small style="color:var(--ink-muted)">${escapeHtml(empObra)}</small>` : ''}</td>
       <td>${escapeHtml(p.funcao) || '—'}</td>
@@ -6186,7 +6342,7 @@ function montarHtmlListaPresenca(t, grupos, logoUrl){
     <div class="id"><div>Identificação: RQ.80<br>Página: ${String(pg+1).padStart(2,'0')}/${String(paginas).padStart(2,'0')}</div><div>Revisão: 11/11/2024<br>Versão: 01</div></div>
   </div>
   <div class="gap4"></div>
-  <div class="box tit"><b>Título do Treinamento: NR 18</b><b>ADMISSIONAL (&nbsp;&nbsp;&nbsp;)</b><b>PERIODICO (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</b></div>
+  <div class="box tit"><b>Título do Treinamento: NR 18</b><b>ADMISSIONAL (${g.itens.some(p => p.tipoTreino === 'admissional') ? '&nbsp;X&nbsp;' : '&nbsp;&nbsp;&nbsp;'})</b><b>PERIODICO (${g.itens.some(p => p.tipoTreino === 'periodico') ? '&nbsp;&nbsp;X&nbsp;&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'})</b></div>
   <div class="par"><div>${campo('Instrutor :', t.instrutor)}</div><div>${campo('Visto:', '')}</div></div>
   <div class="par"><div>${campo('Local:', t.local)}</div><div>${campo('Horário:', '')}</div></div>
   <div class="gap1"></div>
@@ -7120,7 +7276,8 @@ async function salvarTreinandoNuvem(p){
   const { error } = await db.from('treinamento_participantes').upsert({
     id: p.id, turma_id: p.turma, nome: p.nome, cpf: p.cpf || '',
     cliente_id: p.empresa || null, empresa_livre: p.empresaLivre || '',
-    obra_id: p.obra || null, funcao: p.funcao || ''
+    obra_id: p.obra || null, funcao: p.funcao || '',
+    tipo_treinamento: p.tipoTreino || ''
   });
   if(error) throw new Error(error.message);
 }
@@ -7412,7 +7569,8 @@ async function carregarDaNuvem() {
       empresa:      p.cliente_id || '',
       empresaLivre: p.empresa_livre || '',
       obra:         p.obra_id || '',
-      funcao:       p.funcao || ''
+      funcao:       p.funcao || '',
+      tipoTreino:   p.tipo_treinamento || ''
     }))
   }
 
