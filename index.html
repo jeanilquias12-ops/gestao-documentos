@@ -1970,7 +1970,26 @@ function renderHistoricoModal(docId){
   const lista = $('#md-hist-lista');
   if(!hist.length){ sec.style.display = 'none'; return; }
   sec.style.display = '';
-  lista.innerHTML = hist.map(h => `<div class="hist-entry hist-${h.tipo}"><span class="hist-icon">${HIST_ICONS[h.tipo]||'📝'}</span><div class="hist-info"><span class="hist-desc">${escapeHtml(h.descricao)}</span><span class="hist-data">${fmtDateTime(h.dataHora)}</span></div></div>`).join('');
+  // Coordenador pode corrigir a data de cada item do histórico (o banco já permite via papel_full_access).
+  const dtLocal = iso => { const d = new Date(iso), p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const quando = h => PAPEL === 'coordenador'
+    ? `<input type="datetime-local" value="${dtLocal(h.dataHora)}" onchange="editarDataHistorico('${h.id}', this.value, '${docId}')" style="font-size:11.5px;padding:2px 4px;align-self:flex-start">`
+    : `<span class="hist-data">${fmtDateTime(h.dataHora)}</span>`;
+  lista.innerHTML = hist.map(h => `<div class="hist-entry hist-${h.tipo}"><span class="hist-icon">${HIST_ICONS[h.tipo]||'📝'}</span><div class="hist-info"><span class="hist-desc">${escapeHtml(h.descricao)}</span>${quando(h)}</div></div>`).join('');
+}
+
+async function editarDataHistorico(id, valor, docId){
+  const h = (state.historico||[]).find(x => x.id === id);
+  if(PAPEL !== 'coordenador' || !h || !valor) return;
+  const novo = new Date(valor).toISOString();
+  try {
+    const { data, error } = await db.from('historico_documentos').update({ data_hora: novo }).eq('id', id).select('id');
+    if(error) throw new Error(error.message);
+    if(!data?.length) throw new Error('o banco não aceitou a alteração');
+    h.dataHora = novo;
+    save(); renderHistoricoModal(docId);
+    toast('✅ Data do histórico atualizada', 'ok');
+  } catch(err){ toast('Erro ao salvar a data: ' + err.message, 'danger'); renderHistoricoModal(docId); }
 }
 
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); syncSW(); }
