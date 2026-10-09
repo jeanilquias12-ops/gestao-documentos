@@ -11,7 +11,7 @@
 <style>
   :root{
     --green-900:#0B3D1E;--green-700:#1B6B2F;--green-500:#3FA65C;--green-300:#9FCFAF;--green-100:#EAF4EC;--green-50:#F4F9F5;
-    --bg:#F7FAF8;--surface:#ffffff;--ink:#10261A;--ink-soft:#4A6154;--ink-muted:#7C8F84;--line:#C9D6CD;--line-strong:#A9C0B1;
+    --bg:#F7FAF8;--surface:#ffffff;--ink:#10261A;--ink-soft:#4A6154;--ink-muted:#5A6E61;--line:#C9D6CD;--line-strong:#A9C0B1;
     --warn-bg:#FDF4E3;--warn-fg:#8A5A08;--warn-line:#EBD5A6;
     --danger-bg:#FBE9E6;--danger-fg:#9C3123;--danger-line:#EFC1B9;
     --ok-bg:#E7F3EA;--ok-fg:#14602A;--ok-line:#B4D9C0;
@@ -51,14 +51,14 @@
   .brand-text{display:flex;flex-direction:column;line-height:1.1}
   .brand-text b{font-size:14px;letter-spacing:.02em}
   .brand-text span{font-size:11px;color:#A8D5B5;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
-  .navlabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(168,213,181,.6);padding:14px 8px 6px}
+  .navlabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(168,213,181,.6);padding:14px 8px 6px}
   .navitem{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:#CDE3D2;font-size:14px;font-weight:500;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;transition:background .15s}
   .navitem:hover{background:rgba(168,213,181,.10)}
   .navitem.active{background:rgba(168,213,181,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(168,213,181,.22)}
   .navitem svg{width:18px;height:18px;flex-shrink:0;opacity:.9}
   .navitem .badge{margin-left:auto;background:rgba(252,230,226,.18);color:#FFD3CB;font-size:11px;padding:2px 7px;border-radius:99px;font-weight:600}
   .navitem.active .badge{background:#fff;color:#9B2A1A}
-  .nav-caret{margin-left:auto;font-size:10px;opacity:.7;transition:transform .18s}
+  .nav-caret{margin-left:auto;font-size:11px;opacity:.7;transition:transform .18s}
   .nav-caret.open{transform:rotate(180deg)}
   .nav-sub{display:none;flex-direction:column;gap:2px;margin:2px 0;padding-left:6px;border-left:1px solid rgba(168,213,181,.18);margin-left:14px}
   .nav-sub.open{display:flex}
@@ -80,7 +80,7 @@
   .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-muted)}
   .search-results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg);max-height:340px;overflow:auto;display:none;z-index:50}
   .search-results.show{display:block}
-  .sr-head{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);padding:8px 12px 4px;font-weight:600}
+  .sr-head{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);padding:8px 12px 4px;font-weight:600}
   .ss-wrap{position:relative}
   .ss-input{width:100%;padding:8px 32px 8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;cursor:pointer}
   .ss-input:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(76,175,80,.15)}
@@ -95,7 +95,7 @@
   .ss-empty{padding:10px 12px;font-size:13px;color:var(--ink-muted);text-align:center}
   .sr-item{padding:8px 12px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
   .sr-item:hover{background:var(--green-50)}
-  .sr-item small{color:var(--ink-muted);font-family:'JetBrains Mono',monospace;font-size:11px}
+  .sr-item small{color:var(--ink-muted);font-family:'JetBrains Mono',monospace;font-size:12px}
   .sr-empty{padding:20px;text-align:center;color:var(--ink-muted);font-size:13px}
 
   .content{padding:28px 32px 56px;max-width:1400px;width:100%}
@@ -134,8 +134,8 @@
   details.card summary::-webkit-details-marker{display:none}
   details.card[open] summary span:first-child{transform:rotate(90deg)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
-  thead th{text-align:left;padding:11px 16px;background:var(--green-50);color:var(--ink-soft);font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
-  thead th .sortarrow{display:inline-block;margin-left:4px;opacity:.4;font-size:10px}
+  thead th{text-align:left;padding:11px 16px;background:var(--green-50);color:var(--ink-soft);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+  thead th .sortarrow{display:inline-block;margin-left:4px;opacity:.4;font-size:11px}
   thead th.asc .sortarrow,thead th.desc .sortarrow{opacity:1;color:var(--green-700)}
   tbody td{padding:13px 16px;border-bottom:1px solid var(--line-strong)}
   tbody tr:hover{background:var(--green-50)}
@@ -149,7 +149,7 @@
   .hist-icon{font-size:15px;flex-shrink:0;line-height:1.5}
   .hist-info{display:flex;flex-direction:column;gap:2px;min-width:0}
   .hist-desc{font-size:13px;font-weight:500;color:var(--ink-main)}
-  .hist-data{font-size:11.5px;color:var(--ink-muted)}
+  .hist-data{font-size:12px;color:var(--ink-muted)}
   .hist-entry.hist-criado{background:#E8F5E9}
   .hist-entry.hist-enviado_cliente{background:#E3F2FD}
   .hist-entry.hist-enviado_financeiro{background:#EDE7F6}
@@ -160,32 +160,32 @@
   .envio-row label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--ink-main);cursor:pointer;flex:1}
   .envio-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer;flex-shrink:0}
   .envio-row input[type=date]{padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:#fff;color:var(--ink-main)}
-  .envio-row .envio-check{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ok-fg);font-weight:600;background:var(--ok-bg);padding:2px 7px;border-radius:99px;margin-left:auto}
+  .envio-row .envio-check{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ok-fg);font-weight:600;background:var(--ok-bg);padding:2px 7px;border-radius:99px;margin-left:auto}
   .fluxo-section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .fluxo-step{display:flex;gap:14px;padding-bottom:16px;position:relative}
   .fluxo-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;bottom:0;width:2px;background:var(--line)}
-  .fluxo-num{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;z-index:1;position:relative}
+  .fluxo-num{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green-700);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;z-index:1;position:relative}
   .fluxo-body{flex:1}
-  .fluxo-title{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-top:3px}
-  .fluxo-prazo{font-size:11px;font-weight:400;color:var(--ink-muted);text-transform:none;letter-spacing:0}
-  .pill.enviado-c{background:#E8F5E9;color:#2E7D32;font-size:11px}
+  .fluxo-title{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-top:3px}
+  .fluxo-prazo{font-size:12px;font-weight:400;color:var(--ink-muted);text-transform:none;letter-spacing:0}
+  .pill.enviado-c{background:#E8F5E9;color:#2E7D32;font-size:12px}
   .pill.enviado-c::before,.pill.enviado-f::before,.pill.nao-enviado::before{display:none}
-  .pill.enviado-f{background:#E3F2FD;color:#1565C0;font-size:11px}
-  .pill.enviado-a{background:#F3E5F5;color:#6A1B9A;font-size:11px}
+  .pill.enviado-f{background:#E3F2FD;color:#1565C0;font-size:12px}
+  .pill.enviado-a{background:#F3E5F5;color:#6A1B9A;font-size:12px}
   .pill.enviado-a::before{display:none}
-  .pill.nao-enviado{background:#F5F5F5;color:#9E9E9E;font-size:11px;border:1px dashed #BDBDBD}
-  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600}
+  .pill.nao-enviado{background:#F5F5F5;color:#9E9E9E;font-size:12px;border:1px dashed #BDBDBD}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
   .pill::before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor;opacity:.85}
   .pill.ok{background:var(--ok-bg);color:var(--ok-fg)}
   .pill.warn{background:var(--warn-bg);color:var(--warn-fg)}
   .pill.danger{background:var(--danger-bg);color:var(--danger-fg)}
   .pill.muted{background:#EEF2EF;color:var(--ink-soft)}
   .pill.solid-green{background:var(--green-100);color:var(--green-900)}
-  .pill.fase1{background:#E3F2FD;color:#1565C0;font-size:11px}
+  .pill.fase1{background:#E3F2FD;color:#1565C0;font-size:12px}
   .pill.fase1::before{display:none}
-  .pill.fase2{background:#F3E5F5;color:#4A148C;font-size:11px}
+  .pill.fase2{background:#F3E5F5;color:#4A148C;font-size:12px}
   .pill.fase2::before{display:none}
-  .pill.fase-done{background:#E8F5E9;color:#1B5E20;font-size:11px}
+  .pill.fase-done{background:#E8F5E9;color:#1B5E20;font-size:12px}
   .pill.fase-done::before{display:none}
 
   .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
@@ -210,7 +210,7 @@
   .field-block label{font-size:12px;font-weight:500;color:var(--ink-soft)}
   .field-block input,.field-block select,.field-block textarea{padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .field-block input:focus,.field-block select:focus,.field-block textarea:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(76,175,80,.15)}
-  .field-block .hint{font-size:11px;color:var(--ink-muted)}
+  .field-block .hint{font-size:12px;color:var(--ink-muted)}
   .tipos-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin-top:6px}
   .tipo-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 10px}
   .tipo-row span{font-size:12px;color:var(--ink-soft);flex:1;line-height:1.3}
@@ -219,7 +219,7 @@
   .autofill.show{display:block}
   .autofill div{padding:8px 11px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:8px}
   .autofill div:hover{background:var(--green-50)}
-  .autofill small{color:var(--ink-muted);font-family:'JetBrains Mono',monospace;font-size:11px}
+  .autofill small{color:var(--ink-muted);font-family:'JetBrains Mono',monospace;font-size:12px}
 
   .progress{width:100%;height:7px;background:var(--green-100);border-radius:99px;overflow:hidden;position:relative}
   .progress-bar{height:100%;background:linear-gradient(90deg,var(--green-500),var(--green-700));border-radius:99px;transition:width .4s}
@@ -329,11 +329,11 @@
     <div class="login-error" id="loginError"></div>
     <form onsubmit="handleLogin(event)">
       <div class="login-field">
-        <label>Usuário</label>
+        <label for="loginUser">Usuário</label>
         <input id="loginUser" type="text" autocomplete="username" required />
       </div>
       <div class="login-field">
-        <label>Senha</label>
+        <label for="loginPass">Senha</label>
         <input id="loginPass" type="password" autocomplete="current-password" required />
       </div>
       <button type="submit" class="login-btn">Entrar</button>
@@ -494,9 +494,9 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewEmpresa">+ Nova empresa</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Status</label><select id="f-empresa-status"><option value="">Todos</option><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
-          <div class="field"><label>Segmento</label><select id="f-empresa-seg"><option value="">Todos</option></select></div>
-          <div class="field" style="flex:1"><label>Busca rápida</label><input id="f-empresa-q" placeholder="Nome ou CNPJ…" /></div>
+          <div class="field"><label for="f-empresa-status">Status</label><select id="f-empresa-status"><option value="">Todos</option><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+          <div class="field"><label for="f-empresa-seg">Segmento</label><select id="f-empresa-seg"><option value="">Todos</option></select></div>
+          <div class="field" style="flex:1"><label for="f-empresa-q">Busca rápida</label><input id="f-empresa-q" placeholder="Nome ou CNPJ…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-empresas"><thead><tr><th data-sort="nome">Empresa <span class="sortarrow">↕</span></th><th data-sort="cnpj">CNPJ <span class="sortarrow">↕</span></th><th data-sort="segmento">Segmento <span class="sortarrow">↕</span></th><th data-sort="contato">Contato <span class="sortarrow">↕</span></th><th data-sort="obras">Obras <span class="sortarrow">↕</span></th><th data-sort="docs">Docs <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -508,9 +508,9 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewObra">+ Nova obra</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Empresa</label><select id="f-obra-empresa"><option value="">Todas</option></select></div>
-          <div class="field"><label>Status</label><select id="f-obra-status"><option value="">Todos</option><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
-          <div class="field" style="flex:1"><label>Busca rápida</label><input id="f-obra-q" placeholder="Nome da obra…" /></div>
+          <div class="field"><label for="f-obra-empresa">Empresa</label><select id="f-obra-empresa"><option value="">Todas</option></select></div>
+          <div class="field"><label for="f-obra-status">Status</label><select id="f-obra-status"><option value="">Todos</option><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+          <div class="field" style="flex:1"><label for="f-obra-q">Busca rápida</label><input id="f-obra-q" placeholder="Nome da obra…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-obras"><thead><tr><th data-sort="nome">Obra <span class="sortarrow">↕</span></th><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="endereco">Endereço <span class="sortarrow">↕</span></th><th data-sort="contato">Contato <span class="sortarrow">↕</span></th><th data-sort="docs">Docs <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -522,11 +522,11 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewDoc2">+ Novo documento</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Tipo</label><select id="f-doc-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="LTCAT">LTCAT</option></select></div>
-          <div class="field"><label>Status</label><select id="f-doc-status"><option value="">Todos</option><option value="valido">Válido</option><option value="vencendo">Vencendo</option><option value="vencido">Vencido</option></select></div>
-          <div class="field"><label>Fase</label><select id="f-doc-fase"><option value="">Todas</option><option value="elab">Em elaboração</option><option value="assessoria">Ag. assessoria</option><option value="concluido">Concluído</option></select></div>
-          <div class="field"><label>Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
-          <div class="field" style="flex:1"><label>Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
+          <div class="field"><label for="f-doc-tipo">Tipo</label><select id="f-doc-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="LTCAT">LTCAT</option></select></div>
+          <div class="field"><label for="f-doc-status">Status</label><select id="f-doc-status"><option value="">Todos</option><option value="valido">Válido</option><option value="vencendo">Vencendo</option><option value="vencido">Vencido</option></select></div>
+          <div class="field"><label for="f-doc-fase">Fase</label><select id="f-doc-fase"><option value="">Todas</option><option value="elab">Em elaboração</option><option value="assessoria">Ag. assessoria</option><option value="concluido">Concluído</option></select></div>
+          <div class="field"><label for="f-doc-empresa">Empresa</label><select id="f-doc-empresa"><option value="">Todas</option></select></div>
+          <div class="field" style="flex:1"><label for="f-doc-q">Busca</label><input id="f-doc-q" placeholder="Empresa, número, responsável…" /></div>
           <div class="field"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;padding:8px 0"><input type="checkbox" id="f-doc-inativas" /> Incluir empresas/obras inativas</label></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-docs"><thead><tr><th data-sort="empresa">Empresa <span class="sortarrow">↕</span></th><th data-sort="tipo">Tipo <span class="sortarrow">↕</span></th><th data-sort="emissao">Emissão <span class="sortarrow">↕</span></th><th data-sort="validade">Validade <span class="sortarrow">↕</span></th><th data-sort="status">Status <span class="sortarrow">↕</span></th><th>Elaboração</th><th>Entrega</th><th></th></tr></thead><tbody></tbody></table></div></div>
@@ -539,7 +539,7 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewDemanda" style="display:none">+ Nova demanda</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Status</label><select id="f-dm-status"><option value="">Todas</option><option value="aguardando">Aguardando</option><option value="iniciado">Iniciado</option></select></div>
+          <div class="field"><label for="f-dm-status">Status</label><select id="f-dm-status"><option value="">Todas</option><option value="aguardando">Aguardando</option><option value="iniciado">Iniciado</option></select></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-demandas"><thead><tr><th>Demanda</th><th>Empresa</th><th>Cadastrada em</th><th>Aguardando</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -551,42 +551,42 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewContrato">+ Novo contrato</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Empresa</label><select id="f-av-empresa"><option value="">Todas</option></select></div>
-          <div class="field"><label>Saldo</label><select id="f-av-saldo"><option value="">Todos</option><option value="baixo">Baixo (≤ 20%)</option><option value="medio">Médio (20-80%)</option><option value="ok">OK (&gt; 80%)</option><option value="zero">Esgotado</option></select></div>
+          <div class="field"><label for="f-av-empresa">Empresa</label><select id="f-av-empresa"><option value="">Todas</option></select></div>
+          <div class="field"><label for="f-av-saldo">Saldo</label><select id="f-av-saldo"><option value="">Todos</option><option value="baixo">Baixo (≤ 20%)</option><option value="medio">Médio (20-80%)</option><option value="ok">OK (&gt; 80%)</option><option value="zero">Esgotado</option></select></div>
         </div>
         <div id="contratos-list" style="display:flex;flex-direction:column;gap:14px"></div>
       </section>
 
       <!-- PSICOSSOCIAIS -->
       <style>
-        .psi-cal-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow-sm)}
-        .psi-cal-nav{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--green-50)}
+        .psi-cal-wrap{background:#fff;border:1px solid var(--line);overflow:hidden;margin-bottom:20px;}
+        .psi-cal-nav{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);}
         .psi-cal-titulo{font-weight:700;font-size:14px;color:var(--green-900,#0F4F22);flex:1;text-align:center}
         .psi-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line)}
-        .psi-cal-hd{background:var(--green-50);text-align:center;font-size:10px;font-weight:700;color:var(--ink-muted);padding:7px 2px;letter-spacing:.05em;text-transform:uppercase}
+        .psi-cal-hd{text-align:center;font-weight:700;color:var(--ink-muted);padding:7px 2px;text-transform:uppercase;}
         .psi-cal-day{background:#fff;min-height:62px;padding:5px;display:flex;flex-direction:column;gap:2px}
         .psi-cal-day.tem-aval{cursor:pointer}.psi-cal-day.tem-aval:hover{background:var(--green-50)}
         .psi-cal-day.fora{background:#fafafa}.psi-cal-day.ativo{background:#e8f5e9}
-        .psi-cal-day.hoje .psi-cal-num{background:var(--green-700,#1B6B2F);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center}
-        .psi-cal-num{font-size:11.5px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;line-height:20px}
+        .psi-cal-day.hoje .psi-cal-num{color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;}
+        .psi-cal-num{font-size:12px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;line-height:20px}
         .psi-cal-day.fora .psi-cal-num{color:#ccc}
-        .psi-cal-badge{font-size:9px;font-weight:600;color:#fff;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35}
-        .psi-cal-mais{font-size:9px;color:var(--ink-muted);padding:1px 4px}
-        @media(max-width:600px){.psi-cal-day{min-height:44px;padding:3px}.psi-cal-badge{font-size:7.5px}}
-        .ev-prev-pres{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;background:var(--green-100);color:var(--green-900);padding:3px 9px;border-radius:99px}
-        .rel-chk{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500;cursor:pointer;user-select:none}
+        .psi-cal-badge{color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35;}
+        .psi-cal-mais{font-size:11px;color:var(--ink-muted);padding:1px 4px}
+        @media(max-width:600px){.psi-cal-day{min-height:44px;padding:3px}.psi-cal-badge{font-size:11px}}
+        .ev-prev-pres{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;background:var(--green-100);color:var(--green-900);padding:3px 9px;border-radius:99px}
+        .rel-chk{display:inline-flex;align-items:center;gap:7px;font-weight:500;cursor:pointer;user-select:none;}
         .rel-chk input{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer}
         .rel-sec{margin-bottom:18px}
-        .rel-sec h3{margin:0 0 2px;font-size:16px}
+        .rel-sec h3{margin:0 0 2px;}
         .rel-count{display:inline-block;background:var(--green-700);color:#fff;font-size:13px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:6px}
         .rel-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-        .rel-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}
-        .rel-kpi .kpi-label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-muted)}
-        .rel-kpi .kpi-val{font-size:28px;font-weight:800;color:var(--ink-main);line-height:1.1}
-        .rel-kpi .kpi-sub{font-size:12px;color:var(--ink-soft)}
-        .rel-kpi.kpi-danger{border-left:4px solid #dc2626;background:#fff5f5}
-        .rel-kpi.kpi-warn{border-left:4px solid #f59e0b;background:#fffbeb}
-        .rel-kpi.kpi-ok{border-left:4px solid var(--green-500);background:#f0fdf4}
+        .rel-kpi{background:#fff;border:1px solid var(--line);display:flex;flex-direction:column;gap:4px;}
+        .rel-kpi .kpi-label{text-transform:uppercase;color:var(--ink-muted);}
+        .rel-kpi .kpi-val{line-height:1.1;}
+        
+        
+        
+        
         .rel-donut-wrap{display:flex;align-items:center;gap:24px}
         .rel-donut-legend{display:flex;flex-direction:column;gap:10px}
         .rel-donut-legend div{display:flex;align-items:center;gap:8px;font-size:13px}
@@ -609,8 +609,8 @@
             <div class="page-h-actions"><button class="btn primary" id="btnNewPsi">+ Nova avaliação</button></div>
           </div>
           <div class="filters">
-            <div class="field"><label>Empresa</label><select id="f-psi-empresa"><option value="">Todas</option></select></div>
-            <div class="field"><label>Status</label><select id="f-psi-status"><option value="">Todos</option><option value="pendente">Pendente</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            <div class="field"><label for="f-psi-empresa">Empresa</label><select id="f-psi-empresa"><option value="">Todas</option></select></div>
+            <div class="field"><label for="f-psi-status">Status</label><select id="f-psi-status"><option value="">Todos</option><option value="pendente">Pendente</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
           </div>
           <div id="psi-calendario"></div>
           <div id="psi-list" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -623,8 +623,8 @@
             <div class="page-h-actions"><button class="btn primary" id="btnNewEvento-treinamento">+ Novo treinamento</button></div>
           </div>
           <div class="filters">
-            <div class="field"><label>Empresa/Obra</label><select id="f-ev-treinamento-empresa"><option value="">Todas</option></select></div>
-            <div class="field"><label>Status</label><select id="f-ev-treinamento-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            <div class="field"><label for="f-ev-treinamento-empresa">Empresa/Obra</label><select id="f-ev-treinamento-empresa"><option value="">Todas</option></select></div>
+            <div class="field"><label for="f-ev-treinamento-status">Status</label><select id="f-ev-treinamento-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
           </div>
           <div id="evcal-treinamento"></div>
           <div id="evlist-treinamento" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -638,7 +638,7 @@
           </div>
           <div class="card" style="margin-bottom:14px">
             <div class="card-b" style="padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
-              <div class="field"><label>Status</label><select id="f-ev-auditoria-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+              <div class="field"><label for="f-ev-auditoria-status">Status</label><select id="f-ev-auditoria-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
             </div>
           </div>
           <div id="evcal-auditoria"></div>
@@ -652,8 +652,8 @@
             <div class="page-h-actions"><button class="btn primary" id="btnNewEvento-palestra">+ Nova palestra</button></div>
           </div>
           <div class="filters">
-            <div class="field"><label>Empresa/Obra</label><select id="f-ev-palestra-empresa"><option value="">Todas</option></select></div>
-            <div class="field"><label>Status</label><select id="f-ev-palestra-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            <div class="field"><label for="f-ev-palestra-empresa">Empresa/Obra</label><select id="f-ev-palestra-empresa"><option value="">Todas</option></select></div>
+            <div class="field"><label for="f-ev-palestra-status">Status</label><select id="f-ev-palestra-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
           </div>
           <div id="evcal-palestra"></div>
           <div id="evlist-palestra" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -666,8 +666,8 @@
             <div class="page-h-actions"><button class="btn primary" id="btnNewEvento-ltcat">+ Nova avaliação LTCAT</button></div>
           </div>
           <div class="filters">
-            <div class="field"><label>Empresa/Obra</label><select id="f-ev-ltcat-empresa"><option value="">Todas</option></select></div>
-            <div class="field"><label>Status</label><select id="f-ev-ltcat-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            <div class="field"><label for="f-ev-ltcat-empresa">Empresa/Obra</label><select id="f-ev-ltcat-empresa"><option value="">Todas</option></select></div>
+            <div class="field"><label for="f-ev-ltcat-status">Status</label><select id="f-ev-ltcat-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
           </div>
           <div id="evcal-ltcat"></div>
           <div id="evlist-ltcat" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -681,8 +681,8 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewInsumo">+ Novo insumo</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Status</label><select id="f-ins-status"><option value="">Todos</option><option value="ok">Válido</option><option value="warn">Vencendo</option><option value="danger">Vencido</option></select></div>
-          <div class="field" style="flex:1"><label>Busca</label><input id="f-ins-q" placeholder="Nome do material…" /></div>
+          <div class="field"><label for="f-ins-status">Status</label><select id="f-ins-status"><option value="">Todos</option><option value="ok">Válido</option><option value="warn">Vencendo</option><option value="danger">Vencido</option></select></div>
+          <div class="field" style="flex:1"><label for="f-ins-q">Busca</label><input id="f-ins-q" placeholder="Nome do material…" /></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-insumos"><thead><tr><th>Material</th><th>Data de chegada</th><th>Quantidade</th><th>Validade</th><th>Dias restantes</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -694,7 +694,7 @@
           <div class="page-h-actions"><button class="btn" id="btnImportSoc">📥 Importar do SOC</button><input type="file" id="soc-xlsx-input" accept=".xlsx,.xls" style="display:none" /><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
+          <div class="field"><label for="f-turma-tipo">Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
         </div>
         <div class="card"><div class="table-wrap"><table id="tbl-turmas"><thead><tr><th>Norma</th><th>Data</th><th>Carga horária</th><th>Validade</th><th>Local</th><th>Participantes</th><th></th></tr></thead><tbody></tbody></table></div></div>
       </section>
@@ -719,8 +719,8 @@
               <button type="button" class="btn sm" id="rel-tab-cliente" onclick="setRelModo('cliente')">Relatório para Cliente</button>
             </div>
             <div class="filters" style="margin-bottom:14px">
-              <div class="field"><label>Data início</label><input type="date" id="rel-ini" /></div>
-              <div class="field"><label>Data fim</label><input type="date" id="rel-fim" /></div>
+              <div class="field"><label for="rel-ini">Data início</label><input type="date" id="rel-ini" /></div>
+              <div class="field"><label for="rel-fim">Data fim</label><input type="date" id="rel-fim" /></div>
             </div>
             <div id="rel-interno-opcoes" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px">
               <label class="rel-chk"><input type="checkbox" id="rel-c-resumo" checked /> Resumo geral</label>
@@ -733,8 +733,8 @@
               <label class="rel-chk"><input type="checkbox" id="rel-c-indicadores" /> Indicadores</label>
             </div>
             <div id="rel-cliente-opcoes" class="filters" style="display:none;margin-bottom:18px">
-              <div class="field"><label>Empresa</label><select id="rel-cli-empresa"></select></div>
-              <div class="field"><label>Obra</label><select id="rel-cli-obra"></select></div>
+              <div class="field"><label for="rel-cli-empresa">Empresa</label><select id="rel-cli-empresa"></select></div>
+              <div class="field"><label for="rel-cli-obra">Obra</label><select id="rel-cli-obra"></select></div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn primary" id="rel-gerar">Gerar relatório</button>
@@ -855,9 +855,9 @@
           <div class="page-h-actions"><button class="btn primary" id="btnNewMedicao">+ Nova medição</button></div>
         </div>
         <div class="filters">
-          <div class="field"><label>Empresa</label><select id="f-med-empresa"><option value="">Todas</option></select></div>
-          <div class="field"><label>Tipo</label><select id="f-med-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
-          <div class="field"><label>Mês</label><input type="month" id="f-med-mes" /></div>
+          <div class="field"><label for="f-med-empresa">Empresa</label><select id="f-med-empresa"><option value="">Todas</option></select></div>
+          <div class="field"><label for="f-med-tipo">Tipo</label><select id="f-med-tipo"><option value="">Todos</option><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
+          <div class="field"><label for="f-med-mes">Mês</label><input type="month" id="f-med-mes" /></div>
         </div>
         <div class="rel-kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px">
           <div class="rel-kpi kpi-ok"><span class="kpi-label">Total no filtro</span><span class="kpi-val" id="med-kpi-total">R$ 0</span></div>
@@ -886,16 +886,16 @@
 </div>
 
 <!-- MODAL EMPRESA -->
-<div class="modal-bg" id="modal-empresa"><div class="modal">
-  <div class="modal-h"><div><h2 id="me-title">Nova empresa</h2><p>Cadastro de empresa cliente</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-empresa"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="me-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="me-title">Nova empresa</h2><p>Cadastro de empresa cliente</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-empresa"><input type="hidden" id="me-id" /><div class="form-grid">
-    <div class="field-block full"><label>Razão social *</label><input id="me-nome" required autocomplete="off" /><div class="autofill" id="me-nome-af"></div></div>
-    <div class="field-block"><label>CNPJ *</label><input id="me-cnpj" required maxlength="18" placeholder="00.000.000/0000-00" /><div class="autofill" id="me-cnpj-af"></div><span class="hint">Máscara automática</span></div>
-    <div class="field-block"><label>Segmento</label><input id="me-segmento" list="segmentos" /><datalist id="segmentos"><option>Construção civil</option><option>Indústria</option><option>Comércio</option><option>Serviços</option><option>Saúde</option><option>Transporte</option></datalist></div>
-    <div class="field-block full"><label>Endereço</label><input id="me-endereco" /></div>
-    <div class="field-block"><label>Contato (nome)</label><input id="me-contato" /></div>
-    <div class="field-block"><label>Telefone / E-mail</label><input id="me-telefone" /></div>
-    <div class="field-block"><label>Status</label><select id="me-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+    <div class="field-block full"><label for="me-nome">Razão social *</label><input id="me-nome" required autocomplete="off" /><div class="autofill" id="me-nome-af"></div></div>
+    <div class="field-block"><label for="me-cnpj">CNPJ *</label><input id="me-cnpj" required maxlength="18" placeholder="00.000.000/0000-00" /><div class="autofill" id="me-cnpj-af"></div><span class="hint">Máscara automática</span></div>
+    <div class="field-block"><label for="me-segmento">Segmento</label><input id="me-segmento" list="segmentos" /><datalist id="segmentos"><option>Construção civil</option><option>Indústria</option><option>Comércio</option><option>Serviços</option><option>Saúde</option><option>Transporte</option></datalist></div>
+    <div class="field-block full"><label for="me-endereco">Endereço</label><input id="me-endereco" /></div>
+    <div class="field-block"><label for="me-contato">Contato (nome)</label><input id="me-contato" /></div>
+    <div class="field-block"><label for="me-telefone">Telefone / E-mail</label><input id="me-telefone" /></div>
+    <div class="field-block"><label for="me-status">Status</label><select id="me-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
   </div></form>
   <div id="me-converter-section" style="display:none;margin-top:16px;padding:14px 18px;background:#EDE7F6;border-left:4px solid #7E57C2;border-radius:6px">
     <p style="margin:0 0 8px;font-weight:600;font-size:13px;color:#4527A0">🔄 Converter este registro em Obra</p>
@@ -908,27 +908,27 @@
 </div></div>
 
 <!-- MODAL DEMANDA -->
-<div class="modal-bg" id="modal-demanda"><div class="modal">
-  <div class="modal-h"><div><h2 id="dm-title">Nova demanda</h2><p>Registra um pedido pra acompanhar até iniciar o trabalho</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-demanda"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dm-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="dm-title">Nova demanda</h2><p>Registra um pedido pra acompanhar até iniciar o trabalho</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-demanda"><input type="hidden" id="dm-id" /><div class="form-grid">
-    <div class="field-block full"><label>Título / o que precisa ser feito *</label><input id="dm-titulo" required placeholder="Ex: Elaborar PGR novo, Renovar LTCAT…" /></div>
-    <div class="field-block full"><label>Empresa *</label><select id="dm-empresa" required></select></div>
-    <div class="field-block full"><label>Obra</label><select id="dm-obra"><option value="">— Sem obra vinculada —</option></select></div>
-    <div class="field-block full"><label>Observações</label><textarea id="dm-obs" rows="3"></textarea></div>
+    <div class="field-block full"><label for="dm-titulo">Título / o que precisa ser feito *</label><input id="dm-titulo" required placeholder="Ex: Elaborar PGR novo, Renovar LTCAT…" /></div>
+    <div class="field-block full"><label for="dm-empresa">Empresa *</label><select id="dm-empresa" required></select></div>
+    <div class="field-block full"><label for="dm-obra">Obra</label><select id="dm-obra"><option value="">— Sem obra vinculada —</option></select></div>
+    <div class="field-block full"><label for="dm-obs">Observações</label><textarea id="dm-obs" rows="3"></textarea></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="dm-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="dm-save">Salvar demanda</button></div>
 </div></div>
 
 <!-- MODAL OBRA -->
-<div class="modal-bg" id="modal-obra"><div class="modal">
-  <div class="modal-h"><div><h2 id="mo-title">Nova obra</h2><p>Cadastro de obra vinculada a uma empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mo-import-btn" onclick="document.getElementById('mo-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mo-pdf-input" accept=".pdf" style="display:none" onchange="importarObraPDF(this.files[0])"><button class="btn ghost sm" data-close>✕</button></div></div>
+<div class="modal-bg" id="modal-obra"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mo-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mo-title">Nova obra</h2><p>Cadastro de obra vinculada a uma empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mo-import-btn" onclick="document.getElementById('mo-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mo-pdf-input" accept=".pdf" style="display:none" onchange="importarObraPDF(this.files[0])"><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div></div>
   <div class="modal-b"><form id="form-obra"><input type="hidden" id="mo-id" /><div class="form-grid">
-    <div class="field-block full"><label>Empresa *</label><select id="mo-empresa" required></select></div>
-    <div class="field-block full"><label>Nome da obra *</label><input id="mo-nome" required placeholder="Ex: Edifício Residencial Solar" /></div>
-    <div class="field-block full"><label>Endereço</label><input id="mo-endereco" /></div>
-    <div class="field-block"><label>Contato (nome)</label><input id="mo-contato" /></div>
-    <div class="field-block"><label>Telefone / E-mail</label><input id="mo-telefone" /></div>
-    <div class="field-block"><label>Status</label><select id="mo-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+    <div class="field-block full"><label for="mo-empresa">Empresa *</label><select id="mo-empresa" required></select></div>
+    <div class="field-block full"><label for="mo-nome">Nome da obra *</label><input id="mo-nome" required placeholder="Ex: Edifício Residencial Solar" /></div>
+    <div class="field-block full"><label for="mo-endereco">Endereço</label><input id="mo-endereco" /></div>
+    <div class="field-block"><label for="mo-contato">Contato (nome)</label><input id="mo-contato" /></div>
+    <div class="field-block"><label for="mo-telefone">Telefone / E-mail</label><input id="mo-telefone" /></div>
+    <div class="field-block"><label for="mo-status">Status</label><select id="mo-status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
     <div class="field-block full" id="mo-contrato-section" style="grid-column:1/-1;display:none;background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
       <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Contrato PGR desta obra <span style="font-weight:400;color:var(--ink-muted)">(opcional — preenche automaticamente a Medição Mensal quando o PGR for enviado ao financeiro)</span></label>
       <div class="tipos-grid" id="mo-contrato-grid"></div>
@@ -939,22 +939,22 @@
 </div></div>
 
 <!-- MODAL DOCUMENTO -->
-<div class="modal-bg" id="modal-doc"><div class="modal">
-  <div class="modal-h"><div><h2 id="md-title">Novo documento</h2><p>PGR ou LTCAT vinculado à empresa</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-doc"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="md-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="md-title">Novo documento</h2><p>PGR ou LTCAT vinculado à empresa</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-doc"><input type="hidden" id="md-id" />
     <div id="md-reprovado-banner" style="display:none;background:var(--danger-bg,#fff0f0);border:1px solid var(--danger-line,#fca5a5);color:var(--danger-fg,#9B2A1A);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5"></div>
     <div class="form-grid">
-    <div class="field-block full"><label>Empresa *</label><select id="md-empresa" required></select></div>
-    <div class="field-block full"><label>Obra</label><select id="md-obra"><option value="">— Sem obra vinculada —</option></select></div>
-    <div class="field-block"><label>Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
+    <div class="field-block full"><label for="md-empresa">Empresa *</label><select id="md-empresa" required></select></div>
+    <div class="field-block full"><label for="md-obra">Obra</label><select id="md-obra"><option value="">— Sem obra vinculada —</option></select></div>
+    <div class="field-block"><label for="md-tipo">Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
     <input type="hidden" id="md-numero" value="" />
-    <div class="field-block"><label>Data de emissão *</label><input id="md-emissao" type="date" required min="2015-01-01" max="2100-12-31" /></div>
-    <div class="field-block"><label id="md-validade-label">Data de validade</label><input id="md-validade" type="date" min="2015-01-01" max="2100-12-31" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
-    <div class="field-block full"><label>Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
-    <div class="field-block full"><label>Observações</label><textarea id="md-obs" rows="2"></textarea></div>
+    <div class="field-block"><label for="md-emissao">Data de emissão *</label><input id="md-emissao" type="date" required min="2015-01-01" max="2100-12-31" /></div>
+    <div class="field-block"><label id="md-validade-label" for="md-validade">Data de validade</label><input id="md-validade" type="date" min="2015-01-01" max="2100-12-31" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
+    <div class="field-block full"><label for="md-resp">Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
+    <div class="field-block full"><label for="md-obs">Observações</label><textarea id="md-obs" rows="2"></textarea></div>
   </div>
   <div class="hist-section" id="md-hist-section" style="display:none">
-    <h4>Histórico de alterações</h4>
+    <h4 role="heading" aria-level="3">Histórico de alterações</h4>
     <div class="hist-lista" id="md-hist-lista"></div>
   </div>
   <input type="checkbox" id="md-env-assessoria" style="display:none" />
@@ -964,12 +964,12 @@
       <div class="fluxo-body">
         <div class="fluxo-title" id="md-step1-title">Seg. do Trabalho <span class="fluxo-prazo">· 10 dias</span></div>
         <div class="envio-row">
-          <label style="min-width:90px">Responsável</label>
+          <label style="min-width:90px" for="md-resp-elab">Responsável</label>
           <input type="text" id="md-resp-elab" list="responsaveis-elab" placeholder="Quem está elaborando" style="flex:1" />
           <datalist id="responsaveis-elab"></datalist>
         </div>
         <div class="envio-row">
-          <label style="min-width:90px">Início</label>
+          <label style="min-width:90px" for="md-inicio-elab">Início</label>
           <input type="date" id="md-inicio-elab" min="2015-01-01" max="2100-12-31" />
         </div>
         <div class="envio-row" style="align-items:center">
@@ -1009,30 +1009,30 @@
 </div></div>
 
 <!-- MODAL CONTRATO -->
-<div class="modal-bg" id="modal-contrato"><div class="modal">
-  <div class="modal-h"><div><h2 id="mc-title">Novo contrato de avaliações</h2><p>Define o saldo contratado para a empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mc-import-btn" onclick="document.getElementById('mc-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mc-pdf-input" accept=".pdf" style="display:none" onchange="importarContratoPDF(this.files[0])"><button class="btn ghost sm" data-close>✕</button></div></div>
+<div class="modal-bg" id="modal-contrato"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mc-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mc-title">Novo contrato de avaliações</h2><p>Define o saldo contratado para a empresa</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="mc-import-btn" onclick="document.getElementById('mc-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="mc-pdf-input" accept=".pdf" style="display:none" onchange="importarContratoPDF(this.files[0])"><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div></div>
   <div class="modal-b"><form id="form-contrato"><input type="hidden" id="mc-id" /><div class="form-grid">
-    <div class="field-block full"><label>Empresa *</label><select id="mc-empresa" required></select></div>
-    <div class="field-block full"><label>Obra</label><select id="mc-obra"><option value="">— Sem obra vinculada —</option></select></div>
-    <div class="field-block full"><label>Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
+    <div class="field-block full"><label for="mc-empresa">Empresa *</label><select id="mc-empresa" required></select></div>
+    <div class="field-block full"><label for="mc-obra">Obra</label><select id="mc-obra"><option value="">— Sem obra vinculada —</option></select></div>
+    <div class="field-block full"><label for="mc-qtd">Total contratado</label><input id="mc-qtd" type="number" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
     <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
       <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Quantidade por tipo de avaliação <span style="font-weight:400;color:var(--ink-muted)">(valor unitário fixo por tabela)</span></label>
       <div class="tipos-grid" id="mc-tipos-grid"></div>
     </div>
-    <div class="field-block"><label>Valor total do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
-    <div class="field-block full"><label>Observações</label><input id="mc-desc" /></div>
+    <div class="field-block"><label for="mc-valor">Valor total do contrato (R$)</label><input id="mc-valor" type="text" inputmode="numeric" placeholder="Ex.: 5.000,00" oninput="mascararReal(this);recalcTotalContrato()" /></div>
+    <div class="field-block full"><label for="mc-desc">Observações</label><input id="mc-desc" /></div>
   </div></form></div>
   <div class="modal-f"><button class="btn danger" id="mc-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mc-save">Salvar contrato</button></div>
 </div></div>
 
 <!-- MODAL AVALIAÇÃO -->
-<div class="modal-bg" id="modal-aval"><div class="modal">
-  <div class="modal-h"><div><h2>Lançar avaliação realizada</h2><p id="ma-sub">—</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-aval"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-aval-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-aval-titulo">Lançar avaliação realizada</h2><p id="ma-sub">—</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-aval">
     <input type="hidden" id="ma-contrato" /><input type="hidden" id="ma-id" />
     <input type="hidden" id="ma-data" />
     <div class="field-block" style="margin-bottom:12px">
-      <label>GHE — Grupo Homogêneo de Exposição</label>
+      <label for="ma-ghe">GHE — Grupo Homogêneo de Exposição</label>
       <div style="display:flex;gap:8px">
         <select id="ma-ghe" style="flex:1"><option value="">Sem GHE</option></select>
         <button type="button" id="ma-ghe-add" class="btn ghost sm">+ Novo GHE</button>
@@ -1045,66 +1045,66 @@
 </div></div>
 
 <!-- MODAL INSUMO -->
-<div class="modal-bg" id="modal-insumo"><div class="modal">
-  <div class="modal-h"><div><h2 id="mi-title">Novo insumo</h2><p>Preencha os dados do material</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-insumo"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mi-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mi-title">Novo insumo</h2><p>Preencha os dados do material</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-insumo"><input type="hidden" id="mi-id" />
     <div class="form-grid">
-      <div class="field-block full"><label>Nome do material *</label><input id="mi-nome" placeholder="Ex: Tubo de carvão ativado, Solução padrão…" required /></div>
-      <div class="field-block"><label>Data de chegada *</label><input id="mi-chegada" type="date" required /></div>
-      <div class="field-block"><label>Validade (dias) *</label><input id="mi-validade" type="number" min="1" placeholder="Ex: 10" required /></div>
-      <div class="field-block"><label>Quantidade</label><input id="mi-qtd" placeholder="Ex: 50 tubos, 1 frasco 500ml…" /></div>
+      <div class="field-block full"><label for="mi-nome">Nome do material *</label><input id="mi-nome" placeholder="Ex: Tubo de carvão ativado, Solução padrão…" required /></div>
+      <div class="field-block"><label for="mi-chegada">Data de chegada *</label><input id="mi-chegada" type="date" required /></div>
+      <div class="field-block"><label for="mi-validade">Validade (dias) *</label><input id="mi-validade" type="number" min="1" placeholder="Ex: 10" required /></div>
+      <div class="field-block"><label for="mi-qtd">Quantidade</label><input id="mi-qtd" placeholder="Ex: 50 tubos, 1 frasco 500ml…" /></div>
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mi-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mi-save">Salvar</button></div>
 </div></div>
 
 <!-- MODAL TURMA -->
-<div class="modal-bg" id="modal-turma"><div class="modal">
-  <div class="modal-h"><div><h2 id="mt-title">Nova turma</h2><p>Preencha os dados da turma de treinamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-turma"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mt-title">Nova turma</h2><p>Preencha os dados da turma de treinamento</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-turma"><input type="hidden" id="mt-id" />
     <div class="form-grid">
-      <div class="field-block full"><label>Norma (NR) *</label><select id="mt-tipo" required></select></div>
-      <div class="field-block"><label>Data *</label><input id="mt-data" type="date" required /></div>
-      <div class="field-block"><label>Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
-      <div class="field-block"><label>Validade do treinamento</label><input id="mt-validade" type="date" /></div>
-      <div class="field-block full"><label>Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
-      <div class="field-block"><label>Responsável Técnico</label><input id="mt-responsavel" placeholder="Nome do responsável técnico" /></div>
+      <div class="field-block full"><label for="mt-tipo">Norma (NR) *</label><select id="mt-tipo" required></select></div>
+      <div class="field-block"><label for="mt-data">Data *</label><input id="mt-data" type="date" required /></div>
+      <div class="field-block"><label for="mt-carga">Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
+      <div class="field-block"><label for="mt-validade">Validade do treinamento</label><input id="mt-validade" type="date" /></div>
+      <div class="field-block full"><label for="mt-local">Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
+      <div class="field-block"><label for="mt-responsavel">Responsável Técnico</label><input id="mt-responsavel" placeholder="Nome do responsável técnico" /></div>
       <div class="field-block">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label style="margin:0">Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar instrutores</button></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><label for="mt-instrutor-assinatura" style="margin:0">Instrutor</label><button type="button" class="btn ghost sm" id="mt-assinaturas-btn" style="padding:2px 8px;font-size:11px">Gerenciar instrutores</button></div>
         <select id="mt-instrutor-assinatura"><option value="">— selecione o instrutor —</option></select>
         <input id="mt-instrutor" type="hidden" />
       </div>
-      <div class="field-block" style="display:none"><label>Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
+      <div class="field-block" style="display:none"><label for="mt-responsavel-assinatura">Assinatura do Responsável Técnico</label><select id="mt-responsavel-assinatura"><option value="">— sem assinatura cadastrada (linha em branco) —</option></select></div>
     </div>
   </form></div>
   <div class="modal-f"><button class="btn danger" id="mt-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="mt-save">Salvar</button></div>
 </div></div>
 
 <!-- MODAL IMPORTAR PLANILHA DO SOC -->
-<div class="modal-bg" id="modal-soc"><div class="modal">
-  <div class="modal-h"><div><h2>Importar do SOC</h2><p id="soc-resumo"></p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-soc"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-soc-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-soc-titulo">Importar do SOC</h2><p id="soc-resumo"></p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <div id="soc-avisos"></div>
     <label style="font-weight:600;display:block;margin-bottom:6px">Obras da planilha</label>
     <div class="table-wrap"><table><thead><tr><th>Obra no SOC</th><th>Part.</th><th>Obra no sistema</th></tr></thead><tbody id="soc-obras"></tbody></table></div>
     <div class="form-grid" style="margin-top:14px">
-      <div class="field-block"><label>Instrutor *</label><select id="soc-instrutor"></select></div>
-      <div class="field-block"><label>Carga horária (h) *</label><input id="soc-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" /></div>
-      <div class="field-block"><label>Validade do treinamento</label><input id="soc-validade" type="date" /></div>
-      <div class="field-block full"><label>Local</label><input id="soc-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
+      <div class="field-block"><label for="soc-instrutor">Instrutor *</label><select id="soc-instrutor"></select></div>
+      <div class="field-block"><label for="soc-carga">Carga horária (h) *</label><input id="soc-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" /></div>
+      <div class="field-block"><label for="soc-validade">Validade do treinamento</label><input id="soc-validade" type="date" /></div>
+      <div class="field-block full"><label for="soc-local">Local</label><input id="soc-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
     </div>
   </div>
   <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="soc-confirmar">Importar</button></div>
 </div></div>
 
 <!-- MODAL INSTRUTOR (nome + assinatura) -->
-<div class="modal-bg" id="modal-instrutor"><div class="modal">
-  <div class="modal-h"><div><h2 id="min-title">Novo instrutor</h2><p>A assinatura sai automaticamente em todo certificado das turmas desse instrutor.</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-instrutor"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="min-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="min-title">Novo instrutor</h2><p>A assinatura sai automaticamente em todo certificado das turmas desse instrutor.</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><input type="hidden" id="min-id" />
     <div class="form-grid">
-      <div class="field-block full"><label>Nome *</label><input id="min-nome" placeholder="Nome completo do instrutor" /></div>
+      <div class="field-block full"><label for="min-nome">Nome *</label><input id="min-nome" placeholder="Nome completo do instrutor" /></div>
       <div class="field-block full">
-        <label>Imagem da assinatura (PNG/JPG até 500KB, fundo transparente fica melhor)</label>
+        <label for="min-imagem">Imagem da assinatura (PNG/JPG até 500KB, fundo transparente fica melhor)</label>
         <input type="file" id="min-imagem" accept="image/png,image/jpeg" />
       </div>
       <div class="field-block full"><div id="min-preview" style="min-height:70px;background:#f3f4f6;border:1px dashed var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:12px">Sem assinatura selecionada</div></div>
@@ -1114,8 +1114,8 @@
 </div></div>
 
 <!-- MODAL PARTICIPANTES DA TURMA -->
-<div class="modal-bg" id="modal-participantes"><div class="modal">
-  <div class="modal-h"><div><h2 id="mtp-title">Participantes</h2><p id="mtp-sub">Adicione os participantes desta turma</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-participantes"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtp-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mtp-title">Participantes</h2><p id="mtp-sub">Adicione os participantes desta turma</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <input type="hidden" id="mtp-turma-id" />
     <div style="margin-bottom:14px">
@@ -1139,10 +1139,10 @@
         <select id="mtp-empresa"><option value="">— Selecione —</option></select>
         <input id="mtp-empresa-livre" type="text" placeholder="Digite o nome da empresa…" style="display:none;width:100%;box-sizing:border-box" />
       </div>
-      <div class="field-block full"><label>Obra</label><select id="mtp-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
-      <div class="field-block"><label>Nome do participante *</label><input id="mtp-nome" placeholder="Nome completo" /></div>
-      <div class="field-block"><label>CPF</label><input id="mtp-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCpf(this)" /></div>
-      <div class="field-block full"><label>Função</label><input id="mtp-funcao" placeholder="Ex: Pedreiro, Eletricista…" /></div>
+      <div class="field-block full"><label for="mtp-obra">Obra</label><select id="mtp-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
+      <div class="field-block"><label for="mtp-nome">Nome do participante *</label><input id="mtp-nome" placeholder="Nome completo" /></div>
+      <div class="field-block"><label for="mtp-cpf">CPF</label><input id="mtp-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCpf(this)" /></div>
+      <div class="field-block full"><label for="mtp-funcao">Função</label><input id="mtp-funcao" placeholder="Ex: Pedreiro, Eletricista…" /></div>
       <div class="field-block full" style="align-self:flex-end"><button type="button" class="btn primary" id="mtp-add" style="width:100%">+ Adicionar participante</button></div>
     </div>
     <div class="table-wrap"><table id="tbl-participantes"><thead><tr><th>Nome</th><th>CPF</th><th>Empresa</th><th>Função</th><th></th></tr></thead><tbody></tbody></table></div>
@@ -1151,8 +1151,8 @@
 </div></div>
 
 <!-- MODAL PSICOSSOCIAL -->
-<div class="modal-bg" id="modal-psi"><div class="modal">
-  <div class="modal-h"><div><h2 id="mp-title">Nova Avaliação Psicossocial</h2><p id="mp-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-psi"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mp-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mp-title">Nova Avaliação Psicossocial</h2><p id="mp-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-psi"><input type="hidden" id="mp-id" />
     <div class="form-grid">
       <div class="field-block full">
@@ -1165,17 +1165,17 @@
         <select id="mp-empresa" required><option value="">— Selecione —</option></select>
         <input id="mp-empresa-livre" type="text" placeholder="Digite o nome da empresa…" style="display:none;width:100%;box-sizing:border-box" />
       </div>
-      <div class="field-block"><label>Status</label><select id="mp-status">
+      <div class="field-block"><label for="mp-status">Status</label><select id="mp-status">
         <option value="pendente">Pendente</option>
         <option value="realizado">Realizado</option>
         <option value="reagendado">Reagendado</option>
         <option value="cancelado">Cancelado</option>
       </select></div>
-      <div class="field-block"><label>Data *</label><input id="mp-data" type="date" required /></div>
-      <div class="field-block"><label>Horário</label><input id="mp-hora" type="time" /></div>
-      <div class="field-block full"><label>Local</label><input id="mp-local" placeholder="Local da avaliação" /></div>
-      <div class="field-block full"><label>Responsável / Aplicador</label><input id="mp-responsavel" placeholder="Nome do profissional" /></div>
-      <div class="field-block full"><label>Observações</label><input id="mp-obs" placeholder="Anotações gerais sobre a avaliação" /></div>
+      <div class="field-block"><label for="mp-data">Data *</label><input id="mp-data" type="date" required /></div>
+      <div class="field-block"><label for="mp-hora">Horário</label><input id="mp-hora" type="time" /></div>
+      <div class="field-block full"><label for="mp-local">Local</label><input id="mp-local" placeholder="Local da avaliação" /></div>
+      <div class="field-block full"><label for="mp-responsavel">Responsável / Aplicador</label><input id="mp-responsavel" placeholder="Nome do profissional" /></div>
+      <div class="field-block full"><label for="mp-obs">Observações</label><input id="mp-obs" placeholder="Anotações gerais sobre a avaliação" /></div>
       <div class="field-block full" id="mp-reagend-section" style="display:none">
         <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px">
           <b style="font-size:13px;color:#7a5f00">Motivo do reagendamento / cancelamento</b>
@@ -1192,8 +1192,8 @@
 </div></div>
 
 <!-- MODAL EVENTO (treinamento / palestra / auditoria) -->
-<div class="modal-bg" id="modal-evento"><div class="modal">
-  <div class="modal-h"><div><h2 id="mev-title">Novo evento</h2><p id="mev-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-evento"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mev-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="mev-title">Novo evento</h2><p id="mev-sub">Preencha os dados do agendamento</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><form id="form-evento"><input type="hidden" id="mev-id" /><input type="hidden" id="mev-tipo" />
     <div class="form-grid">
       <div class="field-block full" id="mev-empresa-block">
@@ -1206,20 +1206,20 @@
         <select id="mev-empresa" required><option value="">— Selecione —</option></select>
         <input id="mev-empresa-livre" type="text" placeholder="Digite o nome da empresa/obra…" style="display:none;width:100%;box-sizing:border-box" />
       </div>
-      <div class="field-block full"><label id="mev-tema-label">Tema / Título</label><input id="mev-tema" placeholder="Assunto do treinamento/palestra" /></div>
-      <div class="field-block"><label>Data *</label><input id="mev-data" type="date" required /></div>
-      <div class="field-block"><label>Horário</label><input id="mev-hora" type="time" /></div>
-      <div class="field-block full" id="mev-local-block"><label>Local</label><input id="mev-local" placeholder="Local do evento" /></div>
-      <div class="field-block full"><label id="mev-resp-label">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
-      <div class="field-block" id="mev-previstos-block"><label>Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
-      <div class="field-block" id="mev-presentes-block"><label>Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
-      <div class="field-block"><label>Status</label><select id="mev-status">
+      <div class="field-block full"><label id="mev-tema-label" for="mev-tema">Tema / Título</label><input id="mev-tema" placeholder="Assunto do treinamento/palestra" /></div>
+      <div class="field-block"><label for="mev-data">Data *</label><input id="mev-data" type="date" required /></div>
+      <div class="field-block"><label for="mev-hora">Horário</label><input id="mev-hora" type="time" /></div>
+      <div class="field-block full" id="mev-local-block"><label for="mev-local">Local</label><input id="mev-local" placeholder="Local do evento" /></div>
+      <div class="field-block full"><label id="mev-resp-label" for="mev-responsavel">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
+      <div class="field-block" id="mev-previstos-block"><label for="mev-previstos">Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
+      <div class="field-block" id="mev-presentes-block"><label for="mev-presentes">Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
+      <div class="field-block"><label for="mev-status">Status</label><select id="mev-status">
         <option value="agendado">Agendado</option>
         <option value="realizado">Realizado</option>
         <option value="reagendado">Reagendado</option>
         <option value="cancelado">Cancelado</option>
       </select></div>
-      <div class="field-block full"><label>Observações</label><input id="mev-obs" placeholder="Anotações gerais" /></div>
+      <div class="field-block full"><label for="mev-obs">Observações</label><input id="mev-obs" placeholder="Anotações gerais" /></div>
       <div class="field-block full" id="mev-reagend-section" style="display:none">
         <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px">
           <b style="font-size:13px;color:#7a5f00">Motivo do reagendamento / cancelamento</b>
@@ -1236,13 +1236,13 @@
 </div></div>
 
 <!-- MODAL NOTIFICAÇÕES -->
-<div class="modal-bg" id="modal-notify"><div class="modal">
-  <div class="modal-h"><div><h2>Configurações de notificação</h2><p>Escolha como ser avisado sobre vencimentos</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-notify"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-notify-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-notify-titulo">Configurações de notificação</h2><p>Escolha como ser avisado sobre vencimentos</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b"><div class="form-grid">
-    <div class="field-block"><label>Antecedência do alerta</label><select id="nf-dias"><option value="30">30 dias antes</option><option value="60">60 dias antes</option><option value="90" selected>90 dias antes</option><option value="120">120 dias antes</option></select><span class="hint">Documentos dentro desse prazo entram como "vencendo".</span></div>
-    <div class="field-block"><label>Banner no topo do sistema</label><select id="nf-banner"><option value="1" selected>Mostrar quando houver pendências</option><option value="0">Não mostrar</option></select></div>
-    <div class="field-block"><label>E-mail do responsável</label><input id="nf-email" type="email" placeholder="sst@suaempresa.com.br" /></div>
-    <div class="field-block"><label>Frequência mínima</label><select id="nf-freq"><option value="sempre">A cada abertura</option><option value="diaria" selected>Uma vez por dia</option><option value="semanal">Uma vez por semana</option></select></div>
+    <div class="field-block"><label for="nf-dias">Antecedência do alerta</label><select id="nf-dias"><option value="30">30 dias antes</option><option value="60">60 dias antes</option><option value="90" selected>90 dias antes</option><option value="120">120 dias antes</option></select><span class="hint">Documentos dentro desse prazo entram como "vencendo".</span></div>
+    <div class="field-block"><label for="nf-banner">Banner no topo do sistema</label><select id="nf-banner"><option value="1" selected>Mostrar quando houver pendências</option><option value="0">Não mostrar</option></select></div>
+    <div class="field-block"><label for="nf-email">E-mail do responsável</label><input id="nf-email" type="email" placeholder="sst@suaempresa.com.br" /></div>
+    <div class="field-block"><label for="nf-freq">Frequência mínima</label><select id="nf-freq"><option value="sempre">A cada abertura</option><option value="diaria" selected>Uma vez por dia</option><option value="semanal">Uma vez por semana</option></select></div>
     <div class="field-block full" id="nf-https-warn" style="display:none">
       <div style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-fg);padding:10px 13px;border-radius:8px;font-size:12.5px">
         ⚠ <b>Atenção:</b> Notificações requerem <b>HTTPS</b> em produção. Em HTTP o browser bloqueia as notificações. Use HTTPS ou localhost para testar.
@@ -1254,8 +1254,8 @@
 </div></div>
 
 <!-- MODAL CONFIG ENSAIOS (preço de venda + custo de laboratório) -->
-<div class="modal-bg" id="modal-config-ensaios"><div class="modal">
-  <div class="modal-h"><div><h2>Preços &amp; Custos por Ensaio</h2><p>Valor de venda e custo de laboratório usados nos contratos e no relatório LTCAT</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-config-ensaios"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-config-ensaios-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-config-ensaios-titulo">Preços &amp; Custos por Ensaio</h2><p>Valor de venda e custo de laboratório usados nos contratos e no relatório LTCAT</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <div class="table-wrap"><table>
       <thead><tr><th>Tipo de ensaio</th><th style="text-align:right">Venda (R$)</th><th style="text-align:right">Custo Lab (R$)</th><th></th></tr></thead>
@@ -1268,40 +1268,40 @@
 </div></div>
 
 <!-- MODAL DEVOLUÇÃO (assessoria registra retorno) -->
-<div class="modal-bg" id="modal-devolucao"><div class="modal" style="max-width:460px">
-  <div class="modal-h"><div><h2>Registrar devolução</h2><p>Confirme que o documento foi devolvido ao setor</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-devolucao"><div class="modal" style="max-width:460px" role="dialog" aria-modal="true" aria-labelledby="modal-devolucao-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-devolucao-titulo">Registrar devolução</h2><p>Confirme que o documento foi devolvido ao setor</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <input type="hidden" id="dev-id" />
     <div id="dev-info" style="background:var(--green-50);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.5"></div>
-    <div class="field-block"><label>Data da devolução</label><input type="date" id="dev-data" /></div>
+    <div class="field-block"><label for="dev-data">Data da devolução</label><input type="date" id="dev-data" /></div>
   </div>
   <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="dev-save">Confirmar devolução</button></div>
 </div></div>
 
 <!-- MODAL REPROVAR (assessoria devolve para correção) -->
-<div class="modal-bg" id="modal-reprovar"><div class="modal" style="max-width:480px">
-  <div class="modal-h"><div><h2>Reprovar documento</h2><p>O documento volta para a Segurança corrigir e reenviar</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-reprovar"><div class="modal" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="modal-reprovar-titulo" tabindex="-1">
+  <div class="modal-h"><div><h2 id="modal-reprovar-titulo">Reprovar documento</h2><p>O documento volta para a Segurança corrigir e reenviar</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <input type="hidden" id="rep-id" />
     <div id="rep-info" style="background:var(--danger-bg,#fff0f0);border:1px solid var(--danger-line,#fca5a5);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.5"></div>
-    <div class="field-block"><label>Motivo da reprovação *</label><textarea id="rep-motivo" rows="3" placeholder="Descreva o que precisa ser corrigido para a Segurança…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
+    <div class="field-block"><label for="rep-motivo">Motivo da reprovação *</label><textarea id="rep-motivo" rows="3" placeholder="Descreva o que precisa ser corrigido para a Segurança…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical"></textarea></div>
     <p style="font-size:12px;color:var(--ink-muted);margin:10px 2px 0">Ao reprovar, a contagem de prazo da assessoria é <b>zerada</b> — recomeça só quando a Segurança reenviar corrigido.</p>
   </div>
   <div class="modal-f"><button class="btn" data-close>Cancelar</button><button class="btn danger" id="rep-save">Reprovar documento</button></div>
 </div></div>
 
 <!-- MODAL MEDIÇÃO -->
-<div class="modal-bg" id="modal-medicao"><div class="modal">
-  <div class="modal-h"><div><h2 id="medicao-modal-title">Nova medição</h2><p>Lançamento de faturamento por serviço prestado</p></div><button class="btn ghost sm" data-close>✕</button></div>
+<div class="modal-bg" id="modal-medicao"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="medicao-modal-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="medicao-modal-title">Nova medição</h2><p>Lançamento de faturamento por serviço prestado</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
   <div class="modal-b">
     <input type="hidden" id="med-id" />
     <div class="form-grid">
-      <div class="field-block"><label>Empresa *</label><select id="med-empresa"></select></div>
-      <div class="field-block"><label>Obra</label><select id="med-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
-      <div class="field-block"><label>Tipo *</label><select id="med-tipo"><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
-      <div class="field-block"><label id="med-valor-label">Valor (R$) *</label><input type="number" id="med-valor" step="0.01" min="0" /></div>
-      <div class="field-block"><label>Data *</label><input type="date" id="med-data" /></div>
-      <div class="field-block" id="med-desc-block" style="grid-column:1/-1"><label>Descrição</label><input type="text" id="med-desc" placeholder="Ex: Atualização/Elaboração PGR" /></div>
+      <div class="field-block"><label for="med-empresa">Empresa *</label><select id="med-empresa"></select></div>
+      <div class="field-block"><label for="med-obra">Obra</label><select id="med-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
+      <div class="field-block"><label for="med-tipo">Tipo *</label><select id="med-tipo"><option value="PGR">PGR</option><option value="AUDITORIA">Auditoria</option><option value="LAUDO">Laudo</option><option value="PROJETO">Projeto</option><option value="LTCAT">LTCAT</option><option value="OUTRO">Outro</option></select></div>
+      <div class="field-block"><label id="med-valor-label" for="med-valor">Valor (R$) *</label><input type="number" id="med-valor" step="0.01" min="0" /></div>
+      <div class="field-block"><label for="med-data">Data *</label><input type="date" id="med-data" /></div>
+      <div class="field-block" id="med-desc-block" style="grid-column:1/-1"><label for="med-desc">Descrição</label><input type="text" id="med-desc" placeholder="Ex: Atualização/Elaboração PGR" /></div>
       <div class="field-block full" id="med-ltcat-section" style="grid-column:1/-1;display:none;background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
         <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Detalhamento de ensaios <span style="font-weight:400;color:var(--ink-muted)">(quantidade realizada por tipo)</span></label>
         <div class="tipos-grid" id="med-ensaios-grid"></div>
@@ -1318,19 +1318,19 @@
 </div></div>
 
 <!-- MODAL CONTRATO PGR -->
-<div class="modal-bg" id="modal-contrato-pgr"><div class="modal">
-  <div class="modal-h"><div><h2 id="cpgr-modal-title">Novo contrato PGR</h2><p>Selecione os produtos contratados — o valor total é somado automaticamente</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="cpgr-import-btn" onclick="document.getElementById('cpgr-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="cpgr-pdf-input" accept=".pdf" style="display:none" onchange="importarContratoPgrPDF(this.files[0])"><button class="btn ghost sm" data-close>✕</button></div></div>
+<div class="modal-bg" id="modal-contrato-pgr"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="cpgr-modal-title" tabindex="-1">
+  <div class="modal-h"><div><h2 id="cpgr-modal-title">Novo contrato PGR</h2><p>Selecione os produtos contratados — o valor total é somado automaticamente</p></div><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn ghost sm" id="cpgr-import-btn" onclick="document.getElementById('cpgr-pdf-input').click()" title="Importar dados do contrato PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar PDF</button><input type="file" id="cpgr-pdf-input" accept=".pdf" style="display:none" onchange="importarContratoPgrPDF(this.files[0])"><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div></div>
   <div class="modal-b">
     <input type="hidden" id="cpgr-id" />
     <div class="form-grid">
-      <div class="field-block full"><label>Empresa *</label><select id="cpgr-empresa"></select></div>
-      <div class="field-block full"><label>Obra</label><select id="cpgr-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
-      <div class="field-block full"><label>Total contratado</label><input id="cpgr-total" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
+      <div class="field-block full"><label for="cpgr-empresa">Empresa *</label><select id="cpgr-empresa"></select></div>
+      <div class="field-block full"><label for="cpgr-obra">Obra</label><select id="cpgr-obra"><option value="">— nenhuma (nível empresa) —</option></select></div>
+      <div class="field-block full"><label for="cpgr-total">Total contratado</label><input id="cpgr-total" type="text" readonly style="background:var(--green-50);color:var(--ink-muted);cursor:default" tabindex="-1" /></div>
       <div class="field-block full" style="background:var(--green-50);border:1px solid var(--line);border-radius:10px;padding:12px 14px">
         <label style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;display:block">Produtos contratados <span style="font-weight:400;color:var(--ink-muted)">(marque e informe o valor de cada um)</span></label>
         <div class="tipos-grid" id="cpgr-produtos-grid"></div>
       </div>
-      <div class="field-block full"><label>Observações</label><input type="text" id="cpgr-obs" /></div>
+      <div class="field-block full"><label for="cpgr-obs">Observações</label><input type="text" id="cpgr-obs" /></div>
     </div>
   </div>
   <div class="modal-f"><button class="btn danger" id="cpgr-delete" style="margin-right:auto;display:none">Excluir</button><button class="btn" data-close>Cancelar</button><button class="btn primary" id="cpgr-save">Salvar contrato</button></div>
@@ -1362,7 +1362,7 @@
   body.papel-assessoria .nav-sub, body.papel-financeiro .nav-sub, body.papel-assessoria .nav-caret, body.papel-financeiro .nav-caret, body.papel-financeiro #nav-aval-badge { display: none !important; }
 </style>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* ================== AUTENTICAÇÃO (Supabase Auth) ================== */
@@ -1990,7 +1990,7 @@ function renderHistoricoModal(docId){
   // Coordenador pode corrigir a data de cada item do histórico (o banco já permite via papel_full_access).
   const dtLocal = iso => { const d = new Date(iso), p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
   const quando = h => PAPEL === 'coordenador'
-    ? `<input type="datetime-local" value="${dtLocal(h.dataHora)}" onchange="editarDataHistorico('${h.id}', this.value, '${docId}')" style="font-size:11.5px;padding:2px 4px;align-self:flex-start">`
+    ? `<input type="datetime-local" value="${dtLocal(h.dataHora)}" onchange="editarDataHistorico('${h.id}', this.value, '${docId}')" style="font-size:12px;padding:2px 4px;align-self:flex-start">`
     : `<span class="hist-data">${fmtDateTime(h.dataHora)}</span>`;
   lista.innerHTML = hist.map(h => `<div class="hist-entry hist-${h.tipo}"><span class="hist-icon">${HIST_ICONS[h.tipo]||'📝'}</span><div class="hist-info"><span class="hist-desc">${escapeHtml(h.descricao)}</span>${quando(h)}</div></div>`).join('');
 }
@@ -2752,7 +2752,7 @@ function renderDashboard(){
       const cfg = STATUS_PSI[p.status] || {cls:'muted', label:p.status};
       const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
       return `<tr>
-        <td><b>${escapeHtml(p.empresaLivre || nomeEmpresa(p.empresa))}</b>${p.empresaLivre ? ' <span style="font-size:10px;color:var(--ink-muted);font-weight:400">(externa)</span>' : ''}</td>
+        <td><b>${escapeHtml(p.empresaLivre || nomeEmpresa(p.empresa))}</b>${p.empresaLivre ? ' <span style="font-size:11px;color:var(--ink-muted);font-weight:400">(externa)</span>' : ''}</td>
         <td class="tight">${dataFmt}</td>
         <td class="tight">${escapeHtml(p.hora) || '—'}</td>
         <td>${escapeHtml(p.local) || '—'}</td>
@@ -2772,7 +2772,7 @@ function renderDashboard(){
     cardElab.style.display = '';
     $('#tbl-elaboracoes tbody').innerHTML = elaboracoes.map(({d, f}) => {
       const faseTxt = f.fase === 1 ? 'Seg. do Trabalho (10d)' : 'Assessoria de Saúde (5d)';
-      const atrasoHtml = (d.atrasoFase1 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F1: +${d.atrasoFase1}d</span> ` : '') + (d.atrasoFase2 > 0 ? `<span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>` : '');
+      const atrasoHtml = (d.atrasoFase1 > 0 ? `<span class="pill danger" style="font-size:11px;padding:2px 6px">⚠ F1: +${d.atrasoFase1}d</span> ` : '') + (d.atrasoFase2 > 0 ? `<span class="pill danger" style="font-size:11px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>` : '');
       return `<tr>
         <td>${d.obra ? `<b>${escapeHtml(nomeObra(d.obra))}</b><br><small style="color:var(--ink-muted)">${escapeHtml(nomeEmpresa(d.empresa))}</small>` : `<b>${escapeHtml(nomeEmpresa(d.empresa))}</b>`}</td>
         <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
@@ -2936,10 +2936,10 @@ function renderDocs(){
       <td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}">${d.tipo}</span></td>
       <td class="tight">${fmtDate(d.emissao)}</td>
       <td class="tight">${fmtDate(d.validade)}</td>
-      <td><span class="pill ${s.key}">${s.label}</span>${d.reprovado ? `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px" title="${escapeHtml(d.motivoReprovacao)}">⛔ Reprovado p/ assessoria</span>` : ''}</td>
+      <td><span class="pill ${s.key}">${s.label}</span>${d.reprovado ? `<br><span class="pill danger" style="font-size:11px;padding:2px 6px;margin-top:2px" title="${escapeHtml(d.motivoReprovacao)}">⛔ Reprovado p/ assessoria</span>` : ''}</td>
       <td>${(()=>{ const f = faseDoc(d); let html = f ? `<span class="pill ${f.key}">${f.label}</span>` : '<span style="color:var(--ink-muted);font-size:12px">—</span>';
-        if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:10px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
-        if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:10px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
+        if(d.atrasoFase1 > 0) html += `<br><span class="pill danger" style="font-size:11px;padding:2px 6px;margin-top:2px">⚠ F1: +${d.atrasoFase1}d</span>`;
+        if(d.atrasoFase2 > 0) html += ` <span class="pill danger" style="font-size:11px;padding:2px 6px">⚠ F2: +${d.atrasoFase2}d</span>`;
         return html; })()}</td>
       <td>${entregaHtml}</td>
       <td>${ PAPEL === 'assessoria'
@@ -3058,7 +3058,7 @@ function renderAvaliacoes(){
         const gnome = a.ghe ? gheName(a.ghe) : '';
         return `<div class="ev-row">
           <span class="mono">${fmtDate(a.data)}</span>
-          <span><b>${escapeHtml(a.agente)}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${escapeHtml(gnome)}</span>` : ''}${a.foraDoContrato ? ` <span class="pill warn" style="font-size:10.5px;padding:1px 6px" title="Esse tipo de ensaio não consta no contrato desta empresa/obra">⚠ fora do contrato</span>` : ''}</span>
+          <span><b>${escapeHtml(a.agente)}</b>${gnome ? ` <span style="font-weight:400;color:var(--ink-muted);font-size:11px;background:var(--green-50,#f0fdf4);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap">🏷 ${escapeHtml(gnome)}</span>` : ''}${a.foraDoContrato ? ` <span class="pill warn" style="font-size:11px;padding:1px 6px" title="Esse tipo de ensaio não consta no contrato desta empresa/obra">⚠ fora do contrato</span>` : ''}</span>
           <span style="color:var(--ink-muted);font-size:12px">${a.envio_lab ? `🧪 Lab: ${fmtDate(a.envio_lab)}` : '<span style="color:#ccc">Não enviado</span>'}</span>
           <span style="display:flex;align-items:center;gap:8px">
             ${tipoInfo ? `<span class="pill solid-green">${fmtReal(tipoInfo.valor)}</span>` : ''}
@@ -3744,8 +3744,33 @@ function setupSort(tableId, key){
 }
 
 /* ================== MODAIS ================== */
-function openModal(id){ $('#'+id).classList.add('show'); }
-function closeModal(id){ $('#'+id).classList.remove('show'); }
+// Foco: ao abrir, vai para o proprio modal (o leitor de tela anuncia o titulo); Tab fica preso dentro dele;
+// ao fechar, devolve o foco a quem abriu. Fechar continua so pelo X/Cancelar (sem Esc nem clique fora).
+const _modalOpener = new Map();
+function openModal(id){
+  const bg = $('#'+id);
+  _modalOpener.set(id, document.activeElement);
+  bg.classList.add('show');
+  const m = bg.querySelector('.modal');
+  if(m) setTimeout(() => m.focus({preventScroll:true}), 0);
+}
+function closeModal(id){
+  $('#'+id).classList.remove('show');
+  const o = _modalOpener.get(id); _modalOpener.delete(id);
+  if(o && o.focus && document.contains(o)) o.focus({preventScroll:true});
+}
+document.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('sr-item')){ e.preventDefault(); e.target.click(); return; }
+  if(e.key !== 'Tab') return;
+  const m = document.querySelector('.modal-bg.show .modal');
+  if(!m) return;
+  const f = [...m.querySelectorAll('a[href],button:not([disabled]),input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x => x.offsetParent !== null);
+  if(!f.length) return;
+  const first = f[0], last = f[f.length-1];
+  const noModal = document.activeElement === m || !m.contains(document.activeElement);
+  if(e.shiftKey && (noModal || document.activeElement === first)){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && (noModal ? false : document.activeElement === last)){ e.preventDefault(); first.focus(); }
+});
 
 function populateObraSelect(empresaId, selectedObraId){
   const obras = empresaId ? state.obras.filter(o => o.empresa === empresaId && o.status === 'ativa') : [];
@@ -4109,7 +4134,7 @@ function medicaoCustoLab(m){
 
 function medicaoDescHtml(m){
   if(m.tipo === 'LTCAT' && m.detalhes && Object.keys(m.detalhes).length){
-    return Object.entries(m.detalhes).map(([n,q]) => `<span class="pill muted" style="font-size:10.5px;margin:1px 3px 1px 0">${escapeHtml(n)}: ${q}</span>`).join('');
+    return Object.entries(m.detalhes).map(([n,q]) => `<span class="pill muted" style="font-size:11px;margin:1px 3px 1px 0">${escapeHtml(n)}: ${q}</span>`).join('');
   }
   return escapeHtml(m.desc) || '—';
 }
@@ -4518,9 +4543,9 @@ function setupGlobalSearch(){
     const obr = state.obras.filter(o => normalizeTexto(o.nome).includes(q)).slice(0,5);
     const docs = state.docs.filter(d => normalizeTexto(d.numero).includes(q) || normalizeTexto(d.responsavel).includes(q)).slice(0,5);
     let html = '';
-    if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(e.nome)}</b></span><small>${escapeHtml(e.cnpj)}</small></div>`).join(''); }
-    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(o.nome)}</b></span><small>${escapeHtml(nomeEmpresa(o.empresa))}</small></div>`).join(''); }
-    if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${escapeHtml(d.numero)||''} <small>${escapeHtml(nomeEmpresa(d.empresa))}</small></span></div>`).join(''); }
+    if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(e.nome)}</b></span><small>${escapeHtml(e.cnpj)}</small></div>`).join(''); }
+    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(o.nome)}</b></span><small>${escapeHtml(nomeEmpresa(o.empresa))}</small></div>`).join(''); }
+    if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${escapeHtml(d.numero)||''} <small>${escapeHtml(nomeEmpresa(d.empresa))}</small></span></div>`).join(''); }
     if(!html) html = '<div class="sr-empty">Nenhum resultado</div>';
     res.innerHTML = html;
     res.classList.add('show');
@@ -6002,7 +6027,7 @@ function renderInstrutores(){
   tbody.innerHTML = lista.map(a => {
     const qtd = state.turmas.filter(t => t.instrutorAssinatura === a.id || t.responsavelAssinatura === a.id).length;
     return `<tr>
-      <td><b>${escapeHtml(a.nome)}</b>${a.id === padraoId ? ' <span class="pill ok" style="font-size:10.5px">Responsável técnico (padrão)</span>' : ''}</td>
+      <td><b>${escapeHtml(a.nome)}</b>${a.id === padraoId ? ' <span class="pill ok" style="font-size:11px">Responsável técnico (padrão)</span>' : ''}</td>
       <td><img src="${a.imagem}" alt="" style="max-height:34px;max-width:160px;object-fit:contain"></td>
       <td>${qtd} turma${qtd !== 1 ? 's' : ''}</td>
       <td style="text-align:right"><button class="btn sm" onclick="openInstrutor('${a.id}')">Editar</button></td>
@@ -7658,7 +7683,7 @@ h1,h2,h3,h4,.brand-text b,.tile-value,.login-card h1{font-family:var(--font-disp
 h1,h2,h3,h4{letter-spacing:-.022em}
 .topbar h1{font-size:19px;font-weight:700}
 .page-h h2{font-size:25px;font-weight:700}
-.crumbs{font-size:10.5px;letter-spacing:.13em;color:var(--ink-muted);font-weight:600}
+.crumbs{font-size:11px;letter-spacing:.13em;color:var(--ink-muted);font-weight:600}
 .card-h h3{font-size:14.5px;font-weight:700}
 .mono,td .mono,.progress-row span,.sr-item small,.autofill small{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
 
@@ -7667,21 +7692,21 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 .brand{padding:4px 6px 16px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:10px}
 .logo{width:36px;height:36px}
 .brand-text b{font-size:14.5px;font-weight:800;letter-spacing:.01em;color:#fff}
-.brand-text span{font-size:9.5px;letter-spacing:.16em;color:#8FBF9E}
-.navlabel{font-size:9.5px;letter-spacing:.18em;color:rgba(159,207,175,.55);padding:16px 10px 6px;font-weight:700}
+.brand-text span{font-size:11px;letter-spacing:.16em;color:#8FBF9E}
+.navlabel{font-size:11px;letter-spacing:.18em;color:rgba(159,207,175,.55);padding:16px 10px 6px;font-weight:700}
 .navitem{position:relative;padding:8px 11px;border-radius:8px;font-size:13.5px;font-weight:500;color:#C6DCCC;gap:10px;transition:background .14s,color .14s}
 .navitem svg{width:17px;height:17px;opacity:.72}
 .navitem:hover{background:rgba(255,255,255,.06);color:#EAF4EC}
 .navitem.active,.navitem.subitem.active,.navitem.subitem2.active{background:rgba(63,166,92,.16);color:#fff;box-shadow:none}
 .navitem.active svg{opacity:1;color:#6FD08C}
 .navitem.active::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:0 3px 3px 0;background:#6FD08C}
-.navitem .badge{background:rgba(255,255,255,.12);color:#FFD9D2;font-size:10.5px;font-weight:700;padding:1px 7px;min-width:20px;text-align:center}
+.navitem .badge{background:rgba(255,255,255,.12);color:#FFD9D2;font-size:11px;font-weight:700;padding:1px 7px;min-width:20px;text-align:center}
 .navitem.active .badge{background:#fff;color:var(--danger-fg)}
 .nav-sub{border-left:1px solid rgba(255,255,255,.09);margin-left:16px;padding-left:6px}
 .navitem.subitem,.navitem.subitem2{font-size:12.5px;color:#A9C7B2}
 .logout-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:12.5px;font-weight:500;transition:background .14s}
 .logout-btn:hover{background:rgba(255,255,255,.12)}
-.sidebar-foot{font-size:10.5px;color:rgba(159,207,175,.45)}
+.sidebar-foot{font-size:11px;color:rgba(159,207,175,.45)}
 @media (max-width:960px){.navitem.active::before{display:none}}
 
 /* Topbar & busca */
@@ -7709,7 +7734,7 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 .tiles{gap:14px;margin-bottom:20px}
 .tile{padding:16px 18px;border-radius:var(--radius);gap:6px;position:relative;overflow:hidden;min-height:118px;justify-content:center;transition:box-shadow .18s,transform .18s}
 .tile:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-.tile-label{font-size:10.5px;letter-spacing:.11em;font-weight:700;color:var(--ink-muted)}
+.tile-label{font-size:11px;letter-spacing:.11em;font-weight:700;color:var(--ink-muted)}
 .tile-value{font-size:36px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .tile-foot{font-size:12px;margin-top:2px;color:var(--ink-muted)}
 .tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line-strong)}
@@ -7724,7 +7749,7 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 /* Tabelas — compactas */
 .table-wrap{overflow:auto;border-radius:0 0 var(--radius) var(--radius)}
 table{font-size:13px}
-thead th{position:sticky;top:0;z-index:2;padding:9px 14px;background:#F1F6F2;color:var(--ink-muted);font-size:10.5px;letter-spacing:.1em;font-weight:700;border-bottom:1px solid var(--line-strong)}
+thead th{position:sticky;top:0;z-index:2;padding:9px 14px;background:#F1F6F2;color:var(--ink-muted);font-size:11px;letter-spacing:.1em;font-weight:700;border-bottom:1px solid var(--line-strong)}
 thead th:hover{color:var(--green-700)}
 tbody td{padding:9px 14px;border-bottom:1px solid var(--line-strong);vertical-align:middle}
 tbody tr:nth-child(even){background:rgba(244,249,245,.55)}
@@ -7733,7 +7758,7 @@ tbody tr:last-child td{border-bottom:none}
 td.tight,td .mono{font-variant-numeric:tabular-nums}
 
 /* Badges / pills */
-.pill{padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.01em;border-radius:99px;line-height:1.55}
+.pill{padding:2px 8px;font-size:12px;font-weight:700;letter-spacing:.01em;border-radius:99px;line-height:1.55}
 .pill::before{width:5px;height:5px;opacity:.9}
 .pill.ok{background:var(--ok-bg);color:var(--ok-fg)}
 .pill.warn{background:var(--warn-bg);color:var(--warn-fg)}
@@ -7749,7 +7774,7 @@ td.tight,td .mono{font-variant-numeric:tabular-nums}
 .filters .field select,.filters .field input{padding:7px 10px}
 .field-block input,.field-block select,.field-block textarea{padding:8px 11px}
 .filters .field select:focus,.filters .field input:focus,.field-block input:focus,.field-block select:focus,.field-block textarea:focus,.ss-input:focus,.login-field input:focus{outline:none;border-color:var(--green-500);box-shadow:var(--ring)}
-.field-block .hint{font-size:10.5px;color:var(--ink-muted)}
+.field-block .hint{font-size:12px;color:var(--ink-muted)}
 input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 
 /* Modais */
@@ -7783,9 +7808,9 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 .tile.ok .tile-value{color:var(--ok-fg)}
 .tile.warn .tile-value{color:#A06908}
 .tile.danger .tile-value{color:var(--danger-fg)}
-.kpi .tile-label{font-size:10.5px;letter-spacing:.12em;font-weight:700}
-.kpi .tile-foot{font-size:11.5px;line-height:1.35}
-.kpi-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--green-100);color:var(--green-900);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.kpi .tile-label{font-size:11px;letter-spacing:.12em;font-weight:700}
+.kpi .tile-foot{font-size:12px;line-height:1.35}
+.kpi-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--green-100);color:var(--green-900);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .tile.accent .kpi-badge{background:rgba(255,255,255,.16);color:#EAF4EC}
 .tile.warn .kpi-badge{background:var(--warn-bg);color:var(--warn-fg)}
 .tile.danger .kpi-badge{background:var(--danger-bg);color:var(--danger-fg)}
@@ -7797,7 +7822,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 .tile.ok .kpi-meter i{background:var(--ok-fg)}
 .tile.warn .kpi-meter i{background:#D69A22}
 .tile.danger .kpi-meter i{background:var(--danger-fg)}
-.kpi-status{position:absolute;top:16px;right:18px;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.kpi-status{position:absolute;top:16px;right:18px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
 .kpi-top .kpi-status{position:static}
 .st-ok{background:var(--ok-bg);color:var(--ok-fg)}
 .st-warn{background:var(--warn-bg);color:var(--warn-fg)}
@@ -7814,13 +7839,13 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 .kpi-badge-inline{background:var(--ok-bg);color:var(--ok-fg)}
 .kpi-gauge-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 20px;background:radial-gradient(120% 90% at 50% 0%,#FFFFFF 0%,#F1F7F2 100%);border:1px solid var(--line)}
 .gauge-num{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:40px;font-weight:800;letter-spacing:-1.5px}
-.gauge-cap{font-size:9.5px;font-weight:800;fill:#8D9C93;letter-spacing:.16em}
+.gauge-cap{font-size:11px;font-weight:800;fill:#8D9C93;letter-spacing:.16em}
 .gauge-foot{display:flex;align-items:center;gap:8px;margin-top:2px}
-.gauge-meta{font-size:11px;color:var(--ink-muted);font-weight:600}
-.gauge-delta{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#EFF3F0;color:var(--ink-soft)}
+.gauge-meta{font-size:12px;color:var(--ink-muted);font-weight:600}
+.gauge-delta{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:#EFF3F0;color:var(--ink-soft)}
 .gauge-delta.up{background:var(--ok-bg);color:var(--ok-fg)}
 .gauge-delta.down{background:var(--danger-bg);color:var(--danger-fg)}
-.ind-pill{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:99px}
+.ind-pill{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:99px}
 .ind-pill.ok{background:var(--ok-bg);color:var(--ok-fg)}
 .ind-pill.warn{background:var(--warn-bg);color:var(--warn-fg)}
 .ind-pill.bad{background:var(--danger-bg);color:var(--danger-fg)}
@@ -7834,12 +7859,12 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 .ins.ok{border-left-color:var(--green-500)}
 .ins.warn{border-left-color:#F0B429}
 .ins.bad{border-left-color:#E05260}
-.ins-t{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-muted)}
+.ins-t{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-muted)}
 .ins-v{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.4px;line-height:1.15}
-.ins-s{font-size:11.5px;color:var(--ink-soft)}
+.ins-s{font-size:12px;color:var(--ink-soft)}
 /* Heatmap da série histórica */
 .heat-row td{background:#F7FAF8}
-.heat{display:inline-block;min-width:44px;padding:4px 8px;border-radius:7px;font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.heat{display:inline-block;min-width:44px;padding:4px 8px;border-radius:7px;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
 .heat.ok{background:#DCF0E2;color:#155E2C}
 .heat.warn{background:#FDF0D3;color:#8A5B05}
 .heat.bad{background:#FBE0E2;color:#A31D28}
@@ -7852,7 +7877,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 .demo-sep::before,.demo-sep::after{content:"";flex:1;height:1px;background:var(--line)}
 .demo-btn{width:100%;padding:10px 14px;border-radius:9px;border:1px solid var(--green-300);background:var(--green-50);color:var(--green-900);font-weight:700;font-size:13.5px;cursor:pointer;transition:background .15s,border-color .15s}
 .demo-btn:hover{background:var(--green-100);border-color:var(--green-500)}
-.demo-flag{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:150;background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:99px;box-shadow:var(--shadow-lg);display:none;align-items:center;gap:8px}
+.demo-flag{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:150;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;box-shadow:var(--shadow-lg);display:none;align-items:center;gap:8px}
 .demo-flag.show{display:inline-flex}
 .demo-flag button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:99px;padding:2px 9px;font-size:11px;font-weight:600}
 
@@ -7870,22 +7895,22 @@ input[type=checkbox],input[type=radio]{accent-color:var(--green-700)}
 /* Barras de busca e filtros */
 .filters{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow-sm);align-items:flex-end;flex-wrap:wrap}
 .filters .field{margin:0}
-.filters .field label{text-transform:uppercase;letter-spacing:.09em;font-size:10px;margin-bottom:4px}
+.filters .field label{text-transform:uppercase;letter-spacing:.09em;font-size:11px;margin-bottom:4px}
 
 /* Tabelas */
 table{border-collapse:separate;border-spacing:0}
-thead th{background:#F3F8F4;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+thead th{background:#F3F8F4;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;border-bottom:1px solid var(--line-strong);white-space:nowrap}
 tbody td{font-size:13px;border-bottom:1px solid var(--line-strong);vertical-align:middle}
 tbody tr:hover td{background:var(--green-50)}
 tbody tr:last-child td{border-bottom:none}
-.sortarrow{opacity:.45;font-size:10px}
+.sortarrow{opacity:.45;font-size:11px}
 .table-wrap table{width:100%}
 
 /* Cartões de KPI de Relatórios / LTCAT com a mesma linguagem executiva */
 .rel-kpi{border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
-.rel-kpi .kpi-label{font-size:10.5px;letter-spacing:.11em;font-weight:700}
+.rel-kpi .kpi-label{font-size:11px;letter-spacing:.11em;font-weight:700}
 .rel-kpi .kpi-val{font-family:var(--font-display);font-size:32px;font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--ink)}
-.rel-kpi .kpi-sub{font-size:11.5px;color:var(--ink-muted)}
+.rel-kpi .kpi-sub{font-size:12px;color:var(--ink-muted)}
 .rel-kpi.kpi-ok{background:#fff;border-left:0}
 .rel-kpi.kpi-warn{background:#fff;border-left:0}
 .rel-kpi.kpi-danger{background:#fff;border-left:0}
@@ -7898,21 +7923,21 @@ tbody tr:last-child td{border-bottom:none}
 .rel-kpi.kpi-danger .kpi-val{color:var(--danger-fg)}
 .rel-sec h3{font-family:var(--font-display);font-size:15px;font-weight:800;letter-spacing:-.02em}
 .ltcat-kpi-card{border:1px solid var(--line);border-left:3px solid var(--green-500);border-radius:var(--radius);padding:16px 18px;text-align:left;box-shadow:var(--shadow-sm)}
-.ltcat-kpi-card h3{font-size:10.5px;letter-spacing:.11em;font-weight:700;color:var(--ink-muted)}
+.ltcat-kpi-card h3{font-size:11px;letter-spacing:.11em;font-weight:700;color:var(--ink-muted)}
 .ltcat-kpi-card p{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-top:6px;font-variant-numeric:tabular-nums}
 
 /* Agenda e calendário */
 .psi-cal-wrap{border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 .psi-cal-nav{background:#F3F8F4}
 .psi-cal-titulo{font-family:var(--font-display);letter-spacing:-.01em}
-.psi-cal-hd{background:#F3F8F4;font-size:9.5px;letter-spacing:.12em}
-.psi-cal-badge{border-radius:5px;font-size:9.5px;font-weight:700}
+.psi-cal-hd{background:#F3F8F4;font-size:11px;letter-spacing:.12em}
+.psi-cal-badge{border-radius:5px;font-size:11px;font-weight:700}
 .psi-cal-day.hoje .psi-cal-num{background:var(--green-700)}
 .agenda-view{gap:14px}
 
 /* Formulários e modais (14 janelas) */
 .modal-b .form-grid{gap:13px 14px}
-.field-block label{display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.09em;font-size:10px;color:var(--ink-soft);font-weight:700}
+.field-block label{display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.09em;font-size:11px;color:var(--ink-soft);font-weight:700}
 .field-block input[type=checkbox]{width:auto}
 .field-block label:has(input),.filters label:has(input){text-transform:none;letter-spacing:normal;font-size:12.5px;font-weight:600;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
 .field-block textarea{min-height:76px;line-height:1.5;resize:vertical}
@@ -7924,12 +7949,24 @@ tbody tr:last-child td{border-bottom:none}
 .tipo-row input{padding:6px 9px;border-radius:7px}
 .fluxo-step .fluxo-num{font-weight:800;font-family:var(--font-display)}
 .fluxo-title{font-size:13px;font-weight:700}
-.hint{font-size:10.5px;color:var(--ink-muted)}
+.hint{font-size:12px;color:var(--ink-muted)}
 
 /* Buscador global e listas auxiliares */
-.sr-head{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);font-weight:700}
+.sr-head{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);font-weight:700}
 .sr-item{border-radius:8px;font-size:13px}
 .rel-chk{font-size:12.5px}
+
+/* acessibilidade: foco visivel em qualquer controle e movimento reduzido sem perder o estado */
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,[role="button"]:focus-visible,summary:focus-visible{outline:2px solid var(--green-700)!important;outline-offset:2px}
+.modal:focus{outline:none}
+@media (prefers-reduced-motion:reduce){.modal{animation:none}.toast{transform:none;transition:opacity .15s}.progress-bar{transition:none}.btn,.navitem{transition:none}}
+/* toque (celular/tablet): alvos de 44px e campos a 16px (o iOS amplia a tela em campo menor que isso). Mouse nao muda. */
+@media (pointer:coarse){
+  .btn,.btn.sm,.navitem,.sr-item,.login-btn,.logout-btn{min-height:44px}
+  .btn.sm{min-width:44px;justify-content:center}
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea{min-height:44px;font-size:16px}
+  input[type=checkbox],input[type=radio]{width:22px;height:22px}
+}
 </style>
 
 <div class="demo-flag" id="demoFlag">Modo Demonstração · dados fictícios<button type="button" onclick="location.reload()">Sair</button></div>
