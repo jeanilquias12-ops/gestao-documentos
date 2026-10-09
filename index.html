@@ -7958,6 +7958,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   input[type=checkbox],input[type=radio]{width:22px;height:22px}
 }
 .card .filters{background:transparent;border:0;border-radius:0;padding:14px 16px;margin-bottom:0;box-shadow:none}
+/* entre ~600 e 960px a coluna unica ("1fr" = minmax(auto,1fr)) crescia com a tabela mais larga e a pagina inteira rolava de lado; agora so a tabela rola */
+@media (max-width:960px){.app.authenticated{grid-template-columns:minmax(0,1fr)}}
+.main{min-width:0}
 </style>
 
 <div class="demo-flag" id="demoFlag">Modo Demonstração · dados fictícios<button type="button" onclick="location.reload()">Sair</button></div>
