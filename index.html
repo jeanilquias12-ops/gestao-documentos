@@ -51,7 +51,7 @@
   .brand-text{display:flex;flex-direction:column;line-height:1.1}
   .brand-text b{font-size:14px;letter-spacing:.02em}
   .brand-text span{font-size:11px;color:#A8D5B5;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
-  .navlabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(168,213,181,.6);padding:14px 8px 6px}
+  .navlabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(168,213,181,.8);padding:14px 8px 6px}
   .navitem{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:#CDE3D2;font-size:14px;font-weight:500;border:none;background:transparent;width:100%;text-align:left;cursor:pointer;transition:background .15s}
   .navitem:hover{background:rgba(168,213,181,.10)}
   .navitem.active{background:rgba(168,213,181,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(168,213,181,.22)}
@@ -68,7 +68,7 @@
   .navitem.subitem2.active{background:rgba(168,213,181,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(168,213,181,.22)}
   .logout-btn{margin-top:8px;padding:9px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(168,213,181,.2);color:#E6F1E9;border-radius:9px;font-size:13px;cursor:pointer;text-align:center;width:100%;transition:background .15s}
   .logout-btn:hover{background:rgba(168,213,181,.18)}
-  .sidebar-foot{margin-top:8px;font-size:11px;color:rgba(168,213,181,.5);padding:8px;line-height:1.5}
+  .sidebar-foot{margin-top:8px;font-size:11px;color:rgba(168,213,181,.78);padding:8px;line-height:1.5}
 
   .main{padding:0;display:flex;flex-direction:column;min-height:100vh}
   .topbar{display:flex;align-items:center;gap:16px;padding:18px 32px;background:rgba(255,255,255,.85);backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
@@ -124,8 +124,8 @@
   .tile-value{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1}
   .tile-foot{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
   .tile.accent{background:linear-gradient(140deg,var(--green-700) 0%,var(--green-900) 100%);color:#fff;border-color:transparent}
-  .tile.accent .tile-label{color:rgba(255,255,255,.75)}
-  .tile.accent .tile-foot{color:rgba(255,255,255,.7)}
+  .tile.accent .tile-label{color:rgba(255,255,255,.82)}
+  .tile.accent .tile-foot{color:rgba(255,255,255,.8)}
   .tile.warn .tile-value{color:var(--warn-fg)}
   .tile.danger .tile-value{color:var(--danger-fg)}
   .tile.ok .tile-value{color:var(--ok-fg)}
@@ -691,7 +691,7 @@
       <section class="page" id="page-treinamentos">
         <div class="page-h">
           <div><h2>Treinamentos</h2><p>Turmas, participantes e emissão de certificado por norma (NR).</p></div>
-          <div class="page-h-actions"><button class="btn" id="btnImportSoc">📥 Importar do SOC</button><input type="file" id="soc-xlsx-input" accept=".xlsx,.xls" style="display:none" /><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
+          <div class="page-h-actions"><button class="btn" id="btnImportSoc" title="Planilha de agenda do SOC (.xlsx, primeira aba) com as colunas Data, Compromisso, Tipo Compromisso, Funcionário, CPF, Cargo e Razão Social (ou Unidade)">📥 Importar do SOC</button><input type="file" id="soc-xlsx-input" accept=".xlsx,.xls" style="display:none" /><button class="btn primary" id="btnNewTurma">+ Nova turma</button></div>
         </div>
         <div class="filters">
           <div class="field"><label for="f-turma-tipo">Norma</label><select id="f-turma-tipo"><option value="">Todas</option></select></div>
@@ -3181,12 +3181,12 @@ function montarRelatorio(){
           <img src="data:image/png;base64,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" alt="SECONCI" style="width:100%;height:100%;object-fit:contain">
         </div>
         <div>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600">SECONCI Goiás · SST</div>
+          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.8);font-weight:600">SECONCI Goiás · SST</div>
           <b style="font-size:19px;color:#fff">Relatório de Atividades</b><br>
-          <span style="color:rgba(255,255,255,.75);font-size:13px">${periodoLabel}</span>
+          <span style="color:rgba(255,255,255,.85);font-size:13px">${periodoLabel}</span>
         </div>
       </div>
-      <span style="color:rgba(255,255,255,.6);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+      <span style="color:rgba(255,255,255,.8);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
     </div></div>`;
 
   // Resumo geral
@@ -3705,12 +3705,12 @@ function montarRelatorioCliente(){
           <img src="data:image/png;base64,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" alt="SECONCI" style="width:100%;height:100%;object-fit:contain">
         </div>
         <div>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600">SECONCI Goiás · SST</div>
+          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.8);font-weight:600">SECONCI Goiás · SST</div>
           <b style="font-size:19px;color:#fff">Relatório de Serviços Realizados</b><br>
-          <span style="color:rgba(255,255,255,.75);font-size:13px">${empNome}${obraNome ? ' — ' + obraNome : ''} · ${periodoLabel}</span>
+          <span style="color:rgba(255,255,255,.85);font-size:13px">${empNome}${obraNome ? ' — ' + obraNome : ''} · ${periodoLabel}</span>
         </div>
       </div>
-      <span style="color:rgba(255,255,255,.6);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+      <span style="color:rgba(255,255,255,.8);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
     </div></div>`;
 
   html += `<div class="ltcat-report">
@@ -3867,7 +3867,8 @@ async function iniciarDemanda(id){
 async function excluirDemanda(){
   const id = $('#dm-id').value;
   if(!id) return;
-  if(!confirm('Excluir esta demanda?')) return;
+  const _dm = state.demandas.find(x => x.id === id);
+  if(!confirm(`Excluir a demanda "${_dm?.titulo || ''}"${_dm?.empresa ? ' de ' + nomeEmpresa(_dm.empresa) : ''}?\n\nNão dá para desfazer.`)) return;
   try {
     await excluirDemandaNuvem(id);
     state.demandas = state.demandas.filter(x => x.id !== id);
@@ -5069,7 +5070,8 @@ function setupEvents(){
     }
   };
   $('#md-delete').onclick = async () => {
-    if(!confirm('Excluir documento?')) return;
+    const _dd = state.docs.find(d => d.id === $('#md-id').value);
+    if(!confirm(_dd ? `Excluir ${_dd.tipo}${_dd.numero ? ' nº ' + _dd.numero : ''} de ${_dd.obra ? nomeObra(_dd.obra) + ' — ' : ''}${nomeEmpresa(_dd.empresa)}?\n\nNão dá para desfazer.` : 'Excluir documento?')) return;
     const did = $('#md-id').value;
     try {
       await excluirDocumentoNuvem(did);
@@ -5101,7 +5103,9 @@ function setupEvents(){
     }
   };
   $('#mc-delete').onclick = async () => {
-    if(!confirm('Excluir contrato? Avaliações lançadas também serão removidas.')) return;
+    const _ct = state.contratos.find(c => c.id === $('#mc-id').value);
+    const _nAv = state.avaliacoes.filter(a => a.contrato === $('#mc-id').value).length;
+    if(!confirm(`Excluir o contrato de ${_ct ? (_ct.obra ? nomeObra(_ct.obra) + ' — ' : '') + nomeEmpresa(_ct.empresa) : 'avaliações'}?\n\n${_nAv} avaliação(ões) lançada(s) nele também serão removidas. Não dá para desfazer.`)) return;
     const id = $('#mc-id').value;
     const aIds = state.avaliacoes.filter(a => a.contrato === id).map(a => a.id);
     try {
@@ -5149,7 +5153,8 @@ function setupEvents(){
     }
   };
   $('#med-delete').onclick = async () => {
-    if(!confirm('Excluir esta medição?')) return;
+    const _md = state.medicoes.find(m => m.id === $('#med-id').value);
+    if(!confirm(`Excluir a medição${_md ? ' de ' + (_md.tipo || '') + ' — ' + ((_md.obra && nomeObra(_md.obra)) || nomeEmpresa(_md.empresa)) + (_md.data ? ' (' + fmtDate(_md.data) + ')' : '') : ''}?\n\nNão dá para desfazer.`)) return;
     const id = $('#med-id').value;
     try {
       await excluirMedicaoNuvem(id);
@@ -5179,7 +5184,8 @@ function setupEvents(){
     }
   };
   $('#cpgr-delete').onclick = async () => {
-    if(!confirm('Excluir este contrato PGR?')) return;
+    const _cp = state.contratosPgr.find(c => c.id === $('#cpgr-id').value);
+    if(!confirm(`Excluir o contrato PGR de ${_cp ? (_cp.obra ? nomeObra(_cp.obra) + ' — ' : '') + nomeEmpresa(_cp.empresa) : 'esta empresa'}?\n\nNão dá para desfazer.`)) return;
     const id = $('#cpgr-id').value;
     try {
       await excluirContratoPgrNuvem(id);
@@ -5348,7 +5354,8 @@ function setupEvents(){
     }
   };
   $('#ma-delete').onclick = async () => {
-    if(!confirm('Excluir avaliação?')) return;
+    const _av = state.avaliacoes.find(a => a.id === $('#ma-id').value);
+    if(!confirm(`Excluir a avaliação${_av ? ' de ' + (_av.agente || '') + (_av.data ? ' (' + fmtDate(_av.data) + ')' : '') : ''}?\n\nNão dá para desfazer.`)) return;
     const aid = $('#ma-id').value;
     const avExcluida = state.avaliacoes.find(a => a.id === aid);
     try {
@@ -5510,7 +5517,8 @@ function setupEvents(){
   };
 
   $('#mp-delete').onclick = async () => {
-    if(!confirm('Excluir esta avaliação psicossocial?')) return;
+    const _ps = state.psicossociais.find(p => p.id === $('#mp-id').value);
+    if(!confirm(`Excluir a avaliação psicossocial${_ps ? ' de ' + (_ps.empresaLivre || nomeEmpresa(_ps.empresa)) + (_ps.data ? ' (' + fmtDate(_ps.data) + ')' : '') : ''}?\n\nNão dá para desfazer.`)) return;
     const id = $('#mp-id').value;
     try {
       await excluirPsiNuvem(id);
@@ -5613,7 +5621,8 @@ function setupEvents(){
   };
   // Modal evento — excluir
   $('#mev-delete').onclick = async () => {
-    if(!confirm('Excluir este registro?')) return;
+    const _ev = (state.eventos || []).find(x => x.id === $('#mev-id').value);
+    if(!confirm(`Excluir ${_ev ? '"' + (_ev.tema || _ev.tipo || 'registro') + '" de ' + (_ev.empresaLivre || nomeEmpresa(_ev.empresa)) + (_ev.data ? ' (' + fmtDate(_ev.data) + ')' : '') : 'este registro'}?\n\nNão dá para desfazer.`)) return;
     const id = $('#mev-id').value, tipo = $('#mev-tipo').value;
     try {
       await excluirEventoNuvem(id);
@@ -5725,7 +5734,8 @@ function setupInsumos(){
 
   $('#mi-delete').onclick = async () => {
     const id = $('#mi-id').value;
-    if(!id || !confirm('Excluir este insumo?')) return;
+    const _in = id ? state.insumos.find(x => x.id === id) : null;
+    if(!id || !confirm(`Excluir o insumo "${_in?.nome || ''}"?\n\nNão dá para desfazer.`)) return;
     try {
       await excluirInsumoNuvem(id);
       state.insumos = state.insumos.filter(x => x.id !== id);
@@ -5846,7 +5856,9 @@ function setupTreinamentos(){
 
   $('#mt-delete').onclick = async () => {
     const id = $('#mt-id').value;
-    if(!id || !confirm('Excluir esta turma? Os participantes cadastrados nela também serão removidos.')) return;
+    const _tm = id ? state.turmas.find(x => x.id === id) : null;
+    const _nP = id ? state.treinandos.filter(p => p.turma === id).length : 0;
+    if(!id || !confirm(`Excluir a turma${_tm ? ' de ' + (tipoTreinamento(_tm.tipo)?.nome || _tm.tipo) + ' (' + fmtDate(_tm.data) + ')' : ''}?\n\n${_nP} participante(s) cadastrado(s) nela também serão removidos. Não dá para desfazer.`)) return;
     try {
       await excluirTurmaNuvem(id);
       state.turmas = state.turmas.filter(x => x.id !== id);
@@ -5975,32 +5987,37 @@ function setupImportSoc(){
       if(!sel.value){ toast('Escolha a obra do sistema para: ' + sel.dataset.soc, 'danger'); return; }
       mapa[sel.dataset.soc] = state.obras.find(o => o.id === sel.value);
     }
-    let novos = 0, pulados = 0, turmasNovas = 0;
+    // Planeja tudo em memoria; so grava (e so mexe no estado) depois que o banco aceitar o lote inteiro.
+    const btn = $('#soc-confirmar'), rotuloBtn = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Importando…';
+    const turmasNovas = [], novosP = [];
+    let pulados = 0;
     try {
       for(const g of socImport.grupos.filter(g => g.norma)){
-        let turma = state.turmas.find(t => t.tipo === g.norma && t.data === g.data);
+        let turma = state.turmas.find(t => t.tipo === g.norma && t.data === g.data) || turmasNovas.find(t => t.tipo === g.norma && t.data === g.data);
         if(!turma){
           turma = {id:'tt'+uid(), tipo:g.norma, data:g.data, cargaHoraria:carga, validade:$('#soc-validade').value || '',
             local:$('#soc-local').value.trim(), instrutor:instrutor.nome, responsavelTecnico:'',
             instrutorAssinatura:instrutor.id, responsavelAssinatura:assinaturaResponsavelPadrao()?.id || ''};
-          await salvarTurmaNuvem(turma);
-          state.turmas.push(turma); turmasNovas++;
+          turmasNovas.push(turma);
         }
         for(const r of g.rows){
           const cpfNum = r.cpf.replace(/\D/g,'');
-          const jaTem = state.treinandos.some(p => p.turma === turma.id && (cpfNum ? p.cpf.replace(/\D/g,'') === cpfNum : normalizeTexto(p.nome) === normalizeTexto(r.nome)));
+          const jaTem = state.treinandos.concat(novosP).some(p => p.turma === turma.id && (cpfNum ? p.cpf.replace(/\D/g,'') === cpfNum : normalizeTexto(p.nome) === normalizeTexto(r.nome)));
           if(jaTem){ pulados++; continue; }
           const obra = mapa[r.obraSoc];
-          const p = {id:'tp'+uid(), turma:turma.id, nome:r.nome, cpf:r.cpf, empresa:obra.empresa, empresaLivre:'', obra:obra.id, funcao:r.cargo, tipoTreino:r.tipo};
-          await salvarTreinandoNuvem(p);
-          state.treinandos.push(p); novos++;
+          novosP.push({id:'tp'+uid(), turma:turma.id, nome:r.nome, cpf:r.cpf, empresa:obra.empresa, empresaLivre:'', obra:obra.id, funcao:r.cargo, tipoTreino:r.tipo});
         }
       }
+      await salvarLoteSocNuvem(turmasNovas, novosP);
+      turmasNovas.forEach(t => state.turmas.push(t));
+      novosP.forEach(p => state.treinandos.push(p));
       save(); closeModal('modal-soc'); renderAll();
-      toast(`✅ ${novos} participante(s) importado(s)${turmasNovas ? ' em '+turmasNovas+' turma(s) nova(s)' : ''}${pulados ? ' · '+pulados+' já existiam' : ''}`, 'ok');
+      toast(`✅ ${novosP.length} participante(s) importado(s)${turmasNovas.length ? ' em '+turmasNovas.length+' turma(s) nova(s)' : ''}${pulados ? ' · '+pulados+' já existiam' : ''}`, 'ok');
     } catch(err){
-      save(); renderAll();
-      toast(`Erro na importação (${novos} já salvos; reimporte para continuar): ` + (err.message||err), 'danger');
+      toast('Importação cancelada: nada foi gravado. ' + (err.message||err), 'danger');
+    } finally {
+      btn.disabled = false; btn.textContent = rotuloBtn;
     }
   };
 }
@@ -6226,7 +6243,8 @@ async function importarCertificadoSOC(file){
 }
 
 async function excluirTreinando(id, turmaId){
-  if(!confirm('Remover este participante da turma?')) return;
+  const _pt = state.treinandos.find(x => x.id === id);
+  if(!confirm(`Remover ${_pt ? '"' + _pt.nome + '"' : 'este participante'} da turma?\n\nNão dá para desfazer.`)) return;
   try {
     await excluirTreinandoNuvem(id);
     state.treinandos = state.treinandos.filter(x => x.id !== id);
@@ -6312,6 +6330,8 @@ function emitirCertificadosTurma(turmaId){
   }
   const participantes = state.treinandos.filter(p => p.turma === turmaId);
   if(!participantes.length){ toast('Essa turma ainda não tem participantes', 'danger'); return; }
+  // As folhas são pré-impressas (papel de gráfica): confirma a quantidade antes de abrir a impressão.
+  if(!confirm(`Emitir ${participantes.length} certificado(s) de ${tipo.nome} da turma de ${fmtDate(t.data)}?\n\nIsso abre a impressão de ${participantes.length} folha(s) pré-impressa(s). Confira se há papel suficiente na impressora.`)) return;
   // Uma folha por participante, clonada na mesma aba (ver
   // preencherCertificadosLote em certificado-nr18.html) — imprime tudo de
   // uma vez, um trabalho de impressão só, uma folha pré-impressa por vez.
@@ -7273,15 +7293,18 @@ async function excluirInsumoNuvem(id){
   if(error) throw new Error(error.message);
 }
 
-async function salvarTurmaNuvem(t){
-  const { error } = await db.from('treinamento_turmas').upsert({
+function turmaRow(t){
+  return {
     id: t.id, tipo: t.tipo, data: t.data,
     carga_horaria: t.cargaHoraria || null, local: t.local || '',
     instrutor: t.instrutor || '', validade: t.validade || null,
     responsavel_tecnico: t.responsavelTecnico || '',
     instrutor_assinatura_id: t.instrutorAssinatura || null,
     responsavel_assinatura_id: t.responsavelAssinatura || null
-  });
+  };
+}
+async function salvarTurmaNuvem(t){
+  const { error } = await db.from('treinamento_turmas').upsert(turmaRow(t));
   if(error) throw new Error(error.message);
 }
 
@@ -7302,14 +7325,32 @@ async function excluirTurmaNuvem(id){
   if(error) throw new Error(error.message);
 }
 
-async function salvarTreinandoNuvem(p){
-  const { error } = await db.from('treinamento_participantes').upsert({
+function treinandoRow(p){
+  return {
     id: p.id, turma_id: p.turma, nome: p.nome, cpf: p.cpf || '',
     cliente_id: p.empresa || null, empresa_livre: p.empresaLivre || '',
     obra_id: p.obra || null, funcao: p.funcao || '',
     tipo_treinamento: p.tipoTreino || ''
-  });
+  };
+}
+async function salvarTreinandoNuvem(p){
+  const { error } = await db.from('treinamento_participantes').upsert(treinandoRow(p));
   if(error) throw new Error(error.message);
+}
+// Importacao em lote do SOC: tudo ou nada. As turmas novas entram primeiro; os participantes vao num
+// unico INSERT (atomico no banco). Se esse falhar, as turmas criadas agora sao apagadas.
+async function salvarLoteSocNuvem(turmas, participantes){
+  if(turmas.length){
+    const { error } = await db.from('treinamento_turmas').upsert(turmas.map(turmaRow));
+    if(error) throw new Error(error.message);
+  }
+  if(participantes.length){
+    const { error } = await db.from('treinamento_participantes').upsert(participantes.map(treinandoRow));
+    if(error){
+      if(turmas.length) await db.from('treinamento_turmas').delete().in('id', turmas.map(t => t.id));
+      throw new Error(error.message);
+    }
+  }
 }
 async function excluirTreinandoNuvem(id){
   const { error } = await db.from('treinamento_participantes').delete().eq('id', id);
@@ -7693,7 +7734,7 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 .logo{width:36px;height:36px}
 .brand-text b{font-size:14.5px;font-weight:800;letter-spacing:.01em;color:#fff}
 .brand-text span{font-size:11px;letter-spacing:.16em;color:#8FBF9E}
-.navlabel{font-size:11px;letter-spacing:.18em;color:rgba(159,207,175,.55);padding:16px 10px 6px;font-weight:700}
+.navlabel{font-size:11px;letter-spacing:.18em;color:rgba(159,207,175,.8);padding:16px 10px 6px;font-weight:700}
 .navitem{position:relative;padding:8px 11px;border-radius:8px;font-size:13.5px;font-weight:500;color:#C6DCCC;gap:10px;transition:background .14s,color .14s}
 .navitem svg{width:17px;height:17px;opacity:.72}
 .navitem:hover{background:rgba(255,255,255,.06);color:#EAF4EC}
@@ -7706,7 +7747,7 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 .navitem.subitem,.navitem.subitem2{font-size:12.5px;color:#A9C7B2}
 .logout-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:12.5px;font-weight:500;transition:background .14s}
 .logout-btn:hover{background:rgba(255,255,255,.12)}
-.sidebar-foot{font-size:11px;color:rgba(159,207,175,.45)}
+.sidebar-foot{font-size:11px;color:rgba(159,207,175,.78)}
 @media (max-width:960px){.navitem.active::before{display:none}}
 
 /* Topbar & busca */
@@ -7738,8 +7779,8 @@ h1,h2,h3,h4{letter-spacing:-.022em}
 .tile-value{font-size:36px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .tile-foot{font-size:12px;margin-top:2px;color:var(--ink-muted)}
 .tile.accent{background:linear-gradient(150deg,#1B6B2F 0%,#0B3D1E 100%);border-color:transparent;color:#fff}
-.tile.accent .tile-label{color:rgba(255,255,255,.7)}
-.tile.accent .tile-foot{color:rgba(255,255,255,.62)}
+.tile.accent .tile-label{color:rgba(255,255,255,.82)}
+.tile.accent .tile-foot{color:rgba(255,255,255,.8)}
 
 /* Tabelas — compactas */
 .table-wrap{overflow:auto;border-radius:0 0 var(--radius) var(--radius)}
