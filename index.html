@@ -599,6 +599,7 @@
       <section class="page" id="page-agenda">
         <div class="page-h">
           <div><h2>Agenda</h2><p>Escolha a agenda no menu lateral: Psicossociais, Treinamentos ou Palestras.</p></div>
+          <div class="page-h-actions"><button class="btn" id="btnDiasIndisponiveis" style="display:none">Dias indisponíveis</button></div>
         </div>
 
         <!-- AGENDA: PSICOSSOCIAIS -->
@@ -1361,6 +1362,29 @@
   body.papel-assessoria .nav-sub, body.papel-financeiro .nav-sub, body.papel-assessoria .nav-caret, body.papel-financeiro .nav-caret, body.papel-financeiro #nav-aval-badge { display: none !important; }
 </style>
 
+<!-- MODAL DIAS INDISPONÍVEIS E FERIADOS (só o coordenador abre; vale para as 5 agendas) -->
+<div class="modal-bg" id="modal-agenda-dias"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ad-title" tabindex="-1" style="max-width:760px">
+  <div class="modal-h"><div><h2 id="ad-title">Dias indisponíveis e feriados</h2><p>Só o coordenador altera. Vale para todas as agendas.</p></div><button class="btn ghost sm" data-close aria-label="Fechar">✕</button></div>
+  <div class="modal-b">
+    <h3 class="ad-h">Marcar dias indisponíveis</h3>
+    <p class="ad-p">Recesso, evento ou compromisso: a agenda não aceita nada nesses dias e mostra o motivo. Para um dia só, deixe a data final em branco.</p>
+    <input type="hidden" id="ad-id" />
+    <div class="form-grid">
+      <div class="field-block"><label for="ad-inicio">Data inicial *</label><input id="ad-inicio" type="date" /></div>
+      <div class="field-block"><label for="ad-fim">Data final</label><input id="ad-fim" type="date" /></div>
+      <div class="field-block full"><label for="ad-motivo">Motivo *</label><input id="ad-motivo" maxlength="80" placeholder="Ex.: Recesso de fim de ano" /></div>
+    </div>
+    <div style="display:flex;gap:8px;margin:12px 0 16px"><button type="button" class="btn primary" id="ad-adicionar">Adicionar</button><button type="button" class="btn" id="ad-cancelar" style="display:none">Cancelar edição</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Período</th><th>Motivo</th><th></th></tr></thead><tbody id="ad-lista"></tbody></table></div>
+
+    <h3 class="ad-h" style="margin-top:24px">Feriados</h3>
+    <p class="ad-p">Escolha o que cada feriado faz na agenda: <b>impedir</b>, <b>só avisar</b> ou <b>liberar</b> (quando a data não vale para a SECONCI). A mudança vale para todos os anos.</p>
+    <div class="field-block" style="max-width:200px"><label for="ad-ano">Mostrar as datas de</label><select id="ad-ano"></select></div>
+    <div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Feriado</th><th>Data</th><th>Na agenda</th><th></th></tr></thead><tbody id="ad-feriados"></tbody></table></div>
+  </div>
+  <div class="modal-f"><button class="btn" data-close>Fechar</button></div>
+</div></div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1448,6 +1472,8 @@ function aplicarPermissoes(){
   const souCoordenador = PAPEL === 'coordenador';
   const el = document.getElementById('navContratosPgr');
   if(el) el.style.display = souCoordenador ? '' : 'none';
+  const btnDias = document.getElementById('btnDiasIndisponiveis');
+  if(btnDias) btnDias.style.display = souCoordenador ? '' : 'none';
   // Medição Mensal: coordenador e financeiro
   const vejoMedicoes = PAPEL === 'coordenador' || PAPEL === 'financeiro';
   ['navlabelCoordenacao','navMedicoes'].forEach(id => {
@@ -1934,7 +1960,7 @@ async function importarObraPDF(file){
 const STORAGE_KEY = 'seconci_modelo_v1';
 const NOTIFY_KEY = 'seconci_notify_v1';
 
-let state = {empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[], turmas:[], treinandos:[], assinaturas:[]};
+let state = {agendaDias:[], empresas:[], obras:[], docs:[], contratos:[], avaliacoes:[], historico:[], psicossociais:[], ghe:[], insumos:[], eventos:[], medicoes:[], contratosPgr:[], demandas:[], turmas:[], treinandos:[], assinaturas:[]};
 let _psiCalMes = new Date().getMonth();
 let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
@@ -2108,7 +2134,7 @@ function toast(msg, kind){
   setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-/* ================== REGRAS DA AGENDA: fim de semana, feriados e conflito de dia ================== */
+/* ================== REGRAS DA AGENDA: fim de semana, feriados, dias indisponíveis e conflito de dia ================== */
 // Páscoa pelo algoritmo de Meeus/Jones/Butcher. Dela saem Carnaval, Sexta-Feira Santa e Corpus Christi.
 function pascoaDe(ano){
   const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100;
@@ -2119,57 +2145,88 @@ function pascoaDe(ano){
   return new Date(ano, mes - 1, dia);
 }
 
-// Feriados que valem para a equipe da SECONCI em Goiânia. tipo: 'feriado' (impede o agendamento)
-// ou 'facultativo' (só avisa). Datas comemorativas e feriados de outras cidades ficam de fora.
+// Feriados padrão (equipe da SECONCI em Goiânia). tipo: 'feriado' impede o agendamento; 'facultativo' só avisa.
+// A chave é estável: é por ela que o coordenador muda o comportamento, e a mudança vale em todos os anos.
+// Fixos usam md ('MM-DD'); móveis usam pascoa (dias a partir da Páscoa). Datas comemorativas e feriados de outras cidades ficam de fora.
+const FERIADOS_PADRAO = [
+  {chave:'confraternizacao-universal', nome:'Confraternização Universal', tipo:'feriado', md:'01-01'},
+  {chave:'sexta-santa', nome:'Sexta-Feira Santa', tipo:'feriado', pascoa:-2},
+  {chave:'tiradentes', nome:'Tiradentes', tipo:'feriado', md:'04-21'},
+  {chave:'dia-do-trabalho', nome:'Dia do Trabalho', tipo:'feriado', md:'05-01'},
+  {chave:'independencia', nome:'Independência do Brasil', tipo:'feriado', md:'09-07'},
+  {chave:'nossa-senhora-aparecida', nome:'Nossa Senhora Aparecida', tipo:'feriado', md:'10-12'},
+  {chave:'finados', nome:'Finados', tipo:'feriado', md:'11-02'},
+  {chave:'proclamacao-da-republica', nome:'Proclamação da República', tipo:'feriado', md:'11-15'},
+  {chave:'consciencia-negra', nome:'Consciência Negra', tipo:'feriado', md:'11-20', desde:2024},   // Lei 14.759/2023
+  {chave:'natal', nome:'Natal', tipo:'feriado', md:'12-25'},
+  {chave:'padroeira-de-goiania', nome:'Padroeira de Goiânia', tipo:'feriado', md:'05-24'},
+  {chave:'corpus-christi', nome:'Corpus Christi', tipo:'feriado', pascoa:60},
+  {chave:'aniversario-de-goiania', nome:'Aniversário de Goiânia', tipo:'feriado', md:'10-24'},
+  {chave:'carnaval-segunda', nome:'Carnaval (ponto facultativo)', tipo:'facultativo', pascoa:-48},
+  {chave:'carnaval-terca', nome:'Carnaval (ponto facultativo)', tipo:'facultativo', pascoa:-47},
+  {chave:'quarta-de-cinzas', nome:'Quarta-feira de Cinzas (ponto facultativo até as 14h)', tipo:'facultativo', pascoa:-46},
+  {chave:'fundacao-da-cidade-de-goias', nome:'Fundação da Cidade de Goiás (ponto facultativo)', tipo:'facultativo', md:'07-26'},
+  {chave:'dia-do-professor', nome:'Dia do Professor (ponto facultativo)', tipo:'facultativo', md:'10-15'},
+  {chave:'dia-do-servidor-publico', nome:'Dia do Servidor Público (ponto facultativo)', tipo:'facultativo', md:'10-28'}
+];
+
+function _isoDe(d){ return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function dataDoFeriado(def, ano){
+  if(def.md) return `${ano}-${def.md}`;
+  const p = pascoaDe(ano);
+  return _isoDe(new Date(p.getFullYear(), p.getMonth(), p.getDate() + def.pascoa));
+}
+
 const _feriadosCache = {};
 function feriadosDoAno(ano){
   if(_feriadosCache[ano]) return _feriadosCache[ano];
-  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const p = pascoaDe(ano);
-  const desl = n => iso(new Date(p.getFullYear(), p.getMonth(), p.getDate() + n));
   const f = {};
-  const add = (data, nome, tipo) => {                 // feriado de verdade vence ponto facultativo no mesmo dia
-    if(f[data] && f[data].tipo === 'feriado' && tipo === 'facultativo') return;
-    f[data] = {nome, tipo};
-  };
-  // Nacionais
-  add(`${ano}-01-01`, 'Confraternização Universal', 'feriado');
-  add(desl(-2), 'Sexta-Feira Santa', 'feriado');
-  add(`${ano}-04-21`, 'Tiradentes', 'feriado');
-  add(`${ano}-05-01`, 'Dia do Trabalho', 'feriado');
-  add(`${ano}-09-07`, 'Independência do Brasil', 'feriado');
-  add(`${ano}-10-12`, 'Nossa Senhora Aparecida', 'feriado');
-  add(`${ano}-11-02`, 'Finados', 'feriado');
-  add(`${ano}-11-15`, 'Proclamação da República', 'feriado');
-  if(ano >= 2024) add(`${ano}-11-20`, 'Consciência Negra', 'feriado');   // Lei 14.759/2023
-  add(`${ano}-12-25`, 'Natal', 'feriado');
-  // Municipais de Goiânia (a Paixão de Cristo cai na própria Sexta-Feira Santa)
-  add(`${ano}-05-24`, 'Padroeira de Goiânia', 'feriado');
-  add(desl(60), 'Corpus Christi', 'feriado');
-  add(`${ano}-10-24`, 'Aniversário de Goiânia', 'feriado');
-  // Pontos facultativos: a empresa decide
-  add(desl(-48), 'Carnaval (ponto facultativo)', 'facultativo');
-  add(desl(-47), 'Carnaval (ponto facultativo)', 'facultativo');
-  add(desl(-46), 'Quarta-feira de Cinzas (ponto facultativo até as 14h)', 'facultativo');
-  add(`${ano}-07-26`, 'Fundação da Cidade de Goiás (ponto facultativo)', 'facultativo');
-  add(`${ano}-10-15`, 'Dia do Professor (ponto facultativo)', 'facultativo');
-  add(`${ano}-10-28`, 'Dia do Servidor Público (ponto facultativo)', 'facultativo');
+  // feriado de verdade vence ponto facultativo que caia no mesmo dia
+  FERIADOS_PADRAO.filter(d => d.tipo === 'feriado').concat(FERIADOS_PADRAO.filter(d => d.tipo === 'facultativo')).forEach(def => {
+    if(def.desde && ano < def.desde) return;
+    const data = dataDoFeriado(def, ano);
+    if(!f[data]) f[data] = {nome:def.nome, tipo:def.tipo, chave:def.chave};
+  });
   return (_feriadosCache[ano] = f);
 }
 
+// O que o coordenador mudou (state.agendaDias): comportamento de um feriado ('impedir'|'avisar'|'liberar', vale em todos os anos)
+// e dias/períodos indisponíveis (com motivo).
+function comportamentoFeriado(chave){
+  const o = (state.agendaDias || []).find(d => d.tipo === 'feriado' && d.chave === chave);
+  return o ? o.comportamento : null;
+}
+function _feriadoEfetivo(iso, ano){
+  const f = feriadosDoAno(ano)[iso];
+  if(!f) return null;
+  const ov = comportamentoFeriado(f.chave);
+  if(ov === 'liberar') return null;
+  if(ov === 'impedir') return {...f, tipo:'feriado'};
+  if(ov === 'avisar') return {...f, tipo:'facultativo'};
+  return f;
+}
+function _indisponivelEm(iso){
+  return (state.agendaDias || [])
+    .filter(d => d.tipo === 'indisponivel' && d.inicio && d.fim && iso >= d.inicio && iso <= d.fim)
+    .sort((a, b) => a.inicio.localeCompare(b.inicio))[0] || null;
+}
+
 // O que o calendário e as regras precisam saber de um dia (AAAA-MM-DD):
-// {tipo:'fds'|'feriado'|'facultativo'|null, nome, bloqueia:boolean}
+// {tipo:'fds'|'indisponivel'|'feriado'|'facultativo'|null, nome, curto, bloqueia:boolean}
 function diaEspecialAgenda(iso){
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
   if(!m) return {tipo:null, nome:'', bloqueia:false};
   const ano = +m[1], dow = new Date(ano, +m[2] - 1, +m[3]).getDay();
-  const fer = feriadosDoAno(ano)[iso];
-  if(dow === 0 || dow === 6) return {tipo:'fds', nome:(dow === 0 ? 'Domingo' : 'Sábado') + (fer ? ' · ' + fer.nome : ''), curto:fer ? fer.nome.replace(/\s*\([^)]*\)/g, '') : '', bloqueia:true};
-  if(fer) return {tipo:fer.tipo, nome:fer.nome, curto:fer.nome.replace(/\s*\([^)]*\)/g, ''), bloqueia:fer.tipo === 'feriado'};
+  const fer = _feriadoEfetivo(iso, ano);
+  const curtoDe = n => n.replace(/\s*\([^)]*\)/g, '');
+  if(dow === 0 || dow === 6) return {tipo:'fds', nome:(dow === 0 ? 'Domingo' : 'Sábado') + (fer ? ' · ' + fer.nome : ''), curto:fer ? curtoDe(fer.nome) : '', bloqueia:true};
+  const ind = _indisponivelEm(iso);
+  if(ind) return {tipo:'indisponivel', nome:`dia indisponível (${ind.motivo})`, curto:ind.motivo, bloqueia:true};
+  if(fer) return {tipo:fer.tipo, nome:fer.nome, curto:curtoDe(fer.nome), bloqueia:fer.tipo === 'feriado'};
   return {tipo:null, nome:'', bloqueia:false};
 }
 
-const LEGENDA_AGENDA = '<div class="psi-cal-leg"><span><i class="fds"></i>Fim de semana (não agenda)</span><span><i class="feriado"></i>Feriado (não agenda)</span><span><i class="facultativo"></i>Ponto facultativo (avisa)</span></div>';
+const LEGENDA_AGENDA = '<div class="psi-cal-leg"><span><i class="fds"></i>Fim de semana (não agenda)</span><span><i class="feriado"></i>Feriado (não agenda)</span><span><i class="indisponivel"></i>Indisponível (não agenda)</span><span><i class="facultativo"></i>Ponto facultativo (avisa)</span></div>';
 const AGENDA_NOME_TIPO = {psicossocial:'Psicossocial', treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria', ltcat:'Avaliação LTCAT'};
 
 // Tudo o que já está marcado num dia, em qualquer das cinco agendas (menos o item que está sendo editado).
@@ -2186,11 +2243,11 @@ function agendadosNoDia(iso, ignorarId){
   return itens.sort((a, b) => (a.hora || '99').localeCompare(b.hora || '99'));
 }
 
-// Veredito para uma data: {bloqueio: texto|null, avisos: [texto]}. Fim de semana e feriado impedem;
+// Veredito para uma data: {bloqueio: texto|null, avisos: [texto]}. Fim de semana, feriado e dia indisponível impedem;
 // ponto facultativo e outros agendamentos no mesmo dia só avisam (duas equipes podem sair no mesmo dia).
 function avaliarDataAgenda(iso, ignorarId){
   const dia = diaEspecialAgenda(iso), avisos = [];
-  if(dia.tipo === 'facultativo') avisos.push(`${dia.nome}: a empresa decide se trabalha.`);
+  if(dia.tipo === 'facultativo') avisos.push(`${dia.nome}: confira se a equipe trabalha neste dia.`);
   const itens = agendadosNoDia(iso, ignorarId);
   if(itens.length)
     avisos.push(`Já há ${itens.length} agendamento(s) em ${fmtDate(iso)}:\n` +
@@ -2210,6 +2267,137 @@ document.addEventListener('change', e => {
   const v = avaliarDataAgenda(e.target.value, id);
   el.className = 'agenda-aviso' + (v.bloqueio ? ' bloqueio' : v.avisos.length ? ' atencao' : '');
   el.textContent = v.bloqueio ? `Não é possível agendar: ${v.bloqueio}.` : v.avisos.join(' ').replace(/\n\s*•/g, ' ·');
+});
+
+/* ---- Dias indisponíveis e feriados: só o coordenador altera (a RLS do banco também exige); todos veem o resultado ---- */
+function _periodoTxt(d){ return d.inicio === d.fim ? fmtDate(d.inicio) : `${fmtDate(d.inicio)} a ${fmtDate(d.fim)}`; }
+function _padraoFeriado(def){ return def.tipo === 'feriado' ? 'impedir' : 'avisar'; }
+function renderAgendaCalendarios(){
+  try { renderCalendarioPsi(); ['treinamento', 'palestra', 'auditoria', 'ltcat'].forEach(t => renderCalendarioEvento(t)); } catch(e){ /* calendário ainda não montado */ }
+}
+
+function renderAgendaDias(){
+  const lista = $('#ad-lista');
+  if(!lista) return;
+  const hoje = todayISO();
+  const itens = (state.agendaDias || []).filter(d => d.tipo === 'indisponivel').sort((a, b) => a.inicio.localeCompare(b.inicio));
+  lista.innerHTML = itens.length ? itens.map(d => `<tr class="${d.fim < hoje ? 'ad-passado' : ''}">
+      <td class="tight">${_periodoTxt(d)}</td><td>${escapeHtml(d.motivo)}</td>
+      <td class="tight"><button type="button" class="btn sm" data-ad-editar="${d.id}">Editar</button> <button type="button" class="btn sm danger" data-ad-excluir="${d.id}">Excluir</button></td></tr>`).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:var(--ink-muted);padding:18px">Nenhum dia marcado.</td></tr>';
+
+  const selAno = $('#ad-ano');
+  if(!selAno.options.length){
+    const y = new Date().getFullYear();
+    [y, y + 1].forEach(a => selAno.add(new Option(a, a)));
+  }
+  const ano = +selAno.value;
+  $('#ad-feriados').innerHTML = FERIADOS_PADRAO
+    .filter(def => !def.desde || ano >= def.desde)
+    .map(def => ({def, data:dataDoFeriado(def, ano)}))
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .map(({def, data}) => {
+      const padrao = _padraoFeriado(def), atual = comportamentoFeriado(def.chave) || padrao;
+      const opt = (v, t) => `<option value="${v}" ${atual === v ? 'selected' : ''}>${t}${padrao === v ? ' (padrão)' : ''}</option>`;
+      return `<tr class="${atual !== padrao ? 'ad-alterado' : ''}"><td>${escapeHtml(def.nome)}</td><td class="tight">${fmtDate(data)}</td>
+        <td><select data-ad-feriado="${def.chave}" aria-label="Comportamento de ${escapeHtml(def.nome)}">${opt('impedir', 'Impedir')}${opt('avisar', 'Só avisar')}${opt('liberar', 'Liberar')}</select></td>
+        <td class="tight">${atual !== padrao ? `<button type="button" class="btn sm" data-ad-padrao="${def.chave}">Voltar ao padrão</button>` : ''}</td></tr>`;
+    }).join('');
+}
+
+function _limparFormAgendaDias(){
+  ['ad-id', 'ad-inicio', 'ad-fim', 'ad-motivo'].forEach(id => { $('#' + id).value = ''; });
+  $('#ad-adicionar').textContent = 'Adicionar';
+  $('#ad-cancelar').style.display = 'none';
+}
+function _soCoordenador(){
+  if(PAPEL === 'coordenador') return true;
+  toast('Só o coordenador altera os dias indisponíveis e os feriados', 'danger');
+  return false;
+}
+
+async function salvarAgendaDiaNuvem(d){
+  const { error } = await db.from('agenda_dias').upsert({
+    id: d.id, tipo: d.tipo, data_inicio: d.inicio || null, data_fim: d.fim || null, motivo: d.motivo || '',
+    feriado_chave: d.chave || null, comportamento: d.comportamento || null
+  });
+  if(error) throw new Error(error.message);
+}
+async function excluirAgendaDiaNuvem(id){
+  const { error } = await db.from('agenda_dias').delete().eq('id', id);
+  if(error) throw new Error(error.message);
+}
+
+async function agendaDiasSalvar(){
+  if(!_soCoordenador()) return;
+  const ini = $('#ad-inicio').value, motivo = $('#ad-motivo').value.trim(), fim = $('#ad-fim').value || ini;
+  if(!ini || !motivo){ toast('Informe a data e o motivo', 'danger'); return; }
+  if(fim < ini){ toast('A data final não pode ser antes da inicial', 'danger'); return; }
+  const id = $('#ad-id').value || 'ad' + uid();
+  const obj = {id, tipo:'indisponivel', inicio:ini, fim, motivo, chave:'', comportamento:''};
+  try {
+    await salvarAgendaDiaNuvem(obj);
+    state.agendaDias = state.agendaDias || [];
+    const i = state.agendaDias.findIndex(x => x.id === id);
+    if(i >= 0) state.agendaDias[i] = obj; else state.agendaDias.push(obj);
+    save(); _limparFormAgendaDias(); renderAgendaDias(); renderAgendaCalendarios();
+    // agendamentos que já existiam nesses dias continuam: só aparecem destacados
+    let ja = 0;
+    for(let d = new Date(ini + 'T00:00:00'), n = 0; _isoDe(d) <= fim && n < 400; d.setDate(d.getDate() + 1), n++) ja += agendadosNoDia(_isoDe(d)).length;
+    toast('✅ Dia(s) marcado(s) como indisponível(is)' + (ja ? ` · ${ja} agendamento(s) que já existiam nesse período continuam (não foram mexidos)` : ''), 'ok');
+  } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); }
+}
+
+async function agendaDiasExcluir(id){
+  if(!_soCoordenador()) return;
+  const d = (state.agendaDias || []).find(x => x.id === id);
+  if(!d || !confirm(`Liberar ${_periodoTxt(d)} ("${d.motivo}")?\n\nA agenda volta a aceitar agendamentos nesse período.`)) return;
+  try {
+    await excluirAgendaDiaNuvem(id);
+    state.agendaDias = state.agendaDias.filter(x => x.id !== id);
+    save(); renderAgendaDias(); renderAgendaCalendarios(); toast('Período liberado', 'ok');
+  } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
+}
+
+async function agendaFeriadoDefinir(chave, comportamento){
+  if(!_soCoordenador()){ renderAgendaDias(); return; }
+  const def = FERIADOS_PADRAO.find(x => x.chave === chave);
+  if(!def) return;
+  const id = 'fer-' + chave;
+  try {
+    state.agendaDias = state.agendaDias || [];
+    if(comportamento === _padraoFeriado(def)){          // igual ao padrão: some a exceção
+      await excluirAgendaDiaNuvem(id);
+      state.agendaDias = state.agendaDias.filter(x => x.id !== id);
+    } else {
+      const obj = {id, tipo:'feriado', inicio:'', fim:'', motivo:'', chave, comportamento};
+      await salvarAgendaDiaNuvem(obj);
+      const i = state.agendaDias.findIndex(x => x.id === id);
+      if(i >= 0) state.agendaDias[i] = obj; else state.agendaDias.push(obj);
+    }
+    save(); renderAgendaDias(); renderAgendaCalendarios();
+  } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); renderAgendaDias(); }
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('#btnDiasIndisponiveis,#ad-adicionar,#ad-cancelar,[data-ad-editar],[data-ad-excluir],[data-ad-padrao]');
+  if(!t) return;
+  if(t.id === 'btnDiasIndisponiveis'){ if(!_soCoordenador()) return; _limparFormAgendaDias(); renderAgendaDias(); openModal('modal-agenda-dias'); }
+  else if(t.id === 'ad-adicionar') agendaDiasSalvar();
+  else if(t.id === 'ad-cancelar') _limparFormAgendaDias();
+  else if(t.dataset.adExcluir) agendaDiasExcluir(t.dataset.adExcluir);
+  else if(t.dataset.adPadrao){ const def = FERIADOS_PADRAO.find(x => x.chave === t.dataset.adPadrao); if(def) agendaFeriadoDefinir(def.chave, _padraoFeriado(def)); }
+  else if(t.dataset.adEditar){
+    const d = (state.agendaDias || []).find(x => x.id === t.dataset.adEditar);
+    if(!d) return;
+    $('#ad-id').value = d.id; $('#ad-inicio').value = d.inicio; $('#ad-fim').value = d.fim === d.inicio ? '' : d.fim; $('#ad-motivo').value = d.motivo;
+    $('#ad-adicionar').textContent = 'Salvar alteração'; $('#ad-cancelar').style.display = '';
+    $('#ad-motivo').focus();
+  }
+});
+document.addEventListener('change', e => {
+  if(e.target.id === 'ad-ano') renderAgendaDias();
+  else if(e.target.dataset && e.target.dataset.adFeriado) agendaFeriadoDefinir(e.target.dataset.adFeriado, e.target.value);
 });
 
 function nomeEmpresa(id){ const e = state.empresas.find(x => x.id === id); return e ? e.nome : '—'; }
@@ -7495,7 +7683,8 @@ async function carregarDaNuvem() {
     { data: demandasRows,   error: errDemandas },
     { data: turmasRows,     error: errTurmas },
     { data: treinandosRows, error: errTreinandos },
-    { data: assinaturasRows, error: errAssinaturas }
+    { data: assinaturasRows, error: errAssinaturas },
+    { data: agendaDiasRows, error: errAgendaDias }
   ] = await Promise.all([
     db.from('documentos').select('*').order('data_vencimento', { ascending: true }),
     db.from('clientes').select('*'),
@@ -7514,7 +7703,8 @@ async function carregarDaNuvem() {
     db.from('demandas').select('*').order('criado_em', { ascending: true }),
     db.from('treinamento_turmas').select('*').order('data', { ascending: false }),
     db.from('treinamento_participantes').select('*'),
-    db.from('assinaturas_treinamento').select('*').order('nome', { ascending: true })
+    db.from('assinaturas_treinamento').select('*').order('nome', { ascending: true }),
+    db.from('agenda_dias').select('*')
   ])
 
   if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
@@ -7721,6 +7911,12 @@ async function carregarDaNuvem() {
       obs:      c.observacao || ''
     }))
   }
+
+  if (errAgendaDias) console.error('Erro agenda_dias:', errAgendaDias.message);
+  else state.agendaDias = (agendaDiasRows||[]).map(r => ({
+    id: r.id, tipo: r.tipo, inicio: r.data_inicio || '', fim: r.data_fim || '',
+    motivo: r.motivo || '', chave: r.feriado_chave || '', comportamento: r.comportamento || ''
+  }));
 
   if (!errDemandas) {
     state.demandas = (demandasRows||[]).map(d => ({
@@ -8167,6 +8363,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .agenda-aviso{margin-top:6px;font-size:12.5px;line-height:1.35;white-space:pre-line}
 .agenda-aviso.bloqueio{color:var(--danger-fg);font-weight:600}
 .agenda-aviso.atencao{color:var(--warn-fg)}
+/* dias indisponíveis (coordenador) */
+.psi-cal-day.indisponivel{background:#EDE7F6}
+.psi-cal-day.indisponivel.ativo{background:#e8f5e9}
+.psi-cal-day.indisponivel .psi-cal-fer{color:#4A2F86}
+.psi-cal-leg i.indisponivel{background:#EDE7F6}
+.ad-h{margin:0 0 4px;font-size:15px;font-weight:700}
+.ad-p{margin:0 0 10px;font-size:13px;color:var(--ink-soft)}
+.ad-passado td{color:var(--ink-muted)}
+.ad-alterado td{background:#FDF4E3}
+#ad-feriados select{min-width:150px}
 </style>
 
 <div class="demo-flag" id="demoFlag">Modo Demonstração · dados fictícios<button type="button" onclick="location.reload()">Sair</button></div>
