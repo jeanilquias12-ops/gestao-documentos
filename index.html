@@ -251,6 +251,9 @@
 
   .notify-banner{display:none;align-items:center;gap:14px;flex-wrap:wrap;padding:11px 18px;background:linear-gradient(90deg,#FCE6E2,#FFF6E0);border-bottom:1px solid var(--warn-line);font-size:13.5px;color:#5a2418;position:sticky;top:0;z-index:21}
   .notify-banner.show{display:flex}
+  .load-fail{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 18px;background:#9B2A1A;color:#fff;font-size:13.5px}
+  .load-fail button{padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-size:12.5px;font-weight:600;cursor:pointer}
+  .ss-opt.ss-active{background:var(--green-100)}
   .notify-banner svg{width:18px;height:18px;color:var(--danger-fg);flex-shrink:0}
   .notify-banner b{color:var(--danger-fg)}
   .notify-banner .nb-spacer{flex:1}
@@ -285,7 +288,7 @@
   @media print{
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     body{background:#fff}
-    .sidebar,.topbar,.search,#pdfBtn,.navlabel,.logout-btn,.sidebar-foot,.no-print{display:none!important}
+    .sidebar,.topbar,.search,#pdfBtn,.navlabel,.logout-btn,.sidebar-foot,.no-print,#page-relatorios>.page-h,.notify-banner,.toast,.demo-flag,.load-fail{display:none!important}
     .app.authenticated{grid-template-columns:1fr!important}
     .page{display:block!important}
     .page:not(#page-relatorios){display:none!important}
@@ -598,7 +601,7 @@
       </style>
       <section class="page" id="page-agenda">
         <div class="page-h">
-          <div><h2>Agenda</h2><p>Escolha a agenda no menu lateral: Psicossociais, Treinamentos ou Palestras.</p></div>
+          <div><h2>Agenda</h2><p>Escolha a agenda no menu lateral: Psicossociais, Treinamentos, Palestras, Auditorias ou Avaliação LTCAT.</p></div>
           <div class="page-h-actions"><button class="btn" id="btnDiasIndisponiveis" style="display:none">Dias indisponíveis</button></div>
         </div>
 
@@ -712,7 +715,7 @@
 
       <!-- RELATÓRIOS -->
       <section class="page" id="page-relatorios">
-        <div class="page-h"><div><h2>Relatórios</h2><p>Marque as seções, gere e baixe em PDF.</p></div></div>
+        <div class="page-h"><div><h2>Relatórios</h2><p>Marque as seções, gere o relatório e use "Imprimir / salvar PDF".</p></div></div>
 
         <div class="card no-print" style="margin-bottom:18px">
           <div class="card-b" style="padding:18px 22px">
@@ -740,7 +743,7 @@
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn primary" id="rel-gerar">Gerar relatório</button>
-              <button class="btn" id="pdfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar PDF</button>
+              <button class="btn" id="pdfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Imprimir / salvar PDF</button>
             </div>
           </div>
         </div>
@@ -1215,8 +1218,10 @@
       <div class="field-block full"><label id="mev-resp-label" for="mev-responsavel">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
       <div class="field-block" id="mev-tipopal-block"><label for="mev-tipopal">Tipo da palestra</label><select id="mev-tipopal"><option value="">— Selecione —</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
       <div class="field-block" id="mev-modalidade-block"><label for="mev-modalidade">Presencial ou online</label><select id="mev-modalidade"><option value="">— Selecione —</option><option>PRESENCIAL</option><option>ONLINE</option></select></div>
-      <div class="field-block" id="mev-tipomin-block"><label for="mev-tipomin">Ministrante</label><select id="mev-tipomin"><option value="">— Selecione —</option><option>INTERNO</option><option>EXTERNO</option></select></div>
+      <div class="field-block" id="mev-tipomin-block"><label for="mev-tipomin">Tipo de palestrante</label><select id="mev-tipomin"><option value="">— Selecione —</option><option>INTERNO</option><option>EXTERNO</option></select></div>
       <div class="field-block" id="mev-solicitante-block"><label for="mev-solicitante">Solicitante</label><input id="mev-solicitante" placeholder="Quem pediu a palestra" /></div>
+      <div class="field-block" id="mev-equip-block"><label for="mev-equip">Necessidade de equipamentos</label><select id="mev-equip"><option value="">— Selecione —</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+      <div class="field-block full" id="mev-endereco-block"><label for="mev-endereco">Endereço completo</label><input id="mev-endereco" placeholder="Rua, número, bairro, cidade" /></div>
       <div class="field-block" id="mev-previstos-block"><label for="mev-previstos">Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
       <div class="field-block" id="mev-presentes-block"><label for="mev-presentes">Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
       <div class="field-block"><label for="mev-status">Status</label><select id="mev-status">
@@ -1972,10 +1977,10 @@ let _psiCalAno = new Date().getFullYear();
 let _psiCalFiltroData = null;
 let _agendaTab = 'psicossociais';
 const _evCal = {
-  treinamento: {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null},
-  palestra:    {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null},
-  auditoria:   {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null},
-  ltcat:       {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null}
+  treinamento: {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null, modo:'proximas'},
+  palestra:    {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null, modo:'proximas'},
+  auditoria:   {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null, modo:'proximas'},
+  ltcat:       {mes:new Date().getMonth(), ano:new Date().getFullYear(), filtroData:null, modo:'proximas'}
 };
 let notifyPrefs = {dias:90, banner:1, email:'', freq:'diaria', lastShown:'', dismissedDate:''};
 let sortState = {};
@@ -1983,7 +1988,10 @@ let sortState = {};
 const $ = (s, c=document) => c.querySelector(s);
 const $$ = (s, c=document) => [...c.querySelectorAll(s)];
 const uid = () => Math.random().toString(36).slice(2,9);
-const todayISO = () => new Date().toISOString().slice(0,10);
+// Data de hoje no fuso local (toISOString usa UTC e, depois das 21h em Goiânia, já devolve o dia seguinte)
+const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+const fmtPct1 = v => Number(v).toFixed(1).replace('.', ',');
+const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : (varios || um + 's'));
 const fmtDate = (iso) => { if(!iso) return '—'; const d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('pt-BR'); };
 const fmtDateTime = (iso) => { if(!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 const fmtReal = (v) => v ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
@@ -2133,11 +2141,22 @@ function faseDoc(doc){
   return {fase:1, key:'fase1', label:`Seg. do Trabalho · ${rest}d restantes`, dias:corridos};
 }
 
+// Aviso fixo quando a leitura da nuvem falha: os dados na tela podem ser uma copia antiga guardada no navegador
+function mostrarFalhasCarga(lista){
+  let el = document.getElementById('loadFail');
+  if(!lista.length){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement('div'); el.id = 'loadFail'; el.className = 'load-fail'; el.setAttribute('role', 'alert'); document.body.appendChild(el); }
+  el.innerHTML = `<span><b>Não foi possível carregar:</b> ${escapeHtml(lista.join(', '))}. O que aparece pode estar desatualizado.</span><button type="button" onclick="location.reload()">Tentar de novo</button>`;
+}
+let _toastTimer;
 function toast(msg, kind){
   const el = $('#toast');
   el.textContent = msg;
   el.className = 'toast show' + (kind ? ' '+kind : '');
-  setTimeout(() => el.classList.remove('show'), 2400);
+  el.setAttribute('role', kind === 'danger' ? 'alert' : 'status');
+  clearTimeout(_toastTimer);
+  // Erro fica o dobro do tempo: e o aviso que o usuario nao pode perder
+  _toastTimer = setTimeout(() => el.classList.remove('show'), kind === 'danger' ? 6000 : 2400);
 }
 
 /* ================== REGRAS DA AGENDA: fim de semana, feriados, dias indisponíveis e conflito de dia ================== */
@@ -2232,6 +2251,8 @@ function diaEspecialAgenda(iso){
   return {tipo:null, nome:'', bloqueia:false};
 }
 
+// Texto lido por leitor de tela na celula do calendario: o status nao pode existir so na cor do selo
+const calAria = (dia, itens) => `Dia ${dia}: ${plural(itens.length, 'agendamento')} (${Object.entries(itens.reduce((m, x) => (m[x.status] = (m[x.status] || 0) + 1, m), {})).map(([k, n]) => n + ' ' + k).join(', ')}). Filtrar a lista por este dia.`;
 const LEGENDA_AGENDA = '<div class="psi-cal-leg"><span><i class="fds"></i>Fim de semana (não agenda)</span><span><i class="feriado"></i>Feriado (não agenda)</span><span><i class="indisponivel"></i>Indisponível (não agenda)</span><span><i class="facultativo"></i>Ponto facultativo (avisa)</span></div>';
 const AGENDA_NOME_TIPO = {psicossocial:'Psicossocial', treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria', ltcat:'Avaliação LTCAT'};
 
@@ -3504,10 +3525,11 @@ function montarRelatorio(){
     const totalAvals = state.avaliacoes.filter(a => inRange(a.data)).length;
     const saldoPend = state.contratos.filter(contratoEmpresaAtiva).reduce((s,c) => s + Math.max(0, c.qtd - realizadasContrato(c.id)), 0);
 
-    html += `<div class="rel-kpi-grid">
+    html += `<p style="margin:0 0 10px;font-size:12.5px;color:var(--ink-soft)">Documentos, situação e saldo de contratos: <b>posição em ${fmtDate(todayISO())}</b>. Avaliações: <b>${(ini || fim) ? 'no período ' + periodoLabel : 'todo o período'}</b>.</p>
+    <div class="rel-kpi-grid">
       <div class="rel-kpi kpi-ok"><span class="kpi-label">Documentos</span><span class="kpi-val">${docsAtivosRel.length}</span><span class="kpi-sub">${validos} válido${validos!==1?'s':''} · ${vencendo} vencendo · ${vencidos} vencido${vencidos!==1?'s':''}</span></div>
       <div class="rel-kpi${vencidos>0?' kpi-danger':vencendo>0?' kpi-warn':' kpi-ok'}"><span class="kpi-label">Situação</span><span class="kpi-val">${vencidos>0?'Atenção':vencendo>0?'Alerta':'OK'}</span><span class="kpi-sub">${vencidos>0?vencidos+' doc'+(vencidos!==1?'s':'')+' vencido'+(vencidos!==1?'s':''):vencendo>0?vencendo+' vencendo':'Todos em dia'}</span></div>
-      <div class="rel-kpi"><span class="kpi-label">Avaliações</span><span class="kpi-val">${totalAvals}</span><span class="kpi-sub">${saldoPend} pendente${saldoPend!==1?'s':''} no saldo</span></div>
+      <div class="rel-kpi"><span class="kpi-label">Avaliações no período</span><span class="kpi-val">${totalAvals}</span><span class="kpi-sub">${saldoPend} pendente${saldoPend!==1?'s':''} no saldo dos contratos (hoje)</span></div>
       <div class="rel-kpi"><span class="kpi-label">Em elaboração</span><span class="kpi-val">${emElab+agAssess}</span><span class="kpi-sub">${emElab} seg. trabalho · ${agAssess} assessoria</span></div>
     </div>`;
 
@@ -3515,7 +3537,7 @@ function montarRelatorio(){
     const alertas = [];
     const rotuloUnidade = (empresa, obra) => obra ? `<b>${escapeHtml(nomeObra(obra))}</b> — ${escapeHtml(nomeEmpresa(empresa))}` : `<b>${escapeHtml(nomeEmpresa(empresa))}</b>`;
     docsAtivosRel.filter(d => statusDoc(d).key === 'danger').forEach(d => {
-      alertas.push({t:'danger', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo} vencido há ${Math.abs(daysBetween(todayISO(), d.validade))} dias`});
+      alertas.push({t:'danger', m:`${rotuloUnidade(d.empresa, d.obra)} — ${d.tipo} vencido há ${plural(Math.abs(daysBetween(todayISO(), d.validade)), 'dia')}`});
     });
     state.contratos.filter(contratoEmpresaAtiva).forEach(c => {
       const r = realizadasContrato(c.id);
@@ -3539,7 +3561,8 @@ function montarRelatorio(){
       });
     }
     if(alertas.length){
-      html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}</div>`;
+      const maisAlertas = alertas.length - 8;
+      html += `<div style="margin-bottom:18px">${alertas.slice(0,8).map(a => `<div class="rel-alert alert-${a.t}">${a.t==='danger'?'🚨':'⚠'} ${a.m}</div>`).join('')}${maisAlertas > 0 ? `<div class="rel-alert alert-warn">+ ${plural(maisAlertas, 'alerta')} não exibido${maisAlertas!==1?'s':''} (${alertas.length} no total). Veja a seção Documentos para a lista completa.</div>` : ''}</div>`;
     }
   }
 
@@ -3558,7 +3581,7 @@ function montarRelatorio(){
       return `<tr><td>${empresaHtml}</td><td><span class="pill ${d.tipo==='PGR'?'solid-green':'muted'}" style="font-size:11px">${d.tipo}</span></td><td class="tight">${fmtDate(d.emissao)}</td><td class="tight">${fmtDate(d.validade)}</td><td><span class="pill ${s.key}" style="font-size:11px">${s.label}</span></td><td>${fHtml}</td><td>${entrega}</td></tr>`;
     }).join('');
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT</p></div></div>
+      <div class="card-h"><div><h3>Documentos <span class="rel-count">${sorted.length}</span></h3><p>${nPgr} PGR · ${nLtcat} LTCAT · posição em ${fmtDate(todayISO())}</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Tipo</th><th>Emissão</th><th>Validade</th><th>Status</th><th>Elaboração</th><th>Entrega</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhum documento</td></tr>'
       }</tbody></table></div></div>`;
@@ -3567,7 +3590,7 @@ function montarRelatorio(){
   // Panorama por empresa
   if(chk('rel-c-panorama')){
     const empresasAtivas = state.empresas.filter(e => e.status !== 'inativa');
-    const linhas = [...empresasAtivas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
+    const linhasPan = [...empresasAtivas].sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(e => {
       const docsAtivosE = state.docs.filter(d => d.empresa === e.id && docEmpresaAtiva(d));
       const pgr = docsAtivosE.filter(d => d.tipo === 'PGR').length;
       const ltcat = docsAtivosE.filter(d => d.tipo === 'LTCAT').length;
@@ -3589,9 +3612,11 @@ function montarRelatorio(){
       const hasVencendo = docsE.some(d => statusDoc(d).key === 'warn');
       const st = hasVencido ? {k:'danger',l:'Vencido'} : hasVencendo ? {k:'warn',l:'Vencendo'} : {k:'ok',l:'OK'};
       return `<tr><td><b>${escapeHtml(e.nome)}</b></td><td style="text-align:center">${pgr}</td><td style="text-align:center">${ltcat}</td><td style="text-align:center">${avs||'—'}</td><td>${saldoHtml}</td><td>${faseHtml}</td><td><span class="pill ${st.k}" style="font-size:11px">${st.l}</span></td></tr>`;
-    }).filter(Boolean).join('');
+    }).filter(Boolean);
+    const linhas = linhasPan.join('');
+    const semDocs = empresasAtivas.length - linhasPan.length;
     html += `<div class="card rel-sec">
-      <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${empresasAtivas.length}</span></h3><p>Documentos, avaliações e situação de cada empresa</p></div></div>
+      <div class="card-h"><div><h3>Panorama por empresa <span class="rel-count">${linhasPan.length}</span></h3><p>Posição em ${fmtDate(todayISO())} · empresas com PGR ou LTCAT${semDocs > 0 ? ` (${semDocs} ativa${semDocs!==1?'s':''} sem documento não aparece${semDocs!==1?'m':''})` : ''}</p></div></div>
       <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>PGR</th><th>LTCAT</th><th>Aval.</th><th>Saldo</th><th>Elaboração</th><th>Situação</th></tr></thead><tbody>${
         linhas || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">Nenhuma empresa</td></tr>'
       }</tbody></table></div></div>`;
@@ -3743,7 +3768,7 @@ function montarRelatorio(){
           <div class="ltcat-kpi-card"><h3>Faturamento Bruto</h3><p>${fmtR(fatMes)}</p></div>
           <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${qtdMes}</p></div>
           <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab</h3><p>${fmtR(custoMes)}</p></div>
-          <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtR(margemMes)} (${margemMesPct.toFixed(1)}%)</p></div>
+          <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Bruta</h3><p>${fmtR(margemMes)} (${fmtPct1(margemMesPct)}%)</p></div>
         </div>
         <table class="ltcat-table">
           <thead><tr><th>Empresa</th><th>Qtd. Ensaios</th><th>Faturamento (R$)</th><th>Custo Lab (R$)</th><th>Margem (R$)</th></tr></thead>
@@ -3762,10 +3787,10 @@ function montarRelatorio(){
         <div class="ltcat-kpi-card"><h3>Faturamento Total</h3><p>${fmtR(fatTotal)}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#9b59b6"><h3>Total de Ensaios</h3><p>${qtdTotal}</p></div>
         <div class="ltcat-kpi-card" style="border-left-color:#e74c3c"><h3>Custo Lab Total</h3><p>${fmtR(custoTotal)}</p></div>
-        <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtR(margemTotal)} (${margemTotalPct.toFixed(1)}%)</p></div>
+        <div class="ltcat-kpi-card" style="border-left-color:#2ecc71"><h3>Margem Total</h3><p>${fmtR(margemTotal)} (${fmtPct1(margemTotalPct)}%)</p></div>
       </div>
       ${mesesKeys.length ? `<h2>Evolução Mensal do Faturamento</h2>${ltcatChart}` : ''}
-      ${mesesKeys.length ? `<h2>Navegação Rápida por Mês</h2>${sumarioHtml}` : ''}
+      ${mesesKeys.length ? `<div class="no-print"><h2>Navegação Rápida por Mês</h2>${sumarioHtml}</div>` : ''}
       ${secoesMes || '<p style="text-align:center;color:#7f8c8d;padding:24px">Nenhuma medição LTCAT no período</p>'}
     </div>`;
   }
@@ -3861,7 +3886,7 @@ function montarRelatorio(){
             <tr style="background:rgba(46,125,50,.06)"><td style="font-weight:600">Efetividade</td>${meses.map(m=>{
               if(m.efetividade===null) return '<td style="text-align:center;color:var(--ink-muted)">—</td>';
               const pct=(m.efetividade*100).toFixed(0);
-              const cor=m.efetividade>=0.9?'var(--green-700)':m.efetividade>=0.5?'#F57F17':'#C62828';
+              const cor=m.efetividade>=1?'var(--green-700)':m.efetividade>=0.5?'#F57F17':'#C62828';
               return '<td style="text-align:center;color:'+cor+';font-weight:700">'+pct+'%</td>';
             }).join('')}</tr>
             <tr><td>Média (dias)</td>${meses.map(m=>'<td style="text-align:center;'+(m.media!==null&&m.media>15?'color:#C62828;font-weight:600':'')+'">'+( m.media!==null?m.media.toFixed(1):'—')+'</td>').join('')}</tr>
@@ -4034,12 +4059,14 @@ function montarRelatorioCliente(){
 function setupSort(tableId, key){
   const tbl = $('#'+tableId);
   tbl.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.tabIndex = 0;
     th.onclick = () => {
       const col = th.dataset.sort;
       const cur = sortState[key] || {};
       sortState[key] = {col, dir: cur.col===col ? -cur.dir : 1};
-      tbl.querySelectorAll('thead th').forEach(t => t.classList.remove('asc','desc'));
+      tbl.querySelectorAll('thead th').forEach(t => { t.classList.remove('asc','desc'); t.removeAttribute('aria-sort'); });
       th.classList.add(sortState[key].dir === 1 ? 'asc' : 'desc');
+      th.setAttribute('aria-sort', sortState[key].dir === 1 ? 'ascending' : 'descending');
       renderAll();
     };
   });
@@ -4048,12 +4075,14 @@ function setupSort(tableId, key){
 /* ================== MODAIS ================== */
 // Foco: ao abrir, vai para o proprio modal (o leitor de tela anuncia o titulo); Tab fica preso dentro dele;
 // ao fechar, devolve o foco a quem abriu. Fechar continua so pelo X/Cancelar (sem Esc nem clique fora).
-const _modalOpener = new Map();
+const _modalOpener = new Map(), _modalSnap = new Map();
+const _formSnap = bg => JSON.stringify([...bg.querySelectorAll('input,select,textarea')].map(x => x.type === 'checkbox' || x.type === 'radio' ? x.checked : x.value));
 function openModal(id){
   const bg = $('#'+id);
   _modalOpener.set(id, document.activeElement);
   bg.querySelectorAll('.agenda-aviso').forEach(x => { x.textContent = ''; x.className = 'agenda-aviso'; });
   bg.classList.add('show');
+  _modalSnap.set(id, _formSnap(bg));
   const m = bg.querySelector('.modal');
   if(m) setTimeout(() => m.focus({preventScroll:true}), 0);
 }
@@ -4074,7 +4103,13 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('sr-item')){ e.preventDefault(); e.target.click(); return; }
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList && (e.target.classList.contains('sr-item') || e.target.classList.contains('psi-cal-day') || e.target.matches('thead th[data-sort]'))){ e.preventDefault(); e.target.click(); return; }
+  if(e.key === 'Escape'){
+    const bg = document.querySelector('.modal-bg.show');
+    if(!bg || bg.querySelector('.ss-drop.open')) return;   // seletor de empresa aberto: o Esc dele vem primeiro
+    if(_formSnap(bg) === _modalSnap.get(bg.id) || confirm('Descartar as alterações deste formulário?')) closeModal(bg.id);
+    return;
+  }
   if(e.key !== 'Tab') return;
   const m = document.querySelector('.modal-bg.show .modal');
   if(!m) return;
@@ -4187,7 +4222,7 @@ async function excluirDemanda(){
     await excluirDemandaNuvem(id);
     state.demandas = state.demandas.filter(x => x.id !== id);
     save(); closeModal('modal-demanda'); renderDemandas();
-    toast('Demanda excluída', 'danger');
+    toast('Demanda excluída');
   } catch(err){ toast('Erro ao excluir demanda: ' + err.message, 'danger'); }
 }
 
@@ -4913,7 +4948,12 @@ function makeSearchableSelect(sel){
   const btn = document.createElement('div');
   btn.className = 'ss-input';
   btn.tabIndex = 0;
-  btn.innerHTML = '<span class="ss-label"></span><span class="ss-arrow">▼</span>';
+  btn.setAttribute('role', 'combobox');
+  btn.setAttribute('aria-haspopup', 'listbox');
+  btn.setAttribute('aria-expanded', 'false');
+  const _lbl = (sel.id && document.querySelector('label[for="' + sel.id + '"]')) || sel.closest('.field-block, .field')?.querySelector('label');
+  if(_lbl) btn.setAttribute('aria-label', _lbl.textContent.replace('*','').trim());
+  btn.innerHTML = '<span class="ss-label"></span><span class="ss-arrow" aria-hidden="true">▼</span>';
   wrap.insertBefore(btn, sel);
 
   const drop = document.createElement('div');
@@ -4934,7 +4974,7 @@ function makeSearchableSelect(sel){
     const qn = normalizeTexto(q);
     const filtered = [...sel.options].filter(o => !qn || normalizeTexto(o.text).includes(qn));
     opts.innerHTML = filtered.length
-      ? filtered.map(o => `<div class="ss-opt" data-val="${escapeHtml(o.value)}">${escapeHtml(o.text)}</div>`).join('')
+      ? filtered.map(o => `<div class="ss-opt" role="option" data-val="${escapeHtml(o.value)}">${escapeHtml(o.text)}</div>`).join('')
       : '<div class="ss-empty">Nenhum resultado</div>';
     opts.querySelectorAll('.ss-opt').forEach(d => {
       d.onmousedown = e => {
@@ -4948,12 +4988,32 @@ function makeSearchableSelect(sel){
     });
   }
 
-  function open(){ drop.classList.add('open'); searchInp.value = ''; renderOpts(''); setTimeout(()=>searchInp.focus(),0); }
-  function close(){ drop.classList.remove('open'); }
+  function open(){ drop.classList.add('open'); btn.setAttribute('aria-expanded','true'); searchInp.value = ''; renderOpts(''); setTimeout(()=>searchInp.focus(),0); }
+  function close(){ drop.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+  // Setas movem a opcao destacada, Enter escolhe, Esc fecha e devolve o foco ao campo
+  let _ativa = -1;
+  function destacar(i){
+    const lista = [...opts.querySelectorAll('.ss-opt')];
+    if(!lista.length) return;
+    _ativa = (i + lista.length) % lista.length;
+    lista.forEach((d, k) => { d.classList.toggle('ss-active', k === _ativa); d.setAttribute('aria-selected', String(k === _ativa)); });
+    lista[_ativa].scrollIntoView({block:'nearest'});
+  }
 
   btn.onclick = () => drop.classList.contains('open') ? close() : open();
-  btn.onkeydown = e => { if(e.key==='Enter'||e.key===' ') open(); };
-  searchInp.oninput = () => renderOpts(searchInp.value);
+  btn.onkeydown = e => { if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){ e.preventDefault(); open(); } };
+  searchInp.oninput = () => { renderOpts(searchInp.value); _ativa = -1; };
+  searchInp.onkeydown = e => {
+    if(e.key === 'ArrowDown'){ e.preventDefault(); destacar(_ativa + 1); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); destacar(_ativa - 1); }
+    else if(e.key === 'Enter'){
+      e.preventDefault();
+      const alvo = opts.querySelectorAll('.ss-opt')[_ativa >= 0 ? _ativa : 0];
+      if(alvo) alvo.onmousedown({preventDefault(){}});
+      btn.focus();
+    }
+    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); btn.focus(); }
+  };
   document.addEventListener('mousedown', e => { if(!wrap.contains(e.target)) close(); });
 
   new MutationObserver(syncLabel).observe(sel, {childList:true, subtree:true, attributes:true});
@@ -4965,7 +5025,7 @@ function setupEvents(){
   // Navegação
   $$('[data-route]').forEach(b => b.onclick = () => navigate(b.dataset.route));
   // Fechar modal
-  $$('[data-close]').forEach(b => b.onclick = () => b.closest('.modal-bg').classList.remove('show'));
+  $$('[data-close]').forEach(b => b.onclick = () => closeModal(b.closest('.modal-bg').id));
   setupInsumos();
   setupTreinamentos();
 
@@ -5071,7 +5131,7 @@ function setupEvents(){
       // a tela mostra um id de empresa que não existe mais até o F5.
       state.psicossociais.forEach(p => { if(p.empresa === id) p.empresa = ''; });
       state.treinandos.forEach(p => { if(p.empresa === id) p.empresa = ''; });
-      save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída', 'danger');
+      save(); closeModal('modal-empresa'); renderAll(); toast('Empresa excluída');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5239,7 +5299,7 @@ function setupEvents(){
       state.contratos.forEach(c => { if(c.obra === id) c.obra = ''; });
       state.demandas.forEach(d => { if(d.obra === id) d.obra = ''; });
       state.treinandos.forEach(p => { if(p.obra === id) p.obra = ''; });
-      save(); closeModal('modal-obra'); renderAll(); toast('Obra excluída', 'danger');
+      save(); closeModal('modal-obra'); renderAll(); toast('Obra excluída');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5390,7 +5450,7 @@ function setupEvents(){
     try {
       await excluirDocumentoNuvem(did);
       state.docs = state.docs.filter(d => d.id !== did);
-      save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído', 'danger');
+      save(); closeModal('modal-doc'); renderAll(); toast('Documento excluído');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5427,7 +5487,7 @@ function setupEvents(){
       await Promise.all(aIds.map(aid => excluirAvaliacaoNuvem(aid)));
       state.contratos = state.contratos.filter(c => c.id !== id);
       state.avaliacoes = state.avaliacoes.filter(a => a.contrato !== id);
-      save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído', 'danger');
+      save(); closeModal('modal-contrato'); renderAll(); toast('Contrato excluído');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5473,7 +5533,7 @@ function setupEvents(){
     try {
       await excluirMedicaoNuvem(id);
       state.medicoes = state.medicoes.filter(m => m.id !== id);
-      save(); closeModal('modal-medicao'); renderAll(); toast('Medição excluída', 'danger');
+      save(); closeModal('modal-medicao'); renderAll(); toast('Medição excluída');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5504,7 +5564,7 @@ function setupEvents(){
     try {
       await excluirContratoPgrNuvem(id);
       state.contratosPgr = state.contratosPgr.filter(c => c.id !== id);
-      save(); closeModal('modal-contrato-pgr'); renderAll(); toast('Contrato PGR excluído', 'danger');
+      save(); closeModal('modal-contrato-pgr'); renderAll(); toast('Contrato PGR excluído');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
@@ -5678,21 +5738,34 @@ function setupEvents(){
       // Reabre saldo pra quem ficou pra trás: a exclusão pode liberar espaço
       // pra outra avaliação do mesmo tipo que estava marcada como fora do contrato.
       if(avExcluida) await recalcularForaDoContrato(avExcluida.contrato, avExcluida.agente);
-      save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída', 'danger');
+      save(); closeModal('modal-aval'); renderAll(); toast('Avaliação excluída');
     } catch(err) {
       toast('Erro ao excluir no servidor: ' + err.message, 'danger');
     }
   };
 
   // PDF
+  const relValido = () => {
+    const ini = $('#rel-ini').value, fim = $('#rel-fim').value;
+    if(ini && fim && ini > fim){ toast('A data de início é depois da data de fim. Corrija o período.', 'danger'); return false; }
+    if(relModo !== 'cliente' && !$$('#rel-interno-opcoes input:checked').length){ toast('Marque ao menos uma seção para o relatório.', 'danger'); return false; }
+    return true;
+  };
   $('#rel-gerar').onclick = () => {
+    if(!relValido()) return;
     if(relModo === 'cliente') montarRelatorioCliente(); else montarRelatorio();
     toast('✅ Relatório gerado', 'ok');
   };
   $('#pdfBtn').onclick = () => {
+    if(!relValido()) return;
     if(relModo === 'cliente') montarRelatorioCliente(); else montarRelatorio();
+    // O navegador usa o título da página como nome do arquivo: Relatorio-<Empresa>-<AAAA-MM>
+    const slug = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    const empSel = $('#rel-cli-empresa');
+    const empNome = relModo === 'cliente' && empSel && empSel.value ? slug(empSel.options[empSel.selectedIndex].textContent) : 'SECONCI';
+    const mes = ($('#rel-ini').value || $('#rel-fim').value || todayISO()).slice(0,7);
     const titulo = document.title;
-    document.title = 'Relatorio-SECONCI-' + todayISO();
+    document.title = 'Relatorio-' + (empNome || 'SECONCI') + '-' + mes;
     window.print();
     document.title = titulo;
   };
@@ -5829,7 +5902,7 @@ function setupEvents(){
       await excluirPsiNuvem(id);
       state.psicossociais = state.psicossociais.filter(p => p.id !== id);
       save(); closeModal('modal-psi'); renderAll();
-      toast('Avaliação excluída', 'danger');
+      toast('Avaliação excluída');
     } catch(err) {
       toast('Erro ao excluir: ' + err.message, 'danger');
     }
@@ -5922,6 +5995,8 @@ function setupEvents(){
       modalidade:      tipo==='palestra' ? $('#mev-modalidade').value : '',
       tipoMinistrante: tipo==='palestra' ? $('#mev-tipomin').value : '',
       solicitante:     tipo==='palestra' ? $('#mev-solicitante').value.trim() : '',
+      equipamento:     tipo==='palestra' ? $('#mev-equip').value : '',
+      endereco:        tipo==='palestra' ? $('#mev-endereco').value.trim() : '',
       historico
     };
     try {
@@ -5930,7 +6005,7 @@ function setupEvents(){
       if(idx>=0) state.eventos[idx]=obj; else state.eventos.push(obj);
       save(); closeModal('modal-evento'); renderEventos(tipo);
       const nomeTipo = {treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria', ltcat:'Avaliação LTCAT'}[tipo] || 'Registro';
-      toast('✅ '+nomeTipo+' salvo', 'ok');
+      toast('✅ '+nomeTipo+' salv'+((EV_LABELS[tipo]||{}).gen==='a'?'a':'o'), 'ok');
     } catch(err){ toast('Erro ao salvar: '+err.message, 'danger'); }
   };
   // Modal evento — excluir
@@ -5942,7 +6017,7 @@ function setupEvents(){
       await excluirEventoNuvem(id);
       state.eventos = (state.eventos||[]).filter(x=>x.id!==id);
       save(); closeModal('modal-evento'); renderEventos(tipo);
-      toast('Registro excluído', 'danger');
+      toast('Registro excluído');
     } catch(err){ toast('Erro ao excluir: '+err.message, 'danger'); }
   };
 
@@ -5954,6 +6029,18 @@ function setupEvents(){
   ['f-obra-empresa','f-doc-empresa','f-av-empresa','f-psi-empresa','f-ev-treinamento-empresa','f-ev-palestra-empresa','f-ev-ltcat-empresa','f-med-empresa','mc-empresa','mc-obra','md-empresa','md-obra','mo-empresa','mp-empresa','mev-empresa','med-empresa','med-obra','cpgr-empresa','cpgr-obra','me-converter-empresa'].forEach(id => {
     const sel = $('#'+id);
     if(sel) makeSearchableSelect(sel);
+  });
+
+  // Botao primario de cada modal fica travado enquanto o salvamento nao termina (duplo clique criava registro duplicado)
+  $$('.modal-f .btn.primary').forEach(b => {
+    const h = b.onclick;
+    if(!h) return;
+    b.onclick = async function(ev){
+      if(b.dataset.busy) return;
+      b.dataset.busy = '1'; b.disabled = true;
+      try { return await h.call(this, ev); }
+      finally { delete b.dataset.busy; b.disabled = false; }
+    };
   });
 }
 
@@ -6054,7 +6141,7 @@ function setupInsumos(){
       await excluirInsumoNuvem(id);
       state.insumos = state.insumos.filter(x => x.id !== id);
       save(); closeModal('modal-insumo'); renderAll();
-      toast('Insumo excluído', 'danger');
+      toast('Insumo excluído');
     } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
   };
 }
@@ -6178,7 +6265,7 @@ function setupTreinamentos(){
       state.turmas = state.turmas.filter(x => x.id !== id);
       state.treinandos = state.treinandos.filter(x => x.turma !== id);
       save(); closeModal('modal-turma'); renderAll();
-      toast('Turma excluída', 'danger');
+      toast('Turma excluída');
     } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
   };
 
@@ -6433,7 +6520,7 @@ async function excluirInstrutor(id){
       if(t.responsavelAssinatura === id) t.responsavelAssinatura = '';
     });
     save(); closeModal('modal-instrutor'); renderAll();
-    toast('Instrutor excluído', 'danger');
+    toast('Instrutor excluído');
   } catch(err){ toast('Erro ao excluir: ' + err.message, 'danger'); }
 }
 
@@ -7150,7 +7237,7 @@ async function excluirGhe(id) {
     state.ghe = state.ghe.filter(x => x.id !== id);
     save();
     renderAll();
-    toast('GHE excluído', 'danger');
+    toast('GHE excluído');
   } catch(err) {
     toast('Erro ao excluir GHE: ' + err.message, 'danger');
   }
@@ -7225,9 +7312,9 @@ function renderCalendarioPsi(){
 
   const MESES    = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const DIAS_SEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const COR_ST   = {pendente:'#FFA000', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
+  const COR_ST   = {pendente:'#9A5B00', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
 
-  const hojeISO      = new Date().toISOString().slice(0,10);
+  const hojeISO      = todayISO();
   const primeiroDia  = new Date(_psiCalAno, _psiCalMes, 1);
   const ultimoDia    = new Date(_psiCalAno, _psiCalMes + 1, 0);
   const inicioOffset = primeiroDia.getDay();
@@ -7272,7 +7359,7 @@ function renderCalendarioPsi(){
 
     const esp = diaEspecialAgenda(isoDate);
     const cls = ['psi-cal-day', temAval?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':'', esp.tipo].filter(Boolean).join(' ');
-    const click = temAval ? `onclick="psiCalFiltrar('${isoDate}')"` : '';
+    const click = temAval ? `onclick="psiCalFiltrar('${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, avals)}"` : '';
     celulas += `<div class="${cls}" ${click}${esp.tipo ? ` title="${escapeHtml(esp.nome)}"` : ''}><span class="psi-cal-num">${diaNum}</span>${esp.curto ? `<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>` : ''}${badges}${extra}</div>`;
   }
 
@@ -7283,9 +7370,9 @@ function renderCalendarioPsi(){
   el.innerHTML = `
     <div class="psi-cal-wrap">
       <div class="psi-cal-nav">
-        <button class="btn ghost sm" onclick="psiCalMover(-1)" style="font-size:16px;padding:4px 10px">‹</button>
+        <button class="btn ghost sm" onclick="psiCalMover(-1)" aria-label="Mês anterior" style="font-size:16px;padding:4px 10px">‹</button>
         <span class="psi-cal-titulo">${MESES[_psiCalMes]} ${_psiCalAno}</span>
-        <button class="btn ghost sm" onclick="psiCalMover(1)" style="font-size:16px;padding:4px 10px">›</button>
+        <button class="btn ghost sm" onclick="psiCalMover(1)" aria-label="Próximo mês" style="font-size:16px;padding:4px 10px">›</button>
         ${btnFiltro}
       </div>
       <div class="psi-cal-grid">${cabecalho}${celulas}</div>
@@ -7376,10 +7463,10 @@ async function excluirPsiNuvem(id){
 
 /* ================== AGENDA: EVENTOS (treinamento / palestra) ================== */
 const EV_LABELS = {
-  treinamento: {titulo:'treinamento',        resp:'Instrutor',            novo:'Novo treinamento',        editar:'Editar treinamento'},
-  palestra:    {titulo:'palestra',           resp:'Ministrante',          novo:'Nova palestra',           editar:'Editar palestra'},
-  auditoria:   {titulo:'auditoria',          resp:'Auditor responsável',  novo:'Nova auditoria',          editar:'Editar auditoria'},
-  ltcat:       {titulo:'avaliação de LTCAT', resp:'Técnico responsável',  novo:'Nova avaliação LTCAT',    editar:'Editar avaliação LTCAT'}
+  treinamento: {titulo:'treinamento',        resp:'Instrutor',            novo:'Novo treinamento',        editar:'Editar treinamento', gen:'o'},
+  palestra:    {titulo:'palestra',           resp:'Ministrante',          novo:'Nova palestra',           editar:'Editar palestra', gen:'a'},
+  auditoria:   {titulo:'auditoria',          resp:'Auditor responsável',  novo:'Nova auditoria',          editar:'Editar auditoria', gen:'a'},
+  ltcat:       {titulo:'avaliação de LTCAT', resp:'Técnico responsável',  novo:'Nova avaliação LTCAT',    editar:'Editar avaliação LTCAT', gen:'a'}
 };
 const EV_STATUS_CFG = {
   agendado:  {cls:'warn',   label:'Agendado'},
@@ -7387,7 +7474,7 @@ const EV_STATUS_CFG = {
   reagendado:{cls:'muted',  label:'Reagendado'},
   cancelado: {cls:'danger', label:'Cancelado'}
 };
-const EV_COR_ST = {agendado:'#FFA000', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
+const EV_COR_ST = {agendado:'#9A5B00', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
 
 function switchAgenda(tab){
   _agendaTab = tab;
@@ -7411,15 +7498,26 @@ function eventosFiltrados(tipo){
   const fd  = _evCal[tipo].filtroData;
   const tp  = $('#f-ev-'+tipo+'-tipo') ? $('#f-ev-'+tipo+'-tipo').value : '';
   const q   = $('#f-ev-'+tipo+'-busca') ? $('#f-ev-'+tipo+'-busca').value.trim().toLowerCase() : '';
-  const texto = e => [e.empresaLivre, nomeEmpresa(e.empresa), e.local, e.tema, e.responsavel, e.solicitante].join(' ').toLowerCase();
-  return (state.eventos||[]).filter(e =>
+  const texto = e => [e.empresaLivre, nomeEmpresa(e.empresa), e.local, e.endereco, e.tema, e.responsavel, e.solicitante].join(' ').toLowerCase();
+  const lista = (state.eventos||[]).filter(e =>
     e.tipo === tipo &&
     (!emp || e.empresa === emp) &&
     (!st  || e.status === st) &&
     (!tp  || e.tipoPalestra === tp) &&
     (!q   || texto(e).includes(q)) &&
     (!fd  || e.data === fd)
-  ).sort((a,b) => (b.data||'').localeCompare(a.data||''));
+  );
+  const cal = _evCal[tipo], hoje = todayISO();
+  const mesIni = `${cal.ano}-${String(cal.mes+1).padStart(2,'0')}`;
+  const porModo = {
+    proximas: e => (e.data||'') >= hoje,
+    mes:      e => (e.data||'').slice(0,7) === mesIni,
+    passadas: e => (e.data||'') <  hoje,
+    todas:    () => true
+  }[cal.modo || 'proximas'];
+  const crescente = !fd && ['proximas','mes'].includes(cal.modo || 'proximas');
+  return lista.filter(e => fd || porModo(e))
+    .sort((a,b) => crescente ? (a.data||'').localeCompare(b.data||'') || (a.hora||'').localeCompare(b.hora||'') : (b.data||'').localeCompare(a.data||'') || (a.hora||'').localeCompare(b.hora||''));
 }
 
 function renderEventos(tipo){
@@ -7436,11 +7534,23 @@ function renderEventos(tipo){
   const fd = _evCal[tipo].filtroData;
   const labelFiltro = fd
     ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--green-700)">📅 Mostrando: <b>${fd.split('-').reverse().join('/')}</b> <button class="btn ghost sm" style="font-size:11px" onclick="evCalLimpar('${tipo}')">✕ Limpar filtro</button></div>` : '';
+  const lab = EV_LABELS[tipo], nenhum = (lab.gen === 'a' ? 'Nenhuma ' : 'Nenhum ') + lab.titulo;
+  const modo = _evCal[tipo].modo || 'proximas';
+  const MODOS = [['proximas','A partir de hoje'],['mes','Mês do calendário'],['passadas','Passadas'],['todas','Todas']];
+  const barraModo = `<div role="group" aria-label="Período da lista" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">${
+    MODOS.map(([k, t]) => `<button type="button" class="btn sm${modo===k && !fd?' primary':''}" aria-pressed="${modo===k && !fd}" onclick="evModo('${tipo}','${k}')">${t}</button>`).join('')
+  }<span style="font-size:12.5px;color:var(--ink-soft);margin-left:4px">${plural(list.length, 'registro')}</span></div>`;
   if(!list.length){
-    cont.innerHTML = labelFiltro + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhum '+EV_LABELS[tipo].titulo+(fd?' nesta data.':' registrado.')+'</div></div>';
+    const filtrando = !!($('#f-ev-'+tipo+'-empresa')?.value || $('#f-ev-'+tipo+'-status')?.value || $('#f-ev-'+tipo+'-tipo')?.value || $('#f-ev-'+tipo+'-busca')?.value.trim());
+    const msg = fd ? nenhum + ' nesta data.'
+      : filtrando ? nenhum + ' com esses filtros. Limpe os filtros ou troque o período acima.'
+      : modo === 'proximas' ? nenhum + ' a partir de hoje. Veja "Passadas" ou "Todas".'
+      : modo === 'mes' ? nenhum + ' no mês do calendário.'
+      : nenhum + ' registrad' + lab.gen + '.';
+    cont.innerHTML = labelFiltro + barraModo + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">' + msg + '</div></div>';
     return;
   }
-  cont.innerHTML = labelFiltro + list.map(e => {
+  cont.innerHTML = labelFiltro + barraModo + list.map(e => {
     const cfg = EV_STATUS_CFG[e.status] || {cls:'muted', label:e.status};
     const emp = state.empresas.find(x => x.id === e.empresa);
     const dataFmt = e.data ? e.data.split('-').reverse().join('/') : '—';
@@ -7454,12 +7564,15 @@ function renderEventos(tipo){
           <h3>${escapeHtml(e.empresaLivre || (emp ? emp.nome : '—'))}</h3>
           <p>${e.tema ? '<b>'+escapeHtml(e.tema)+'</b> · ' : ''}${dataFmt}${escapeHtml(hora)}${e.local ? ' · '+escapeHtml(e.local) : ''}</p>
           ${e.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">${EV_LABELS[tipo].resp}: ${escapeHtml(e.responsavel)}${e.tipoMinistrante ? ' ('+escapeHtml(e.tipoMinistrante.toLowerCase())+')' : ''}${e.solicitante ? ' · Solicitante: '+escapeHtml(e.solicitante) : ''}</p>` : ''}
+          ${e.endereco ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">Endereço: ${escapeHtml(e.endereco)}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           ${prevPres}
           ${e.tipoPalestra ? `<span class="pill muted">${escapeHtml(e.tipoPalestra)}</span>` : ''}
           ${e.modalidade === 'ONLINE' ? '<span class="pill muted">Online</span>' : ''}
+          ${e.equipamento === 'nao' ? '<span class="pill muted">Sem equipamento</span>' : ''}
           <span class="pill ${cfg.cls}">${cfg.label}</span>
+          ${e.status==='agendado' && (e.data||'') < todayISO() ? '<span class="pill muted" title="A data já passou e o status continua Agendado. Quem ministrou fecha como Realizado.">Data passou</span>' : ''}
           <button class="btn sm" onclick="openEvento('${tipo}','${e.id}')">Editar</button>
         </div>
       </div>
@@ -7475,7 +7588,7 @@ function renderCalendarioEvento(tipo){
   const cal = _evCal[tipo];
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const DIAS_SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const hojeISO=new Date().toISOString().slice(0,10);
+  const hojeISO=todayISO();
   const primeiroDia=new Date(cal.ano, cal.mes, 1);
   const ultimoDia=new Date(cal.ano, cal.mes+1, 0);
   const inicioOffset=primeiroDia.getDay();
@@ -7506,14 +7619,14 @@ function renderCalendarioEvento(tipo){
     }).join('');
     const esp=diaEspecialAgenda(isoDate);
     const cls=['psi-cal-day',temAval?'tem-aval':'',isHoje?'hoje':'',isAtivo?'ativo':'',esp.tipo].filter(Boolean).join(' ');
-    const click=temAval?`onclick="evCalFiltrar('${tipo}','${isoDate}')"`:'';
+    const click=temAval?`onclick="evCalFiltrar('${tipo}','${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, evs)}"`:'';
     celulas+=`<div class="${cls}" ${click}${esp.tipo?` title="${escapeHtml(esp.nome)}"`:''}><span class="psi-cal-num">${diaNum}</span>${esp.curto?`<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>`:''}${badges}${extra}</div>`;
   }
   const btnFiltro=cal.filtroData?`<button class="btn ghost sm" style="margin-left:auto;font-size:11px" onclick="evCalLimpar('${tipo}')">✕ ${cal.filtroData.split('-').reverse().join('/')}</button>`:'';
   el.innerHTML=`<div class="psi-cal-wrap"><div class="psi-cal-nav">
-    <button class="btn ghost sm" onclick="evCalMover('${tipo}',-1)" style="font-size:16px;padding:4px 10px">‹</button>
+    <button class="btn ghost sm" onclick="evCalMover('${tipo}',-1)" aria-label="Mês anterior" style="font-size:16px;padding:4px 10px">‹</button>
     <span class="psi-cal-titulo">${MESES[cal.mes]} ${cal.ano}</span>
-    <button class="btn ghost sm" onclick="evCalMover('${tipo}',1)" style="font-size:16px;padding:4px 10px">›</button>
+    <button class="btn ghost sm" onclick="evCalMover('${tipo}',1)" aria-label="Próximo mês" style="font-size:16px;padding:4px 10px">›</button>
     ${btnFiltro}</div><div class="psi-cal-grid">${cabecalho}${celulas}</div>${LEGENDA_AGENDA}</div>`;
 }
 
@@ -7525,6 +7638,7 @@ function evCalMover(tipo,delta){
   cal.filtroData=null;
   renderEventos(tipo);
 }
+function evModo(tipo,modo){ _evCal[tipo].modo = modo; _evCal[tipo].filtroData = null; renderEventos(tipo); }
 function evCalFiltrar(tipo,data){ _evCal[tipo].filtroData = _evCal[tipo].filtroData===data?null:data; renderEventos(tipo); }
 function evCalLimpar(tipo){ _evCal[tipo].filtroData=null; renderEventos(tipo); }
 
@@ -7540,7 +7654,9 @@ function openEvento(tipo,id){
   $('#mev-tema').placeholder = tipo==='auditoria' ? 'Nome da obra auditada' : tipo==='ltcat' ? 'Ex.: renovação anual, obra nova…' : 'Assunto do treinamento/palestra';
   $('#mev-tema').required = tipo==='auditoria';
   $('#mev-local-block').style.display = (tipo==='palestra' || tipo==='ltcat') ? '' : 'none';
-  ['tipopal','modalidade','tipomin','solicitante'].forEach(k => $('#mev-'+k+'-block').style.display = tipo==='palestra' ? '' : 'none');
+  ['tipopal','modalidade','tipomin','solicitante','equip','endereco'].forEach(k => $('#mev-'+k+'-block').style.display = tipo==='palestra' ? '' : 'none');
+  $('#mev-equip').value = e?.equipamento || '';
+  $('#mev-endereco').value = e?.endereco || '';
   $('#mev-tipopal').value = e?.tipoPalestra || '';
   $('#mev-modalidade').value = e?.modalidade || '';
   $('#mev-tipomin').value = e?.tipoMinistrante || '';
@@ -7604,6 +7720,8 @@ async function salvarEventoNuvem(e){
     modalidade: e.modalidade || null,
     tipo_ministrante: e.tipoMinistrante || null,
     solicitante: e.solicitante || null,
+    endereco: e.endereco || null,
+    precisa_equipamento: e.equipamento === 'sim' ? true : e.equipamento === 'nao' ? false : null,
     historico_reagendamentos: e.historico || []
   });
   if(error) throw new Error(error.message);
@@ -7733,23 +7851,25 @@ async function carregarDaNuvem() {
     db.from('agenda_dias').select('*')
   ])
 
-  if (errDocs)      { console.error('Erro docs:', errDocs.message); toast('Erro ao carregar documentos da nuvem', 'danger') }
-  if (errEmps)      { console.error('Erro clientes:', errEmps.message); toast('Erro ao carregar empresas da nuvem', 'danger') }
-  if (errObras)     { console.error('Erro obras:', errObras.message); toast('Erro ao carregar obras da nuvem', 'danger'); }
-  if (errContratos) { console.error('Erro contratos:', errContratos.message); toast('Erro ao carregar contratos da nuvem', 'danger'); }
-  if (errAval)      { console.error('Erro avaliações:', errAval.message); toast('Erro ao carregar avaliações da nuvem', 'danger'); }
-  if (errPsi)       { console.error('Erro psicossociais:', errPsi.message); toast('Erro ao carregar avaliações psicossociais', 'danger'); }
-  if (errHist)      { console.error('Erro histórico:', errHist.message); toast('Erro ao carregar histórico de documentos', 'danger'); }
-  if (errGhe)       { console.error('Erro GHE:', errGhe.message); toast('Erro ao carregar GHEs da nuvem', 'danger'); }
-  if (errInsumos)   { console.error('Erro insumos:', errInsumos.message); toast('Erro ao carregar insumos da nuvem', 'danger'); }
-  if (errEventos)   { console.error('Erro eventos:', errEventos.message); toast('Erro ao carregar agenda de treinamentos/palestras', 'danger'); }
-  if (errConfigGeral) { console.error('Erro config geral:', errConfigGeral.message); toast('Erro ao carregar configuração geral', 'danger'); }
-  if (errMedicoes)    { console.error('Erro medições:', errMedicoes.message); toast('Erro ao carregar medições da nuvem', 'danger'); }
-  if (errContratosPgr){ console.error('Erro contratos PGR:', errContratosPgr.message); toast('Erro ao carregar contratos PGR', 'danger'); }
-  if (errDemandas)    { console.error('Erro demandas:', errDemandas.message); toast('Erro ao carregar quadro de demandas', 'danger'); }
-  if (errTurmas)      { console.error('Erro turmas:', errTurmas.message); toast('Erro ao carregar turmas de treinamento', 'danger'); }
-  if (errTreinandos)  { console.error('Erro treinandos:', errTreinandos.message); toast('Erro ao carregar participantes de treinamento', 'danger'); }
-  if (errAssinaturas) { console.error('Erro assinaturas:', errAssinaturas.message); toast('Erro ao carregar assinaturas cadastradas', 'danger'); }
+  const falhasCarga = [];
+  if (errDocs)      { console.error('Erro docs:', errDocs.message); falhasCarga.push('documentos da nuvem') }
+  if (errEmps)      { console.error('Erro clientes:', errEmps.message); falhasCarga.push('empresas da nuvem') }
+  if (errObras)     { console.error('Erro obras:', errObras.message); falhasCarga.push('obras da nuvem'); }
+  if (errContratos) { console.error('Erro contratos:', errContratos.message); falhasCarga.push('contratos da nuvem'); }
+  if (errAval)      { console.error('Erro avaliações:', errAval.message); falhasCarga.push('avaliações da nuvem'); }
+  if (errPsi)       { console.error('Erro psicossociais:', errPsi.message); falhasCarga.push('avaliações psicossociais'); }
+  if (errHist)      { console.error('Erro histórico:', errHist.message); falhasCarga.push('histórico de documentos'); }
+  if (errGhe)       { console.error('Erro GHE:', errGhe.message); falhasCarga.push('GHEs da nuvem'); }
+  if (errInsumos)   { console.error('Erro insumos:', errInsumos.message); falhasCarga.push('insumos da nuvem'); }
+  if (errEventos)   { console.error('Erro eventos:', errEventos.message); falhasCarga.push('agenda de treinamentos/palestras'); }
+  if (errConfigGeral) { console.error('Erro config geral:', errConfigGeral.message); falhasCarga.push('configuração geral'); }
+  if (errMedicoes)    { console.error('Erro medições:', errMedicoes.message); falhasCarga.push('medições da nuvem'); }
+  if (errContratosPgr){ console.error('Erro contratos PGR:', errContratosPgr.message); falhasCarga.push('contratos PGR'); }
+  if (errDemandas)    { console.error('Erro demandas:', errDemandas.message); falhasCarga.push('quadro de demandas'); }
+  if (errTurmas)      { console.error('Erro turmas:', errTurmas.message); falhasCarga.push('turmas de treinamento'); }
+  if (errTreinandos)  { console.error('Erro treinandos:', errTreinandos.message); falhasCarga.push('participantes de treinamento'); }
+  if (errAssinaturas) { console.error('Erro assinaturas:', errAssinaturas.message); falhasCarga.push('assinaturas cadastradas'); }
+  mostrarFalhasCarga(falhasCarga);
 
   if (!errDocs) state.docs = (docs||[]).map(d => ({
     id:               d.id,
@@ -7893,6 +8013,8 @@ async function carregarDaNuvem() {
       modalidade:   e.modalidade || '',
       tipoMinistrante: e.tipo_ministrante || '',
       solicitante:  e.solicitante || '',
+      endereco:     e.endereco || '',
+      equipamento:  e.precisa_equipamento === true ? 'sim' : e.precisa_equipamento === false ? 'nao' : '',
       historico:    Array.isArray(e.historico_reagendamentos) ? e.historico_reagendamentos : []
     }))
   }
