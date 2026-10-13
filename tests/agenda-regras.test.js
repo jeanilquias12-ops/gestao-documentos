@@ -56,7 +56,7 @@ state.eventos.push({id: 'v1', tipo: 'auditoria', data: '2026-10-13', empresaLivr
                    {id: 'v3', tipo: 'treinamento', data: '2026-10-14', empresa: 'e2', hora: '10:00', status: 'pendente'});
 let r = api.avaliarDataAgenda('2026-10-13');
 ok(r.bloqueio === null, 'conflito nunca impede');
-ok(r.avisos.length === 1 && /Já há 2 agendamento\(s\) em 13\/10\/2026/.test(r.avisos[0]), 'conta 2 (cancelado fica de fora)');
+ok(r.avisos.length === 1 && /Já há 2 agendamentos em 13\/10\/2026/.test(r.avisos[0]), 'conta 2 (cancelado fica de fora)');
 ok(r.avisos[0].indexOf('Psicossocial · Empresa Um · 09:00') < r.avisos[0].indexOf('Auditoria · Obra Alfa'), 'ordenado por horário (sem hora por último)');
 ok(!/Palestra/.test(r.avisos[0]), 'cancelado não conta');
 r = api.avaliarDataAgenda('2026-10-13', 'p1');

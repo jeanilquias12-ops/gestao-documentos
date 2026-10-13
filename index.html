@@ -449,7 +449,7 @@
           </div>
           <div class="tile warn kpi">
             <div class="kpi-top"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="kpi-badge" id="kpi-vencendo-badge" hidden></span></div>
-            <span class="tile-label">Vencendo em 90 dias</span>
+            <span class="tile-label" id="kpi-vencendo-label">Vencendo em 90 dias</span>
             <span class="tile-value" id="kpi-vencendo">—</span>
             <span class="tile-foot">Renovação recomendada</span>
             <div class="kpi-meter"><i id="kpi-vencendo-meter" style="width:0%"></i></div>
@@ -466,9 +466,9 @@
         </div>
         <div class="grid-2" style="margin-bottom:18px">
           <div class="card">
-            <div class="card-h"><div><h3>Próximas ações</h3><p>Documentos que precisam de atenção nos próximos 90 dias</p></div><button class="btn ghost sm" data-route="documentos">Ver todos →</button></div>
+            <div class="card-h"><div><h3>Próximas ações</h3><p>Documentos que precisam de atenção nos próximos <span class="js-dias-alerta">90 dias</span></p></div><button class="btn ghost sm" data-route="documentos">Ver todos →</button></div>
             <div class="table-wrap"><table id="tbl-acoes"><thead><tr><th>Empresa</th><th>Documento</th><th>Validade</th><th>Status</th></tr></thead><tbody></tbody></table></div>
-            <div class="card-b" id="acoes-vazio" style="display:none;color:var(--ink-muted);font-size:13.5px">✅ Nenhum documento vence ou venceu nos próximos 90 dias.</div>
+            <div class="card-b" id="acoes-vazio" style="display:none;color:var(--ink-muted);font-size:13.5px">✅ Nenhum documento vence ou venceu nos próximos <span class="js-dias-alerta">90 dias</span>.</div>
           </div>
           <div class="card">
             <div class="card-h"><div><h3>Saldos baixos</h3><p>Avaliações com ≤ 20% restante</p></div><button class="btn ghost sm" data-route="avaliacoes">Ver todos →</button></div>
@@ -956,7 +956,7 @@
     <div class="field-block"><label for="md-tipo">Tipo *</label><select id="md-tipo"><option value="PGR">PGR — 1 ano de validade</option><option value="LTCAT">LTCAT — 1 ano (validade da ART)</option></select></div>
     <input type="hidden" id="md-numero" value="" />
     <div class="field-block"><label for="md-emissao">Data de emissão *</label><input id="md-emissao" type="date" required min="2015-01-01" max="2100-12-31" /></div>
-    <div class="field-block"><label id="md-validade-label" for="md-validade">Data de validade</label><input id="md-validade" type="date" min="2015-01-01" max="2100-12-31" /><span class="hint" id="md-validade-hint">PGR é preenchido automaticamente em +2 anos</span></div>
+    <div class="field-block"><label id="md-validade-label" for="md-validade">Data de validade</label><input id="md-validade" type="date" min="2015-01-01" max="2100-12-31" /><span class="hint" id="md-validade-hint">PGR — preenchido automaticamente em +1 ano</span></div>
     <div class="field-block full"><label for="md-resp">Responsável técnico</label><input id="md-resp" list="responsaveis" /><datalist id="responsaveis"><option>Adriano Augusto Gonçalves de Oliveira / CREA – GO n.° 101672344D-GO</option></datalist></div>
     <div class="field-block full"><label for="md-obs">Observações</label><textarea id="md-obs" rows="2"></textarea></div>
   </div>
@@ -2111,9 +2111,9 @@ function statusDoc(doc){
   if(doc.tipo === 'LTCAT' && !doc.validade) return {key:'ok', label:'Válido (sem validade fixa)'};
   if(!doc.validade) return {key:'muted', label:'Sem validade'};
   const d = daysBetween(todayISO(), doc.validade);
-  if(d < 0) return {key:'danger', label:`Vencido há ${Math.abs(d)} dias`};
-  if(d <= notifyPrefs.dias) return {key:'warn', label:`Vence em ${d} dias`};
-  return {key:'ok', label:`Válido (${d} dias)`};
+  if(d < 0) return {key:'danger', label:`Vencido há ${plural(Math.abs(d), 'dia')}`};
+  if(d <= notifyPrefs.dias) return {key:'warn', label:`Vence em ${plural(d, 'dia')}`};
+  return {key:'ok', label:`Válido (${plural(d, 'dia')})`};
 }
 
 function faseDoc(doc){
@@ -2139,7 +2139,7 @@ function faseDoc(doc){
   const rest = 10 - corridos;
   if(rest < 0)  return {fase:1, key:'danger', label:`Seg. do Trabalho · atrasado ${Math.abs(rest)}d ⚠`, dias:corridos};
   if(rest === 0) return {fase:1, key:'danger', label:`Seg. do Trabalho · vence hoje ⚠`, dias:corridos};
-  if(rest <= 2)  return {fase:1, key:'warn',   label:`Seg. do Trabalho · ${rest}d restantes`, dias:corridos};
+  if(rest <= 2)  return {fase:1, key:'warn',   label:`Seg. do Trabalho · ${rest}d ${rest === 1 ? 'restante' : 'restantes'}`, dias:corridos};
   return {fase:1, key:'fase1', label:`Seg. do Trabalho · ${rest}d restantes`, dias:corridos};
 }
 
@@ -2150,8 +2150,23 @@ function mostrarFalhasCarga(lista){
   if(!el){ el = document.createElement('div'); el.id = 'loadFail'; el.className = 'load-fail'; el.setAttribute('role', 'alert'); document.body.appendChild(el); }
   el.innerHTML = `<span><b>Não foi possível carregar:</b> ${escapeHtml(lista.join(', '))}. O que aparece pode estar desatualizado.</span><button type="button" onclick="location.reload()">Tentar de novo</button>`;
 }
+// Traduz a mensagem tecnica do servidor para o que a pessoa pode fazer
+function traduzirErro(m){
+  m = String(m || '');
+  if(/failed to fetch|networkerror|load failed|network request/i.test(m)) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+  if(/jwt|token.*expired|not authenticated|invalid.*(session|claim)/i.test(m)) return 'Sua sessão expirou. Entre de novo.';
+  if(/row-level security|permission denied|not authorized|violates row-level/i.test(m)) return 'Seu perfil não tem permissão para esta ação.';
+  if(/duplicate key|already exists|unique constraint/i.test(m)) return 'Já existe um registro igual a este.';
+  if(/foreign key|still referenced|violates foreign/i.test(m)) return 'Este registro está ligado a outros e não pode ser alterado ou excluído assim.';
+  if(/violates check constraint|invalid input|out of range/i.test(m)) return 'Algum campo tem um valor que o sistema não aceita. Revise o formulário.';
+  return 'Tente de novo e, se continuar, avise o suporte. Detalhe: ' + m;
+}
 let _toastTimer;
 function toast(msg, kind){
+  if(kind === 'danger'){
+    const m = /^Erro ao ([^:]+): ([\s\S]+)$/.exec(msg);
+    if(m) msg = 'Não foi possível ' + m[1].replace(/ no servidor$/, '') + '. ' + traduzirErro(m[2]);
+  }
   const el = $('#toast');
   el.textContent = msg;
   el.className = 'toast show' + (kind ? ' '+kind : '');
@@ -2255,7 +2270,7 @@ function diaEspecialAgenda(iso){
 
 // Texto lido por leitor de tela na celula do calendario: o status nao pode existir so na cor do selo
 const calAria = (dia, itens) => `Dia ${dia}: ${plural(itens.length, 'agendamento')} (${Object.entries(itens.reduce((m, x) => (m[x.status] = (m[x.status] || 0) + 1, m), {})).map(([k, n]) => n + ' ' + k).join(', ')}). Filtrar a lista por este dia.`;
-const LEGENDA_AGENDA = '<div class="psi-cal-leg"><span><i class="fds"></i>Fim de semana (não agenda)</span><span><i class="feriado"></i>Feriado (não agenda)</span><span><i class="indisponivel"></i>Indisponível (não agenda)</span><span><i class="facultativo"></i>Ponto facultativo (avisa)</span></div>';
+const LEGENDA_AGENDA = '<div class="psi-cal-leg"><span><i class="fds"></i>Fim de semana (não agenda)</span><span><i class="feriado"></i>Feriado (não agenda)</span><span><i class="indisponivel"></i>Indisponível (não agenda)</span><span><i class="facultativo"></i>Ponto facultativo (avisa)</span><span><i style="background:#B45309"></i>Agendado</span><span><i style="background:#2E7D32"></i>Realizado</span><span><i style="background:#757575"></i>Reagendado</span><span><i style="background:#C62828"></i>Cancelado</span></div>';
 const AGENDA_NOME_TIPO = {psicossocial:'Psicossocial', treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria', ltcat:'Avaliação LTCAT'};
 
 // Tudo o que já está marcado num dia, em qualquer das cinco agendas (menos o item que está sendo editado).
@@ -2279,7 +2294,7 @@ function avaliarDataAgenda(iso, ignorarId){
   if(dia.tipo === 'facultativo') avisos.push(`${dia.nome}: confira se a equipe trabalha neste dia.`);
   const itens = agendadosNoDia(iso, ignorarId);
   if(itens.length)
-    avisos.push(`Já há ${itens.length} agendamento(s) em ${fmtDate(iso)}:\n` +
+    avisos.push(`Já há ${itens.length === 1 ? '1 agendamento' : itens.length + ' agendamentos'} em ${fmtDate(iso)}:\n` +
       itens.map(c => `   • ${AGENDA_NOME_TIPO[c.tipo] || c.tipo} · ${c.quem}${c.hora ? ' · ' + c.hora : ''}`).join('\n'));
   return {bloqueio: dia.bloqueia ? dia.nome : null, avisos};
 }
@@ -2373,7 +2388,7 @@ async function agendaDiasSalvar(){
     // agendamentos que já existiam nesses dias continuam: só aparecem destacados
     let ja = 0;
     for(let d = new Date(ini + 'T00:00:00'), n = 0; _isoDe(d) <= fim && n < 400; d.setDate(d.getDate() + 1), n++) ja += agendadosNoDia(_isoDe(d)).length;
-    toast('✅ Dia(s) marcado(s) como indisponível(is)' + (ja ? ` · ${ja} agendamento(s) que já existiam nesse período continuam (não foram mexidos)` : ''), 'ok');
+    toast('✅ Período marcado como indisponível' + (ja ? ` · ${plural(ja, 'agendamento')} que já ${ja === 1 ? 'existia' : 'existiam'} nesse período ${ja === 1 ? 'continua' : 'continuam'} (não ${ja === 1 ? 'foi mexido' : 'foram mexidos'})` : ''), 'ok');
   } catch(err){ toast('Erro ao salvar: ' + err.message, 'danger'); }
 }
 
@@ -3027,6 +3042,8 @@ function renderDashboard(){
   $('#kpi-empresas-foot').textContent = inativas + ' inativas';
   $('#kpi-validos').textContent = validos;
   $('#kpi-vencendo').textContent = vencendo;
+  $$('.js-dias-alerta').forEach(x => x.textContent = plural(notifyPrefs.dias, 'dia'));
+  const _lv = $('#kpi-vencendo-label'); if(_lv) _lv.textContent = 'Vencendo em ' + plural(notifyPrefs.dias, 'dia');
   $('#kpi-vencidos').textContent = vencidos;
   $('#nav-doc-badge').textContent = vencidos + vencendo;
   $('#nav-doc-badge').style.display = (vencidos + vencendo) ? '' : 'none';
@@ -3117,7 +3134,7 @@ function renderDashboard(){
     const tbArt = $('#tbl-art-alertas tbody');
     tbArt.innerHTML = arts.map(({doc, realizadas, pendentes, diasRestantes}) => {
       const cls = diasRestantes < 0 ? 'danger' : diasRestantes <= 10 ? 'danger' : 'warn';
-      const label = diasRestantes < 0 ? `Vencida há ${Math.abs(diasRestantes)}d` : `${diasRestantes} dias`;
+      const label = diasRestantes < 0 ? `Vencida há ${Math.abs(diasRestantes)}d` : plural(diasRestantes, 'dia');
       return `<tr>
         <td>${doc.obra ? `<b>${nomeObra(doc.obra)}</b><br><small style="color:var(--ink-muted)">${nomeEmpresa(doc.empresa)}</small>` : `<b>${nomeEmpresa(doc.empresa)}</b>`}</td>
         <td><span class="mono">${doc.numero||'—'}</span></td>
@@ -3880,7 +3897,7 @@ function montarRelatorio(){
         </div>
         <h4 style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;font-weight:600">Efetividade mensal</h4>
         ${chartSvg}
-        <div style="margin-top:14px">
+        <div style="margin-top:14px;overflow-x:auto">
           <table style="width:100%;font-size:12px"><thead><tr><th style="text-align:left">Mês</th>${MESES.map(m=>'<th style="text-align:center">'+m+'</th>').join('')}</tr></thead>
           <tbody>
             <tr><td>Entregas</td>${meses.map(m=>'<td style="text-align:center">'+(m.total||'—')+'</td>').join('')}</tr>
@@ -4019,8 +4036,10 @@ function montarRelatorioCliente(){
       return `<tr><td>${it.tipo} <small style="color:#7f8c8d">(${it.qtd}x)</small></td><td class="tight">${fmtDate(dataRef)}</td><td style="text-align:right">${fmtR(it.valor)}</td></tr>`;
     }).join('');
 
+    const obrasMes = [...new Set(medsMes.map(m => m.obra ? nomeObra(m.obra) : 'Sem obra vinculada'))];
     return `<section class="ltcat-mes-section">
       <h2>${labelMes(mm)}</h2>
+      ${!obraId ? `<p style="margin:0 0 8px;font-size:12.5px;color:#7f8c8d">${obrasMes.length === 1 ? 'Obra' : 'Obras'}: ${obrasMes.map(escapeHtml).join(', ')}</p>` : ''}
       <table class="ltcat-table">
         <thead><tr><th>Ensaio realizado</th><th>Data</th><th style="text-align:right">Valor (R$)</th></tr></thead>
         <tbody>${linhas || '<tr><td colspan="3" style="text-align:center;color:#7f8c8d">Sem detalhamento</td></tr>'}<tr class="total-row"><td colspan="2">TOTAL DO MÊS</td><td style="text-align:right">${fmtR(valorMes)}</td></tr></tbody>
@@ -4036,7 +4055,7 @@ function montarRelatorioCliente(){
         <div>
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.8);font-weight:600">SECONCI Goiás · SST</div>
           <b style="font-size:19px;color:#fff">Relatório de Serviços Realizados</b><br>
-          <span style="color:rgba(255,255,255,.85);font-size:13px">${empNome}${obraNome ? ' — ' + obraNome : ''} · ${periodoLabel}</span>
+          <span style="color:rgba(255,255,255,.85);font-size:13px">${empNome} — ${obraNome || 'todas as obras'} · ${periodoLabel}</span>
         </div>
       </div>
       <span style="color:rgba(255,255,255,.8);font-size:12px;text-align:right">Gerado em ${fmtDate(todayISO())}<br>às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
@@ -4731,9 +4750,9 @@ function renderNotifyBanner(){
   const {venc, venciendo} = getResumoPendencias();
   if(!venc.length && !venciendo.length){ $('#notifyBanner').classList.remove('show'); return; }
   let txt = '';
-  if(venc.length) txt += `<b>${venc.length} documento(s) vencido(s)</b>`;
+  if(venc.length) txt += `<b>${plural(venc.length, 'documento')} ${venc.length === 1 ? 'vencido' : 'vencidos'}</b>`;
   if(venc.length && venciendo.length) txt += ' · ';
-  if(venciendo.length) txt += `${venciendo.length} vencendo em ${notifyPrefs.dias} dias`;
+  if(venciendo.length) txt += `${venciendo.length} vencendo em ${plural(notifyPrefs.dias, 'dia')}`;
   $('#notifyBannerText').innerHTML = txt;
   $('#notifyBanner').classList.add('show');
 }
@@ -4747,7 +4766,7 @@ function openNotifyModal(){
   let resumo = '';
   if(!venc.length && !venciendo.length){ resumo = '✅ Sem pendências no momento.'; }
   else {
-    if(venc.length){ resumo += `<b style="color:var(--danger-fg)">🚨 ${venc.length} documento(s) vencido(s):</b><br>`; resumo += venc.slice(0,5).map(d => `• ${escapeHtml(nomeEmpresa(d.empresa))} — ${d.tipo} ${escapeHtml(d.numero)||''}`).join('<br>') + '<br><br>'; }
+    if(venc.length){ resumo += `<b style="color:var(--danger-fg)">🚨 ${plural(venc.length, 'documento')} ${venc.length === 1 ? 'vencido' : 'vencidos'}:</b><br>`; resumo += venc.slice(0,5).map(d => `• ${escapeHtml(nomeEmpresa(d.empresa))} — ${d.tipo} ${escapeHtml(d.numero)||''}`).join('<br>') + '<br><br>'; }
     if(venciendo.length){ resumo += `<b style="color:var(--warn-fg)">⏰ ${venciendo.length} vencendo:</b><br>`; resumo += venciendo.slice(0,5).map(d => `• ${escapeHtml(nomeEmpresa(d.empresa))} — ${d.tipo} ${escapeHtml(d.numero)||''} (vence ${fmtDate(d.validade)})`).join('<br>'); }
   }
   $('#nf-resumo').innerHTML = resumo;
