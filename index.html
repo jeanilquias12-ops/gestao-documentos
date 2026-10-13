@@ -300,6 +300,8 @@
     .progress{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .progress-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #page-relatorios table th,#page-relatorios table td{padding:6px 8px;font-size:11.5px}
+    #page-relatorios .pill{border-radius:6px;padding:2px 6px;line-height:1.25;white-space:normal}
     @page{margin:20mm;size:A4}
   }
   @media (max-width: 960px){
@@ -411,7 +413,7 @@
       </div>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="globalSearch" placeholder="Buscar empresa, CNPJ ou documento…" autocomplete="off" />
+        <input id="globalSearch" placeholder="Buscar empresa, obra, documento ou agenda…" autocomplete="off" />
         <div class="search-results" id="searchResults"></div>
       </div>
     </header>
@@ -658,7 +660,7 @@
             <div class="field"><label for="f-ev-palestra-empresa">Empresa/Obra</label><select id="f-ev-palestra-empresa"><option value="">Todas</option></select></div>
             <div class="field"><label for="f-ev-palestra-status">Status</label><select id="f-ev-palestra-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
             <div class="field"><label for="f-ev-palestra-tipo">Tipo</label><select id="f-ev-palestra-tipo"><option value="">Todos</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
-            <div class="field"><label for="f-ev-palestra-busca">Buscar</label><input id="f-ev-palestra-busca" type="search" placeholder="Empresa, obra, tema, ministrante…" /></div>
+            <div class="field" style="flex:1;min-width:260px"><label for="f-ev-palestra-busca">Buscar</label><input id="f-ev-palestra-busca" type="search" placeholder="Empresa, obra, tema, ministrante…" /></div>
           </div>
           <div id="evcal-palestra"></div>
           <div id="evlist-palestra" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -1215,13 +1217,12 @@
       <div class="field-block"><label for="mev-data">Data *</label><input id="mev-data" type="date" required /></div>
       <div class="field-block"><label for="mev-hora">Horário</label><input id="mev-hora" type="time" /></div>
       <div class="field-block full" id="mev-local-block"><label for="mev-local">Local</label><input id="mev-local" placeholder="Local do evento" /></div>
+      <div class="field-block full" id="mev-endereco-block"><label for="mev-endereco">Endereço completo</label><input id="mev-endereco" placeholder="Rua, número, bairro, cidade" /></div>
       <div class="field-block full"><label id="mev-resp-label" for="mev-responsavel">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
-      <div class="field-block" id="mev-tipopal-block"><label for="mev-tipopal">Tipo da palestra</label><select id="mev-tipopal"><option value="">— Selecione —</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
-      <div class="field-block" id="mev-modalidade-block"><label for="mev-modalidade">Presencial ou online</label><select id="mev-modalidade"><option value="">— Selecione —</option><option>PRESENCIAL</option><option>ONLINE</option></select></div>
       <div class="field-block" id="mev-tipomin-block"><label for="mev-tipomin">Tipo de palestrante</label><select id="mev-tipomin"><option value="">— Selecione —</option><option>INTERNO</option><option>EXTERNO</option></select></div>
       <div class="field-block" id="mev-solicitante-block"><label for="mev-solicitante">Solicitante</label><input id="mev-solicitante" placeholder="Quem pediu a palestra" /></div>
-      <div class="field-block" id="mev-equip-block"><label for="mev-equip">Necessidade de equipamentos</label><select id="mev-equip"><option value="">— Selecione —</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-      <div class="field-block full" id="mev-endereco-block"><label for="mev-endereco">Endereço completo</label><input id="mev-endereco" placeholder="Rua, número, bairro, cidade" /></div>
+      <div class="field-block" id="mev-tipopal-block"><label for="mev-tipopal">Tipo da palestra</label><select id="mev-tipopal"><option value="">— Selecione —</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
+      <div class="field-block" id="mev-modalidade-block"><label for="mev-modalidade">Presencial ou online</label><select id="mev-modalidade"><option value="">— Selecione —</option><option>PRESENCIAL</option><option>ONLINE</option></select></div>
       <div class="field-block" id="mev-previstos-block"><label for="mev-previstos">Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
       <div class="field-block" id="mev-presentes-block"><label for="mev-presentes">Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
       <div class="field-block"><label for="mev-status">Status</label><select id="mev-status">
@@ -1230,6 +1231,7 @@
         <option value="reagendado">Reagendado</option>
         <option value="cancelado">Cancelado</option>
       </select></div>
+      <div class="field-block" id="mev-equip-block"><label for="mev-equip">Necessidade de equipamentos</label><select id="mev-equip"><option value="">— Selecione —</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
       <div class="field-block full"><label for="mev-obs">Observações</label><input id="mev-obs" placeholder="Anotações gerais" /></div>
       <div class="field-block full" id="mev-reagend-section" style="display:none">
         <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px">
@@ -4104,6 +4106,14 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if((e.key === 'Enter' || e.key === ' ') && e.target.classList && (e.target.classList.contains('sr-item') || e.target.classList.contains('psi-cal-day') || e.target.matches('thead th[data-sort]'))){ e.preventDefault(); e.target.click(); return; }
+  if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
+    const t = e.target, bg = t.closest && t.closest('.modal-bg.show');
+    if(bg && t.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button])') && !t.closest('.ss-drop')){
+      const salvar = bg.querySelector('.modal-f .btn.primary:not([disabled])');
+      if(salvar && salvar.offsetParent !== null){ e.preventDefault(); salvar.click(); }
+      return;
+    }
+  }
   if(e.key === 'Escape'){
     const bg = document.querySelector('.modal-bg.show');
     if(!bg || bg.querySelector('.ss-drop.open')) return;   // seletor de empresa aberto: o Esc dele vem primeiro
@@ -4886,21 +4896,73 @@ function buildEmailBody(){
 function setupGlobalSearch(){
   const inp = $('#globalSearch');
   const res = $('#searchResults');
+  const fechar = () => res.classList.remove('show');
+  const AG_NOME = {psicossocial:'Psicossocial', treinamento:'Treinamento', palestra:'Palestra', auditoria:'Auditoria', ltcat:'Avaliação LTCAT'};
+  const item = (tipo, id, titulo, sub) => `<div class="sr-item" role="button" tabindex="0" data-sr="${tipo}" data-id="${escapeHtml(id)}"><span><b>${escapeHtml(titulo)}</b></span><small>${escapeHtml(sub || '')}</small></div>`;
   inp.oninput = () => {
     const q = normalizeTexto(inp.value.trim());
-    if(!q){ res.classList.remove('show'); return; }
-    const emp = state.empresas.filter(e => normalizeTexto(e.nome).includes(q) || e.cnpj.includes(q)).slice(0,5);
-    const obr = state.obras.filter(o => normalizeTexto(o.nome).includes(q)).slice(0,5);
-    const docs = state.docs.filter(d => normalizeTexto(d.numero).includes(q) || normalizeTexto(d.responsavel).includes(q)).slice(0,5);
+    if(!q){ fechar(); return; }
+    const digitos = q.replace(/\D/g, '');
+    const casa = (...cs) => cs.some(c => normalizeTexto(c || '').includes(q));
+    const emp = state.empresas.filter(e => casa(e.nome) || (digitos.length >= 3 && String(e.cnpj || '').replace(/\D/g, '').includes(digitos))).slice(0, 5);
+    const obr = state.obras.filter(o => casa(o.nome, nomeEmpresa(o.empresa))).slice(0, 5);
+    const docs = state.docs.filter(d => casa(d.numero, d.responsavel, d.tipo, nomeEmpresa(d.empresa), d.obra ? nomeObra(d.obra) : '')).slice(0, 5);
+    // Agenda: as cinco agendas numa lista só; o que ainda vai acontecer vem primeiro, depois o passado do mais recente ao mais antigo
+    const hoje = todayISO();
+    const ag = [
+      ...(state.psicossociais || []).filter(a => casa(a.empresaLivre, nomeEmpresa(a.empresa), a.responsavel)).map(a => ({k:'psi', id:a.id, tipo:'psicossocial', quem:a.empresaLivre || nomeEmpresa(a.empresa), data:a.data})),
+      ...(state.eventos || []).filter(a => casa(a.empresaLivre, nomeEmpresa(a.empresa), a.tema, a.local, a.endereco, a.responsavel, a.solicitante)).map(a => ({k:'ev', id:a.id, tipo:a.tipo, quem:a.empresaLivre || nomeEmpresa(a.empresa), data:a.data}))
+    ].sort((a, b) => ((a.data >= hoje) === (b.data >= hoje)) ? (a.data >= hoje ? a.data.localeCompare(b.data) : b.data.localeCompare(a.data)) : (a.data >= hoje ? -1 : 1));
     let html = '';
-    if(emp.length){ html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('empresas');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(e.nome)}</b></span><small>${escapeHtml(e.cnpj)}</small></div>`).join(''); }
-    if(obr.length){ html += '<div class="sr-head">OBRAS</div>' + obr.map(o => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('obras');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${escapeHtml(o.nome)}</b></span><small>${escapeHtml(nomeEmpresa(o.empresa))}</small></div>`).join(''); }
-    if(docs.length){ html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => `<div class="sr-item" role="button" tabindex="0" onclick="navigate('documentos');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''"><span><b>${d.tipo}</b> ${escapeHtml(d.numero)||''} <small>${escapeHtml(nomeEmpresa(d.empresa))}</small></span></div>`).join(''); }
+    if(emp.length) html += '<div class="sr-head">EMPRESAS</div>' + emp.map(e => item('empresa', e.id, e.nome, e.cnpj)).join('');
+    if(obr.length) html += '<div class="sr-head">OBRAS</div>' + obr.map(o => item('obra', o.id, o.nome, nomeEmpresa(o.empresa))).join('');
+    if(docs.length) html += '<div class="sr-head">DOCUMENTOS</div>' + docs.map(d => item('doc', d.id, `${d.tipo} ${d.numero || ''}`.trim(), nomeEmpresa(d.empresa))).join('');
+    if(ag.length){
+      html += '<div class="sr-head">AGENDA</div>' + ag.slice(0, 6).map(a => item(a.k, a.id, a.quem, `${AG_NOME[a.tipo] || a.tipo} · ${fmtDate(a.data)}`)).join('');
+      if(ag.length > 6) html += `<div class="sr-empty">+ ${plural(ag.length - 6, 'resultado')} na agenda. Refine a busca.</div>`;
+    }
     if(!html) html = '<div class="sr-empty">Nenhum resultado</div>';
     res.innerHTML = html;
     res.classList.add('show');
   };
-  document.addEventListener('click', e => { if(!inp.contains(e.target) && !res.contains(e.target)) res.classList.remove('show'); });
+  // Clique (ou Enter/Espaço no item) abre a tela certa já filtrada no que foi achado
+  res.onclick = e => {
+    const it = e.target.closest('.sr-item[data-sr]');
+    if(!it) return;
+    abrirResultadoBusca(it.dataset.sr, it.dataset.id);
+    fechar(); inp.value = '';
+  };
+  inp.onkeydown = e => {
+    if(e.key === 'Enter'){ const primeiro = res.querySelector('.sr-item[data-sr]'); if(primeiro){ e.preventDefault(); primeiro.click(); } }
+    else if(e.key === 'ArrowDown'){ const primeiro = res.querySelector('.sr-item[data-sr]'); if(primeiro){ e.preventDefault(); primeiro.focus(); } }
+    else if(e.key === 'Escape'){ inp.value = ''; fechar(); }
+  };
+  res.onkeydown = e => {
+    const itens = [...res.querySelectorAll('.sr-item[data-sr]')], i = itens.indexOf(document.activeElement);
+    if(e.key === 'ArrowDown'){ e.preventDefault(); (itens[i + 1] || itens[0]).focus(); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); if(i <= 0) inp.focus(); else itens[i - 1].focus(); }
+    else if(e.key === 'Escape'){ inp.focus(); fechar(); }
+  };
+  document.addEventListener('click', e => { if(!inp.contains(e.target) && !res.contains(e.target)) fechar(); });
+}
+
+function abrirResultadoBusca(tipo, id){
+  const filtrar = (campo, valor, render) => { const el = $('#' + campo); if(el){ el.value = valor; render(); } };
+  if(tipo === 'empresa'){ const e = state.empresas.find(x => x.id === id); navigate('empresas'); if(e) filtrar('f-empresa-q', e.nome, renderEmpresas); }
+  else if(tipo === 'obra'){ const o = state.obras.find(x => x.id === id); navigate('obras'); if(o) filtrar('f-obra-q', o.nome, renderObras); }
+  else if(tipo === 'doc'){ const d = state.docs.find(x => x.id === id); navigate('documentos'); if(d) filtrar('f-doc-q', d.numero || nomeEmpresa(d.empresa), renderDocs); }
+  else if(tipo === 'psi'){
+    const a = (state.psicossociais || []).find(x => x.id === id); if(!a) return;
+    const [y, m] = a.data.split('-').map(Number);
+    _psiCalAno = y; _psiCalMes = m - 1; _psiCalFiltroData = a.data; _agendaTab = 'psicossociais';
+    navigate('agenda'); switchAgenda('psicossociais');
+  }
+  else if(tipo === 'ev'){
+    const a = (state.eventos || []).find(x => x.id === id); if(!a) return;
+    const [y, m] = a.data.split('-').map(Number), cal = _evCal[a.tipo];
+    cal.ano = y; cal.mes = m - 1; cal.filtroData = a.data; _agendaTab = a.tipo;
+    navigate('agenda'); switchAgenda(a.tipo);
+  }
 }
 
 /* ================== AUTOFILL EMPRESA ================== */
@@ -7312,7 +7374,7 @@ function renderCalendarioPsi(){
 
   const MESES    = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const DIAS_SEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const COR_ST   = {pendente:'#9A5B00', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
+  const COR_ST   = {pendente:'#B45309', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
 
   const hojeISO      = todayISO();
   const primeiroDia  = new Date(_psiCalAno, _psiCalMes, 1);
@@ -7474,7 +7536,7 @@ const EV_STATUS_CFG = {
   reagendado:{cls:'muted',  label:'Reagendado'},
   cancelado: {cls:'danger', label:'Cancelado'}
 };
-const EV_COR_ST = {agendado:'#9A5B00', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
+const EV_COR_ST = {agendado:'#B45309', realizado:'#2E7D32', reagendado:'#757575', cancelado:'#C62828'};
 
 function switchAgenda(tab){
   _agendaTab = tab;
@@ -8452,6 +8514,8 @@ tbody tr:last-child td{border-bottom:none}
 /* Buscador global e listas auxiliares */
 .sr-head{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);font-weight:700}
 .sr-item{border-radius:8px;font-size:13px}
+.sr-item[data-sr]{flex-direction:column;align-items:flex-start;gap:2px}
+.sr-item[data-sr] small{white-space:nowrap}
 .rel-chk{font-size:12.5px}
 
 /* acessibilidade: foco visivel em qualquer controle e movimento reduzido sem perder o estado */
