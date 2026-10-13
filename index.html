@@ -654,6 +654,8 @@
           <div class="filters">
             <div class="field"><label for="f-ev-palestra-empresa">Empresa/Obra</label><select id="f-ev-palestra-empresa"><option value="">Todas</option></select></div>
             <div class="field"><label for="f-ev-palestra-status">Status</label><select id="f-ev-palestra-status"><option value="">Todos</option><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="reagendado">Reagendado</option><option value="cancelado">Cancelado</option></select></div>
+            <div class="field"><label for="f-ev-palestra-tipo">Tipo</label><select id="f-ev-palestra-tipo"><option value="">Todos</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
+            <div class="field"><label for="f-ev-palestra-busca">Buscar</label><input id="f-ev-palestra-busca" type="search" placeholder="Empresa, obra, tema, ministrante…" /></div>
           </div>
           <div id="evcal-palestra"></div>
           <div id="evlist-palestra" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -1211,6 +1213,10 @@
       <div class="field-block"><label for="mev-hora">Horário</label><input id="mev-hora" type="time" /></div>
       <div class="field-block full" id="mev-local-block"><label for="mev-local">Local</label><input id="mev-local" placeholder="Local do evento" /></div>
       <div class="field-block full"><label id="mev-resp-label" for="mev-responsavel">Responsável</label><input id="mev-responsavel" placeholder="Nome do responsável" /></div>
+      <div class="field-block" id="mev-tipopal-block"><label for="mev-tipopal">Tipo da palestra</label><select id="mev-tipopal"><option value="">— Selecione —</option><option>PCMSO</option><option>CAMPANHA</option><option>PERSONALIZADA</option><option>PGR</option></select></div>
+      <div class="field-block" id="mev-modalidade-block"><label for="mev-modalidade">Presencial ou online</label><select id="mev-modalidade"><option value="">— Selecione —</option><option>PRESENCIAL</option><option>ONLINE</option></select></div>
+      <div class="field-block" id="mev-tipomin-block"><label for="mev-tipomin">Ministrante</label><select id="mev-tipomin"><option value="">— Selecione —</option><option>INTERNO</option><option>EXTERNO</option></select></div>
+      <div class="field-block" id="mev-solicitante-block"><label for="mev-solicitante">Solicitante</label><input id="mev-solicitante" placeholder="Quem pediu a palestra" /></div>
       <div class="field-block" id="mev-previstos-block"><label for="mev-previstos">Participantes previstos</label><input id="mev-previstos" type="number" min="0" placeholder="Ex.: 20" /></div>
       <div class="field-block" id="mev-presentes-block"><label for="mev-presentes">Participantes presentes</label><input id="mev-presentes" type="number" min="0" placeholder="Preencher após realizar" /></div>
       <div class="field-block"><label for="mev-status">Status</label><select id="mev-status">
@@ -5850,7 +5856,7 @@ function setupEvents(){
   $('#btnNewEvento-ltcat').onclick       = () => openEvento('ltcat');
   // Filtros dos eventos
   ['f-ev-treinamento-empresa','f-ev-treinamento-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('treinamento'); });
-  ['f-ev-palestra-empresa','f-ev-palestra-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('palestra'); });
+  ['f-ev-palestra-empresa','f-ev-palestra-status','f-ev-palestra-tipo','f-ev-palestra-busca'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('palestra'); });
   ['f-ev-auditoria-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('auditoria'); });
   ['f-ev-ltcat-empresa','f-ev-ltcat-status'].forEach(id => { const el=$('#'+id); if(el) el.oninput = () => renderEventos('ltcat'); });
 
@@ -5912,6 +5918,10 @@ function setupEvents(){
       status,
       obs:         $('#mev-obs').value,
       motivo:      (status==='reagendado' || status==='cancelado') ? $('#mev-motivo').value : '',
+      tipoPalestra:    tipo==='palestra' ? $('#mev-tipopal').value : '',
+      modalidade:      tipo==='palestra' ? $('#mev-modalidade').value : '',
+      tipoMinistrante: tipo==='palestra' ? $('#mev-tipomin').value : '',
+      solicitante:     tipo==='palestra' ? $('#mev-solicitante').value.trim() : '',
       historico
     };
     try {
@@ -7399,10 +7409,15 @@ function eventosFiltrados(tipo){
   const emp = $('#f-ev-'+tipo+'-empresa') ? $('#f-ev-'+tipo+'-empresa').value : '';
   const st  = $('#f-ev-'+tipo+'-status')  ? $('#f-ev-'+tipo+'-status').value  : '';
   const fd  = _evCal[tipo].filtroData;
+  const tp  = $('#f-ev-'+tipo+'-tipo') ? $('#f-ev-'+tipo+'-tipo').value : '';
+  const q   = $('#f-ev-'+tipo+'-busca') ? $('#f-ev-'+tipo+'-busca').value.trim().toLowerCase() : '';
+  const texto = e => [e.empresaLivre, nomeEmpresa(e.empresa), e.local, e.tema, e.responsavel, e.solicitante].join(' ').toLowerCase();
   return (state.eventos||[]).filter(e =>
     e.tipo === tipo &&
     (!emp || e.empresa === emp) &&
     (!st  || e.status === st) &&
+    (!tp  || e.tipoPalestra === tp) &&
+    (!q   || texto(e).includes(q)) &&
     (!fd  || e.data === fd)
   ).sort((a,b) => (b.data||'').localeCompare(a.data||''));
 }
@@ -7438,10 +7453,12 @@ function renderEventos(tipo){
         <div>
           <h3>${escapeHtml(e.empresaLivre || (emp ? emp.nome : '—'))}</h3>
           <p>${e.tema ? '<b>'+escapeHtml(e.tema)+'</b> · ' : ''}${dataFmt}${escapeHtml(hora)}${e.local ? ' · '+escapeHtml(e.local) : ''}</p>
-          ${e.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">${EV_LABELS[tipo].resp}: ${escapeHtml(e.responsavel)}</p>` : ''}
+          ${e.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">${EV_LABELS[tipo].resp}: ${escapeHtml(e.responsavel)}${e.tipoMinistrante ? ' ('+escapeHtml(e.tipoMinistrante.toLowerCase())+')' : ''}${e.solicitante ? ' · Solicitante: '+escapeHtml(e.solicitante) : ''}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           ${prevPres}
+          ${e.tipoPalestra ? `<span class="pill muted">${escapeHtml(e.tipoPalestra)}</span>` : ''}
+          ${e.modalidade === 'ONLINE' ? '<span class="pill muted">Online</span>' : ''}
           <span class="pill ${cfg.cls}">${cfg.label}</span>
           <button class="btn sm" onclick="openEvento('${tipo}','${e.id}')">Editar</button>
         </div>
@@ -7523,6 +7540,11 @@ function openEvento(tipo,id){
   $('#mev-tema').placeholder = tipo==='auditoria' ? 'Nome da obra auditada' : tipo==='ltcat' ? 'Ex.: renovação anual, obra nova…' : 'Assunto do treinamento/palestra';
   $('#mev-tema').required = tipo==='auditoria';
   $('#mev-local-block').style.display = (tipo==='palestra' || tipo==='ltcat') ? '' : 'none';
+  ['tipopal','modalidade','tipomin','solicitante'].forEach(k => $('#mev-'+k+'-block').style.display = tipo==='palestra' ? '' : 'none');
+  $('#mev-tipopal').value = e?.tipoPalestra || '';
+  $('#mev-modalidade').value = e?.modalidade || '';
+  $('#mev-tipomin').value = e?.tipoMinistrante || '';
+  $('#mev-solicitante').value = e?.solicitante || '';
   const showParticipantes = tipo !== 'auditoria' && tipo !== 'ltcat';
   $('#mev-previstos-block').style.display = showParticipantes ? '' : 'none';
   $('#mev-presentes-block').style.display = showParticipantes ? '' : 'none';
@@ -7578,6 +7600,10 @@ async function salvarEventoNuvem(e){
     status: e.status,
     observacoes: e.obs || '',
     motivo: e.motivo || '',
+    tipo_palestra: e.tipoPalestra || null,
+    modalidade: e.modalidade || null,
+    tipo_ministrante: e.tipoMinistrante || null,
+    solicitante: e.solicitante || null,
     historico_reagendamentos: e.historico || []
   });
   if(error) throw new Error(error.message);
@@ -7863,6 +7889,10 @@ async function carregarDaNuvem() {
       status:       e.status || 'agendado',
       obs:          e.observacoes || '',
       motivo:       e.motivo || '',
+      tipoPalestra: e.tipo_palestra || '',
+      modalidade:   e.modalidade || '',
+      tipoMinistrante: e.tipo_ministrante || '',
+      solicitante:  e.solicitante || '',
       historico:    Array.isArray(e.historico_reagendamentos) ? e.historico_reagendamentos : []
     }))
   }
