@@ -577,6 +577,7 @@
         .psi-cal-day.hoje .psi-cal-num{color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;}
         .psi-cal-num{font-size:12px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;line-height:20px}
         .psi-cal-day.fora .psi-cal-num{color:#ccc}
+        .psi-cal-badge.aud-outro{background:#fff!important;color:#0F5C7A;border:1px solid #0F5C7A}.psi-cal-badge.aud-outro.mesma{background:#E1F0F7!important;font-weight:700}
         .psi-cal-badge.psi-outro{background:#fff!important;color:#6A1B9A;border:1px solid #6A1B9A}.psi-cal-badge.psi-outro.mesma{background:#F3E5F5!important;font-weight:700}
         .psi-cal-badge{color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35;}
         .psi-cal-mais{font-size:11px;color:var(--ink-muted);padding:1px 4px}
@@ -7433,11 +7434,15 @@ function renderPsicossociais(){
         <button class="btn ghost sm" style="font-size:11px" onclick="psiCalLimpar()">✕ Limpar filtro</button>
        </div>` : '';
 
+  const audDia = _psiCalFiltroData ? auditoriasDoDia(_psiCalFiltroData) : [];
+  const nomesLista = new Set(list.map(p => normalizeTexto(p.empresaLivre || nomeEmpresa(p.empresa) || '')));
+  const avisoAud = audDia.length
+    ? `<div style="margin-bottom:12px;padding:8px 12px;border:1px solid #0F5C7A;border-radius:8px;background:#E1F0F7;color:#0B3D52;font-size:13px">🔍 <b>Auditoria neste dia:</b> ${audDia.map(a => escapeHtml(a.quem) + (a.hora ? ' (' + escapeHtml(a.hora) + ')' : '') + (nomesLista.has(normalizeTexto(a.quem)) ? ' — <b>mesma firma</b>' : '')).join('; ')}</div>` : '';
   if(!list.length){
-    container.innerHTML = labelFiltro + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial' + (_psiCalFiltroData ? ' nesta data.' : ' registrada.') + '</div></div>';
+    container.innerHTML = labelFiltro + avisoAud + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial' + (_psiCalFiltroData ? ' nesta data.' : ' registrada.') + '</div></div>';
     return;
   }
-  container.innerHTML = labelFiltro + list.map(p => {
+  container.innerHTML = labelFiltro + avisoAud + list.map(p => {
     const cfg = STATUS_CFG[p.status] || {cls:'muted', label:p.status};
     const emp = state.empresas.find(e => e.id === p.empresa);
     const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
@@ -7503,7 +7508,17 @@ function renderCalendarioPsi(){
     const isAtivo  = isoDate === _psiCalFiltroData;
     const temAval  = avals.length > 0;
     const mostrar  = avals.slice(0, 2);
-    const extra    = avals.length > 2 ? `<div class="psi-cal-mais">+${avals.length - 2} mais</div>` : '';
+    // Auditorias do mesmo dia (destaca a mesma firma)
+    const auds = auditoriasDoDia(isoDate);
+    const nomesPsi = avals.map(a => a.empresaLivre || (state.empresas.find(e => e.id === a.empresa)?.nome) || '');
+    const audMostrar = auds.slice(0, 1);
+    const restante = (avals.length - mostrar.length) + (auds.length - audMostrar.length);
+    const extra    = restante > 0 ? `<div class="psi-cal-mais">+${restante} mais</div>` : '';
+    const audBadges = audMostrar.map(a => {
+      const igual = nomesPsi.some(n => mesmaFirma(n, a.quem));
+      const rot = 'Aud · ' + a.quem;
+      return `<div class="psi-cal-badge aud-outro${igual ? ' mesma' : ''}" title="Auditoria${igual ? ' (mesma firma do psicossocial)' : ''} · ${escapeHtml(a.quem)}${a.hora ? ' · ' + escapeHtml(a.hora) : ''} · ${escapeHtml(a.status || '')}">${escapeHtml(rot.length > 16 ? rot.slice(0, 15) + '…' : rot)}</div>`;
+    }).join('');
 
     const badges = mostrar.map(a => {
       const nomeEmp = a.empresaLivre || (state.empresas.find(e => e.id === a.empresa)?.nome) || '—';
@@ -7515,7 +7530,7 @@ function renderCalendarioPsi(){
     const esp = diaEspecialAgenda(isoDate);
     const cls = ['psi-cal-day', temAval?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':'', esp.tipo].filter(Boolean).join(' ');
     const click = temAval ? `onclick="psiCalFiltrar('${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, avals)}"` : '';
-    celulas += `<div class="${cls}" ${click}${esp.tipo ? ` title="${escapeHtml(esp.nome)}"` : ''}><span class="psi-cal-num">${diaNum}</span>${esp.curto ? `<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>` : ''}${badges}${extra}</div>`;
+    celulas += `<div class="${cls}" ${click}${esp.tipo ? ` title="${escapeHtml(esp.nome)}"` : ''}><span class="psi-cal-num">${diaNum}</span>${esp.curto ? `<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>` : ''}${badges}${audBadges}${extra}</div>`;
   }
 
   const btnFiltro = _psiCalFiltroData
@@ -7531,7 +7546,7 @@ function renderCalendarioPsi(){
         ${btnFiltro}
       </div>
       <div class="psi-cal-grid">${cabecalho}${celulas}</div>
-      ${LEGENDA_AGENDA}
+      ${LEGENDA_AGENDA.replace(/<\/div>$/, '<span><i style="background:#fff;border:2px solid #0F5C7A"></i>Auditoria no mesmo dia</span></div>')}
     </div>`;
 }
 
@@ -7745,6 +7760,10 @@ function renderEventos(tipo){
 function psicossociaisDoDia(iso){
   return (state.psicossociais || []).filter(p => p.data === iso && p.status !== 'cancelado')
     .map(p => ({quem: p.empresaLivre || nomeEmpresa(p.empresa) || '—', hora: p.hora || '', status: p.status}));
+}
+function auditoriasDoDia(iso){
+  return (state.eventos || []).filter(e => e.tipo === 'auditoria' && e.data === iso && e.status !== 'cancelado')
+    .map(e => ({quem: e.empresaLivre || nomeEmpresa(e.empresa) || '—', hora: e.hora || '', status: e.status}));
 }
 const mesmaFirma = (a, b) => !!a && !!b && normalizeTexto(a) === normalizeTexto(b);
 
