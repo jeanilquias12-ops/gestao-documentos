@@ -577,6 +577,7 @@
         .psi-cal-day.hoje .psi-cal-num{color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;}
         .psi-cal-num{font-size:12px;font-weight:600;color:var(--ink);min-width:20px;text-align:center;line-height:20px}
         .psi-cal-day.fora .psi-cal-num{color:#ccc}
+        .psi-cal-badge.psi-outro{background:#fff!important;color:#6A1B9A;border:1px solid #6A1B9A}.psi-cal-badge.psi-outro.mesma{background:#F3E5F5!important;font-weight:700}
         .psi-cal-badge{color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.35;}
         .psi-cal-mais{font-size:11px;color:var(--ink-muted);padding:1px 4px}
         @media(max-width:600px){.psi-cal-day{min-height:44px;padding:3px}.psi-cal-badge{font-size:11px}}
@@ -7688,6 +7689,10 @@ function renderEventos(tipo){
   const fd = _evCal[tipo].filtroData;
   const labelFiltro = fd
     ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--green-700)">📅 Mostrando: <b>${fd.split('-').reverse().join('/')}</b> <button class="btn ghost sm" style="font-size:11px" onclick="evCalLimpar('${tipo}')">✕ Limpar filtro</button></div>` : '';
+  const psiDia = (tipo === 'auditoria' && fd) ? psicossociaisDoDia(fd) : [];
+  const nomesLista = new Set(list.map(e => normalizeTexto(e.empresaLivre || nomeEmpresa(e.empresa) || '')));
+  const avisoPsi = psiDia.length
+    ? `<div style="margin-bottom:12px;padding:8px 12px;border:1px solid #6A1B9A;border-radius:8px;background:#F3E5F5;color:#4A148C;font-size:13px">🧠 <b>Psicossocial neste dia:</b> ${psiDia.map(p => escapeHtml(p.quem) + (p.hora ? ' (' + escapeHtml(p.hora) + ')' : '') + (nomesLista.has(normalizeTexto(p.quem)) ? ' — <b>mesma firma</b>' : '')).join('; ')}</div>` : '';
   const lab = EV_LABELS[tipo], nenhum = (lab.gen === 'a' ? 'Nenhuma ' : 'Nenhum ') + lab.titulo;
   const modo = _evCal[tipo].modo || 'proximas';
   const MODOS = [['proximas','A partir de hoje'],['mes','Mês do calendário'],['passadas','Passadas'],['todas','Todas']];
@@ -7701,10 +7706,10 @@ function renderEventos(tipo){
       : modo === 'proximas' ? nenhum + ' a partir de hoje. Veja "Passadas" ou "Todas".'
       : modo === 'mes' ? nenhum + ' no mês do calendário.'
       : nenhum + ' registrad' + lab.gen + '.';
-    cont.innerHTML = labelFiltro + barraModo + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">' + msg + '</div></div>';
+    cont.innerHTML = labelFiltro + avisoPsi + barraModo + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">' + msg + '</div></div>';
     return;
   }
-  cont.innerHTML = labelFiltro + barraModo + list.map(e => {
+  cont.innerHTML = labelFiltro + avisoPsi + barraModo + list.map(e => {
     const cfg = EV_STATUS_CFG[e.status] || {cls:'muted', label:e.status};
     const emp = state.empresas.find(x => x.id === e.empresa);
     const dataFmt = e.data ? e.data.split('-').reverse().join('/') : '—';
@@ -7736,6 +7741,13 @@ function renderEventos(tipo){
   }).join('');
 }
 
+// Psicossociais marcados numa data (a equipe é a mesma da auditoria: serve para enxergar o dia todo).
+function psicossociaisDoDia(iso){
+  return (state.psicossociais || []).filter(p => p.data === iso && p.status !== 'cancelado')
+    .map(p => ({quem: p.empresaLivre || nomeEmpresa(p.empresa) || '—', hora: p.hora || '', status: p.status}));
+}
+const mesmaFirma = (a, b) => !!a && !!b && normalizeTexto(a) === normalizeTexto(b);
+
 function renderCalendarioEvento(tipo){
   const el = $('#evcal-'+tipo);
   if(!el) return;
@@ -7764,7 +7776,17 @@ function renderCalendarioEvento(tipo){
     const isAtivo=isoDate===cal.filtroData;
     const temAval=evs.length>0;
     const mostrar=evs.slice(0,2);
-    const extra=evs.length>2?`<div class="psi-cal-mais">+${evs.length-2} mais</div>`:'';
+    // Auditoria: mostra também os psicossociais do mesmo dia (destaca a mesma firma)
+    const psis=tipo==='auditoria'?psicossociaisDoDia(isoDate):[];
+    const nomesEv=evs.map(a=>a.empresaLivre||(state.empresas.find(e=>e.id===a.empresa)?.nome)||'');
+    const psiMostrar=psis.slice(0,1);
+    const restante=(evs.length-mostrar.length)+(psis.length-psiMostrar.length);
+    const extra=restante>0?`<div class="psi-cal-mais">+${restante} mais</div>`:'';
+    const psiBadges=psiMostrar.map(p=>{
+      const igual=nomesEv.some(n=>mesmaFirma(n,p.quem));
+      const label=('Psi · '+p.quem).length>16?('Psi · '+p.quem).slice(0,15)+'…':'Psi · '+p.quem;
+      return `<div class="psi-cal-badge psi-outro${igual?' mesma':''}" title="Psicossocial${igual?' (mesma firma da auditoria)':''} · ${escapeHtml(p.quem)}${p.hora?' · '+escapeHtml(p.hora):''} · ${escapeHtml(p.status||'')}">${escapeHtml(label)}</div>`;
+    }).join('');
     const badges=mostrar.map(a=>{
       const nomeEmp=a.empresaLivre||(state.empresas.find(e=>e.id===a.empresa)?.nome)||'—';
       const cor=EV_COR_ST[a.status]||'#555';
@@ -7774,14 +7796,14 @@ function renderCalendarioEvento(tipo){
     const esp=diaEspecialAgenda(isoDate);
     const cls=['psi-cal-day',temAval?'tem-aval':'',isHoje?'hoje':'',isAtivo?'ativo':'',esp.tipo].filter(Boolean).join(' ');
     const click=temAval?`onclick="evCalFiltrar('${tipo}','${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, evs)}"`:'';
-    celulas+=`<div class="${cls}" ${click}${esp.tipo?` title="${escapeHtml(esp.nome)}"`:''}><span class="psi-cal-num">${diaNum}</span>${esp.curto?`<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>`:''}${badges}${extra}</div>`;
+    celulas+=`<div class="${cls}" ${click}${esp.tipo?` title="${escapeHtml(esp.nome)}"`:''}><span class="psi-cal-num">${diaNum}</span>${esp.curto?`<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>`:''}${badges}${psiBadges}${extra}</div>`;
   }
   const btnFiltro=cal.filtroData?`<button class="btn ghost sm" style="margin-left:auto;font-size:11px" onclick="evCalLimpar('${tipo}')">✕ ${cal.filtroData.split('-').reverse().join('/')}</button>`:'';
   el.innerHTML=`<div class="psi-cal-wrap"><div class="psi-cal-nav">
     <button class="btn ghost sm" onclick="evCalMover('${tipo}',-1)" aria-label="Mês anterior" style="font-size:16px;padding:4px 10px">‹</button>
     <span class="psi-cal-titulo">${MESES[cal.mes]} ${cal.ano}</span>
     <button class="btn ghost sm" onclick="evCalMover('${tipo}',1)" aria-label="Próximo mês" style="font-size:16px;padding:4px 10px">›</button>
-    ${btnFiltro}</div><div class="psi-cal-grid">${cabecalho}${celulas}</div>${LEGENDA_AGENDA}</div>`;
+    ${btnFiltro}</div><div class="psi-cal-grid">${cabecalho}${celulas}</div>${tipo==='auditoria'?LEGENDA_AGENDA.replace(/<\/div>$/,'<span><i style="background:#fff;border:2px solid #6A1B9A"></i>Psicossocial no mesmo dia</span></div>'):LEGENDA_AGENDA}</div>`;
 }
 
 function evCalMover(tipo,delta){
