@@ -185,8 +185,10 @@ module.exports = async function handler(req, res) {
     diffDays(d.data_inicio_elaboracao, today) > 10
   );
 
-  // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno
+  // Fase 2 atrasada: enviado à assessoria há mais de 5 dias sem retorno.
+  // LTCAT não passa pela assessoria (vai só ao cliente), então fica de fora.
   const fase2Atrasadas = docs.filter(d =>
+    d.tipo_documento !== 'LTCAT' &&
     d.elab_finalizada &&
     d.data_envio_assessoria &&
     !d.retorno_recebido &&
