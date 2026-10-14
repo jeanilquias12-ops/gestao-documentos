@@ -7436,13 +7436,12 @@ function renderPsicossociais(){
 
   const audDia = _psiCalFiltroData ? auditoriasDoDia(_psiCalFiltroData) : [];
   const nomesLista = new Set(list.map(p => normalizeTexto(p.empresaLivre || nomeEmpresa(p.empresa) || '')));
-  const avisoAud = audDia.length
-    ? `<div style="margin-bottom:12px;padding:8px 12px;border:1px solid #0F5C7A;border-radius:8px;background:#E1F0F7;color:#0B3D52;font-size:13px">🔍 <b>Auditoria neste dia:</b> ${audDia.map(a => escapeHtml(a.quem) + (a.hora ? ' (' + escapeHtml(a.hora) + ')' : '') + (nomesLista.has(normalizeTexto(a.quem)) ? ' — <b>mesma firma</b>' : '')).join('; ')}</div>` : '';
+  const secaoAud = secaoOutraAgenda('🔍 Auditoria neste dia', '#0F5C7A', '#F3F9FC', audDia, nomesLista, it => `openEvento('auditoria','${it.id}')`);
   if(!list.length){
-    container.innerHTML = labelFiltro + avisoAud + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial' + (_psiCalFiltroData ? ' nesta data.' : ' registrada.') + '</div></div>';
+    container.innerHTML = labelFiltro + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">Nenhuma avaliação psicossocial' + (_psiCalFiltroData ? ' nesta data.' : ' registrada.') + '</div></div>' + secaoAud;
     return;
   }
-  container.innerHTML = labelFiltro + avisoAud + list.map(p => {
+  container.innerHTML = labelFiltro + list.map(p => {
     const cfg = STATUS_CFG[p.status] || {cls:'muted', label:p.status};
     const emp = state.empresas.find(e => e.id === p.empresa);
     const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
@@ -7462,7 +7461,7 @@ function renderPsicossociais(){
       ${p.obs ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:var(--ink-muted)">📝 ${escapeHtml(p.obs)}</div>` : ''}
       ${p.motivo && (p.status==='reagendado'||p.status==='cancelado') ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:#b45309">⚠ ${escapeHtml(p.motivo)}</div>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + secaoAud;
 }
 
 /* ================== CALENDÁRIO PSICOSSOCIAIS ================== */
@@ -7528,8 +7527,8 @@ function renderCalendarioPsi(){
     }).join('');
 
     const esp = diaEspecialAgenda(isoDate);
-    const cls = ['psi-cal-day', temAval?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':'', esp.tipo].filter(Boolean).join(' ');
-    const click = temAval ? `onclick="psiCalFiltrar('${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, avals)}"` : '';
+    const cls = ['psi-cal-day', (temAval || auds.length)?'tem-aval':'', isHoje?'hoje':'', isAtivo?'ativo':'', esp.tipo].filter(Boolean).join(' ');
+    const click = (temAval || auds.length) ? `onclick="psiCalFiltrar('${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, [...avals, ...auds])}"` : '';
     celulas += `<div class="${cls}" ${click}${esp.tipo ? ` title="${escapeHtml(esp.nome)}"` : ''}><span class="psi-cal-num">${diaNum}</span>${esp.curto ? `<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>` : ''}${badges}${audBadges}${extra}</div>`;
   }
 
@@ -7706,8 +7705,7 @@ function renderEventos(tipo){
     ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--green-700)">📅 Mostrando: <b>${fd.split('-').reverse().join('/')}</b> <button class="btn ghost sm" style="font-size:11px" onclick="evCalLimpar('${tipo}')">✕ Limpar filtro</button></div>` : '';
   const psiDia = (tipo === 'auditoria' && fd) ? psicossociaisDoDia(fd) : [];
   const nomesLista = new Set(list.map(e => normalizeTexto(e.empresaLivre || nomeEmpresa(e.empresa) || '')));
-  const avisoPsi = psiDia.length
-    ? `<div style="margin-bottom:12px;padding:8px 12px;border:1px solid #6A1B9A;border-radius:8px;background:#F3E5F5;color:#4A148C;font-size:13px">🧠 <b>Psicossocial neste dia:</b> ${psiDia.map(p => escapeHtml(p.quem) + (p.hora ? ' (' + escapeHtml(p.hora) + ')' : '') + (nomesLista.has(normalizeTexto(p.quem)) ? ' — <b>mesma firma</b>' : '')).join('; ')}</div>` : '';
+  const secaoPsi = secaoOutraAgenda('🧠 Psicossocial neste dia', '#6A1B9A', '#FBF5FC', psiDia, nomesLista, it => `openPsi('${it.id}')`);
   const lab = EV_LABELS[tipo], nenhum = (lab.gen === 'a' ? 'Nenhuma ' : 'Nenhum ') + lab.titulo;
   const modo = _evCal[tipo].modo || 'proximas';
   const MODOS = [['proximas','A partir de hoje'],['mes','Mês do calendário'],['passadas','Passadas'],['todas','Todas']];
@@ -7721,10 +7719,10 @@ function renderEventos(tipo){
       : modo === 'proximas' ? nenhum + ' a partir de hoje. Veja "Passadas" ou "Todas".'
       : modo === 'mes' ? nenhum + ' no mês do calendário.'
       : nenhum + ' registrad' + lab.gen + '.';
-    cont.innerHTML = labelFiltro + avisoPsi + barraModo + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">' + msg + '</div></div>';
+    cont.innerHTML = labelFiltro + barraModo + '<div class="card"><div class="card-b" style="text-align:center;color:var(--ink-muted);padding:32px">' + msg + '</div></div>' + secaoPsi;
     return;
   }
-  cont.innerHTML = labelFiltro + avisoPsi + barraModo + list.map(e => {
+  cont.innerHTML = labelFiltro + barraModo + list.map(e => {
     const cfg = EV_STATUS_CFG[e.status] || {cls:'muted', label:e.status};
     const emp = state.empresas.find(x => x.id === e.empresa);
     const dataFmt = e.data ? e.data.split('-').reverse().join('/') : '—';
@@ -7753,19 +7751,41 @@ function renderEventos(tipo){
       ${e.obs ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:var(--ink-muted)">📝 ${escapeHtml(e.obs)}</div>` : ''}
       ${e.motivo && (e.status==='reagendado'||e.status==='cancelado') ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:#b45309">⚠ ${escapeHtml(e.motivo)}</div>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + secaoPsi;
 }
 
 // Psicossociais marcados numa data (a equipe é a mesma da auditoria: serve para enxergar o dia todo).
 function psicossociaisDoDia(iso){
   return (state.psicossociais || []).filter(p => p.data === iso && p.status !== 'cancelado')
-    .map(p => ({quem: p.empresaLivre || nomeEmpresa(p.empresa) || '—', hora: p.hora || '', status: p.status}));
+    .map(p => ({id: p.id, quem: p.empresaLivre || nomeEmpresa(p.empresa) || '—', data: p.data, hora: p.hora || '', local: p.local || '',
+      responsavel: p.responsavel || '', obs: p.obs || '', status: p.status}));
 }
 function auditoriasDoDia(iso){
   return (state.eventos || []).filter(e => e.tipo === 'auditoria' && e.data === iso && e.status !== 'cancelado')
-    .map(e => ({quem: e.empresaLivre || nomeEmpresa(e.empresa) || '—', hora: e.hora || '', status: e.status}));
+    .map(e => ({id: e.id, quem: e.empresaLivre || nomeEmpresa(e.empresa) || '—', data: e.data, hora: e.hora || '', local: e.local || '',
+      responsavel: e.responsavel || '', obs: e.obs || '', status: e.status}));
 }
 const mesmaFirma = (a, b) => !!a && !!b && normalizeTexto(a) === normalizeTexto(b);
+
+// Cartões do que está marcado no mesmo dia na OUTRA agenda (ao clicar num dia do calendário).
+// nomesLista: firmas já listadas acima, para marcar "mesma firma".
+function secaoOutraAgenda(titulo, cor, fundo, itens, nomesLista, editar){
+  if(!itens.length) return '';
+  const CLS = {pendente:'warn', agendado:'warn', realizado:'ok', reagendado:'muted', cancelado:'danger'};
+  const LAB = {pendente:'Pendente', agendado:'Agendado', realizado:'Realizado', reagendado:'Reagendado', cancelado:'Cancelado'};
+  return `<div style="margin:18px 0 8px;font-weight:700;color:${cor}">${titulo} (${itens.length})</div>` + itens.map(it => `
+    <div class="card" style="border-left:4px solid ${cor};background:${fundo}">
+      <div class="card-h">
+        <div>
+          <h3>${escapeHtml(it.quem)}${nomesLista.has(normalizeTexto(it.quem)) ? ' <span class="pill muted" style="font-size:11px">mesma firma</span>' : ''}</h3>
+          <p>${fmtDate(it.data)}${it.hora ? ' às ' + escapeHtml(it.hora) : ''}${it.local ? ' · ' + escapeHtml(it.local) : ''}</p>
+          ${it.responsavel ? `<p style="font-size:12px;color:var(--ink-muted);margin:2px 0 0">Responsável: ${escapeHtml(it.responsavel)}</p>` : ''}
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span class="pill ${CLS[it.status] || 'muted'}">${LAB[it.status] || escapeHtml(it.status || '')}</span><button class="btn sm" onclick="${editar(it)}">Editar</button></div>
+      </div>
+      ${it.obs ? `<div class="card-b" style="padding-top:6px;font-size:13px;color:var(--ink-muted)">📝 ${escapeHtml(it.obs)}</div>` : ''}
+    </div>`).join('');
+}
 
 function renderCalendarioEvento(tipo){
   const el = $('#evcal-'+tipo);
@@ -7813,8 +7833,8 @@ function renderCalendarioEvento(tipo){
       return `<div class="psi-cal-badge" style="background:${cor}" title="${escapeHtml(nomeEmp)} · ${escapeHtml(a.hora)||''} · ${escapeHtml(a.status)}">${escapeHtml(label)}</div>`;
     }).join('');
     const esp=diaEspecialAgenda(isoDate);
-    const cls=['psi-cal-day',temAval?'tem-aval':'',isHoje?'hoje':'',isAtivo?'ativo':'',esp.tipo].filter(Boolean).join(' ');
-    const click=temAval?`onclick="evCalFiltrar('${tipo}','${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, evs)}"`:'';
+    const cls=['psi-cal-day',(temAval||psis.length)?'tem-aval':'',isHoje?'hoje':'',isAtivo?'ativo':'',esp.tipo].filter(Boolean).join(' ');
+    const click=(temAval||psis.length)?`onclick="evCalFiltrar('${tipo}','${isoDate}')" role="button" tabindex="0" aria-label="${calAria(diaNum, [...evs, ...psis])}"`:'';
     celulas+=`<div class="${cls}" ${click}${esp.tipo?` title="${escapeHtml(esp.nome)}"`:''}><span class="psi-cal-num">${diaNum}</span>${esp.curto?`<span class="psi-cal-fer">${escapeHtml(esp.curto)}</span>`:''}${badges}${psiBadges}${extra}</div>`;
   }
   const btnFiltro=cal.filtroData?`<button class="btn ghost sm" style="margin-left:auto;font-size:11px" onclick="evCalLimpar('${tipo}')">✕ ${cal.filtroData.split('-').reverse().join('/')}</button>`:'';
