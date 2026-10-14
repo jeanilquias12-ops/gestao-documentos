@@ -9,6 +9,9 @@
       "schedule": "0 10 * * 5"
     }
   ],
+  "rewrites": [
+    { "source": "/v/:codigo", "destination": "/verificar.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

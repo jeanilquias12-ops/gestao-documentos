@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Verificar certificado · SECONCI Goiás</title>
+<style>
+:root{--bg:#eef3ef;--ink:#14231a;--muted:#5d6e63;--card:#fff;--line:#d6e0d8;--ok:#1B6B2F;--okbg:#E8F5E9;--warn:#8A5A00;--warnbg:#FFF6E0;--bad:#9B2A1A;--badbg:#FCE6E2}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1a13;--ink:#e8f1ea;--muted:#9db0a2;--card:#16251b;--line:#2a3d30;--ok:#7bd48f;--okbg:#17321f;--warn:#f0b84a;--warnbg:#33290f;--bad:#ff9d8f;--badbg:#3a1a15}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Calibri,Carlito,Arial,Helvetica,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+header{display:flex;align-items:center;gap:10px;margin:8px 0 20px;font-weight:700;letter-spacing:.02em}
+header img{width:34px;height:34px}
+header small{display:block;font-weight:400;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+main{width:100%;max-width:520px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.status{padding:18px 20px;font-size:19px;font-weight:700;display:flex;gap:10px;align-items:center}
+.status.ok{background:var(--okbg);color:var(--ok)}.status.warn{background:var(--warnbg);color:var(--warn)}.status.bad{background:var(--badbg);color:var(--bad)}
+dl{margin:0;padding:6px 20px 14px}
+dt{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:12px}
+dd{margin:2px 0 0;font-size:17px;font-weight:600;word-break:break-word}
+.note{padding:12px 20px 18px;color:var(--muted);font-size:13px;line-height:1.45;border-top:1px solid var(--line)}
+form{display:flex;gap:8px;margin-top:14px}
+input{flex:1;min-width:0;padding:12px;font:inherit;font-size:16px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+button{padding:12px 18px;font:inherit;font-weight:700;border:0;border-radius:10px;background:var(--ok);color:#fff;cursor:pointer}
+@media(prefers-color-scheme:dark){button{color:#0f1a13}}
+.mono{font-variant-numeric:tabular-nums;letter-spacing:.08em}
+footer{margin-top:20px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header><img src="/favicon.png" alt=""><div>SECONCI Goiás<small>Verificação de certificado</small></div></header>
+<main>
+ <div class="card" id="res" aria-live="polite"><div class="status warn">Consultando…</div></div>
+ <form id="f" autocomplete="off"><input id="c" placeholder="Código do certificado" maxlength="14" aria-label="Código do certificado" inputmode="text"><button type="submit">Verificar</button></form>
+</main>
+<footer>Confira se o nome e os dados acima são os mesmos do certificado que você recebeu.</footer>
+<script>
+const URL_API='https://jpmhnlorbrtjeesknwbl.supabase.co/rest/v1/rpc/verificar_certificado';
+const KEY='sb_publishable_J3BY43oX5VIrIdj7qo-TIQ_z7ylupDy';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtData=iso=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''};
+function fmtHoras(h){if(h==null)return '';const n=Number(h),i=Math.floor(n),m=Math.round((n-i)*60);return m?`${i}h${String(m).padStart(2,'0')}`:`${i} hora${i===1?'':'s'}`}
+function mostrar(html){$('res').innerHTML=html}
+function linha(r,v){return v?`<dt>${r}</dt><dd>${esc(v)}</dd>`:''}
+async function verificar(cod){
+  mostrar('<div class="status warn">Consultando…</div>');
+  try{
+    const r=await fetch(URL_API,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({p_codigo:cod})});
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    if(!d||!d.encontrado){mostrar('<div class="status bad">✕ Certificado não encontrado</div><div class="note">Confira o código impresso no certificado. Se estiver correto e o certificado não aparece, ele não foi emitido por este sistema.</div>');return}
+    const ok=d.status==='valido';
+    const cab=ok?'<div class="status ok">✓ Certificado válido</div>':d.status==='substituido'?'<div class="status warn">⚠ Substituído por uma versão corrigida</div>':'<div class="status bad">✕ Certificado cancelado</div>';
+    const nota=ok?'':`<div class="note">${d.status==='substituido'?'Este certificado foi reemitido com dados corrigidos. Peça a versão mais recente ao participante.':'Este certificado não vale mais. Entre em contato com o SECONCI Goiás.'}</div>`;
+    mostrar(cab+'<dl>'+linha('Participante',d.nome)+linha('CPF',d.cpf_mascarado)+linha('Treinamento',d.treinamento)+linha('Data',fmtData(d.data))+linha('Carga horária',fmtHoras(d.carga_horaria))+linha('Local',d.local)+linha('Instrutor',d.instrutor)+`<dt>Código</dt><dd class="mono">${esc(String(d.codigo).replace(/(.{4})(?=.)/g,'$1-'))}</dd></dl>`+nota);
+  }catch(e){mostrar('<div class="status warn">Não foi possível consultar agora</div><div class="note">Verifique a internet e tente de novo.</div>')}
+}
+function codigoDaUrl(){const m=/\/v\/([^/?#]+)/.exec(location.pathname);return m?decodeURIComponent(m[1]):(new URLSearchParams(location.search).get('c')||'')}
+$('f').addEventListener('submit',e=>{e.preventDefault();const c=$('c').value.trim();if(c)verificar(c)});
+const c0=codigoDaUrl();
+if(c0){$('c').value=c0.toUpperCase();verificar(c0)}else mostrar('<div class="status warn">Digite o código impresso no certificado</div>');
+</script>
+</body>
+</html>

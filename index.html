@@ -6784,6 +6784,31 @@ function dadosCertificadoParticipante(p, t){
   };
 }
 
+// Registra o certificado no banco (gera/reaproveita o código do QR de autenticidade).
+// Os dados do certificado vêm do banco; reemitir o mesmo participante sem mudanças devolve o mesmo código.
+async function registrarCertificado(p, t){
+  const tipo = tipoTreinamento(t.tipo);
+  const { data, error } = await db.rpc('emitir_certificado', { p_participante: p.id, p_treinamento: tipo ? tipo.nome : t.tipo });
+  if(error) throw error;
+  return data;
+}
+function dadosCertificadoComCodigo(p, t, codigo){
+  return { ...dadosCertificadoParticipante(p, t), codigo, verificacaoUrl: location.origin + '/v/' + codigo };
+}
+// Abre o certificado (a janela precisa abrir já no clique, senão o navegador bloqueia),
+// espera os códigos e então preenche. fn recebe a janela pronta.
+function abrirCertificadoComCodigos(gerarDados, preencher){
+  const win = window.open('certificado-nr18.html', '_blank');
+  if(!win){ toast('O navegador bloqueou a abertura do certificado — permita pop-ups', 'danger'); return; }
+  let dados = null;
+  const tentar = () => { if(dados && typeof win.preencherCertificado === 'function'){ preencher(win, dados); dados = null; } };
+  win.addEventListener('load', tentar);
+  gerarDados().then(d => { dados = d; tentar(); }).catch(err => {
+    win.close();
+    toast('Não foi possível registrar o certificado: ' + traduzirErro(err && err.message), 'danger');
+  });
+}
+
 function emitirCertificado(participanteId){
   const p = state.treinandos.find(x => x.id === participanteId);
   if(!p) return;
@@ -6797,11 +6822,10 @@ function emitirCertificado(participanteId){
   // A folha física já vem pré-impressa da gráfica (frente decorada + verso
   // inteiro) — certificado-nr18.html só posiciona o texto em milímetros,
   // sem marca d'água nem cor de fundo, pra imprimir por cima dela.
-  const win = window.open('certificado-nr18.html', '_blank');
-  if(!win){ toast('O navegador bloqueou a abertura do certificado — permita pop-ups', 'danger'); return; }
-  win.addEventListener('load', () => {
-    win.preencherCertificado(dadosCertificadoParticipante(p, t));
-  });
+  abrirCertificadoComCodigos(
+    async () => dadosCertificadoComCodigo(p, t, await registrarCertificado(p, t)),
+    (win, dados) => win.preencherCertificado(dados)
+  );
 }
 
 function emitirCertificadosTurma(turmaId){
@@ -6819,11 +6843,14 @@ function emitirCertificadosTurma(turmaId){
   // Uma folha por participante, clonada na mesma aba (ver
   // preencherCertificadosLote em certificado-nr18.html) — imprime tudo de
   // uma vez, um trabalho de impressão só, uma folha pré-impressa por vez.
-  const win = window.open('certificado-nr18.html', '_blank');
-  if(!win){ toast('O navegador bloqueou a abertura do certificado — permita pop-ups', 'danger'); return; }
-  win.addEventListener('load', () => {
-    win.preencherCertificadosLote(participantes.map(p => dadosCertificadoParticipante(p, t)));
-  });
+  abrirCertificadoComCodigos(
+    async () => {
+      const lista = [];
+      for(const p of participantes) lista.push(dadosCertificadoComCodigo(p, t, await registrarCertificado(p, t)));
+      return lista;
+    },
+    (win, lista) => win.preencherCertificadosLote(lista)
+  );
 }
 
 /* ---- Lista de presença NR 18 (modelo oficial RQ.80): uma lista por obra.
