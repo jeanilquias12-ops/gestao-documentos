@@ -5454,10 +5454,10 @@ function setupEvents(){
     }
     const id = $('#md-id').value || 'd'+uid();
     const tipo = $('#md-tipo').value;
-    const elabFin = $('#md-elab-finalizada').checked;
+    const elabFin = $('#md-elab-finalizada').checked || (tipo === 'LTCAT' && $('#md-env-cliente').checked); // LTCAT: enviado ao cliente já encerra
     const retRec = tipo === 'LTCAT' ? false : $('#md-retorno-recebido').checked;
     const obra = $('#md-obra').value;
-    const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:elabFin || $('#md-env-assessoria').checked, envAssessoriaData:$('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-data').value || todayISO()) : ''};
+    const data = {id, empresa, obra, tipo, numero:$('#md-numero').value, responsavel:$('#md-resp').value, emissao, validade:$('#md-validade').value, obs:$('#md-obs').value, envCliente:$('#md-env-cliente').checked, envClienteData:$('#md-env-cliente-data').value, envFinanceiro:$('#md-env-financeiro').checked, envFinanceiroData:$('#md-env-financeiro-data').value, envAssessoria:tipo !== 'LTCAT' && (elabFin || $('#md-env-assessoria').checked), envAssessoriaData:tipo === 'LTCAT' ? '' : $('#md-env-assessoria-data').value, inicioElaboracao:$('#md-inicio-elab').value, respElaboracao:$('#md-resp-elab').value, elabFinalizada:elabFin, retornoRecebido:retRec, retornoAssessoria:retRec ? ($('#md-retorno-recebido-data').value || todayISO()) : ''};
     // Calcular atraso persistente nas transições de fase
     const idx = state.docs.findIndex(d => d.id === id);
     const docAntigo = idx >= 0 ? {...state.docs[idx]} : null;
@@ -5501,7 +5501,7 @@ function setupEvents(){
         if(!docAntigo.inicioElaboracao && data.inicioElaboracao)
           registrarHistorico(id, 'atualizado', `Elaboração iniciada em ${fmtDate(data.inicioElaboracao)}`, data.inicioElaboracao);
         if(!docAntigo.elabFinalizada && data.elabFinalizada){
-          registrarHistorico(id, 'enviado_assessoria', `Elaboração finalizada — enviado à assessoria em ${fmtDate(data.envAssessoriaData)}`, data.envAssessoriaData);
+          registrarHistorico(id, 'enviado_assessoria', data.tipo === 'LTCAT' ? 'Elaboração finalizada' : `Elaboração finalizada — enviado à assessoria em ${fmtDate(data.envAssessoriaData)}`, data.envAssessoriaData || undefined);
           // Avisa a Assessoria de Saúde que um novo documento chegou (só PGR passa por eles)
           if(data.tipo !== 'LTCAT'){
             const msg = `Documento enviado para avaliação da Assessoria de Saúde\n`
