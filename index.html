@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
+<script src="lib/modelos-treinamento.js"></script>
 <style>
   :root{
     --green-900:#0B3D1E;--green-700:#1B6B2F;--green-500:#3FA65C;--green-300:#9FCFAF;--green-100:#EAF4EC;--green-50:#F4F9F5;
@@ -1073,9 +1074,11 @@
   <div class="modal-b"><form id="form-turma"><input type="hidden" id="mt-id" />
     <div class="form-grid">
       <div class="field-block full"><label for="mt-tipo">Norma (NR) *</label><select id="mt-tipo" required></select></div>
+      <div class="field-block" id="mt-modalidade-wrap"><label for="mt-modalidade">Tipo do treinamento</label><select id="mt-modalidade"><option value="inicial">Inicial</option><option value="periodico">Periódico (reciclagem)</option><option value="eventual">Eventual</option></select></div>
       <div class="field-block"><label for="mt-data">Data *</label><input id="mt-data" type="date" required /></div>
-      <div class="field-block"><label for="mt-carga">Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /></div>
+      <div class="field-block"><label for="mt-carga">Carga horária (h) *</label><input id="mt-carga" type="number" min="1" step="0.5" placeholder="Ex: 4" required /><span class="hint" id="mt-carga-dica"></span></div>
       <div class="field-block"><label for="mt-validade">Validade do treinamento</label><input id="mt-validade" type="date" /></div>
+      <div class="field-block full" id="mt-detalhe-wrap" style="display:none"><label for="mt-detalhe" id="mt-detalhe-label">Observações</label><input id="mt-detalhe" maxlength="200" /><span class="hint" id="mt-detalhe-dica"></span></div>
       <div class="field-block full"><label for="mt-local">Local</label><input id="mt-local" placeholder="Ex: Sala de Capacitação do Seconci Goiás" /></div>
       <div class="field-block"><label for="mt-responsavel">Responsável Técnico</label><input id="mt-responsavel" placeholder="Nome do responsável técnico" /></div>
       <div class="field-block">
@@ -4427,19 +4430,13 @@ const PRODUTOS_PGR = [
 ];
 
 /* ================== TIPOS DE TREINAMENTO (NR) ================== */
-// certificadoModelo: identifica qual gerador de certificado usar em gerarCertificado().
-// Só NR-18 tem modelo pronto (RQ-116.01) por enquanto — os outros ficam
-// cadastráveis (pra já poder criar turma) mas emitem aviso "modelo ainda não
-// cadastrado" até o usuário mandar o RQ de cada um.
+// certificadoModelo: chave do modelo de certificado. NR-18 é o modelo original (RQ-116.01);
+// as demais vêm de lib/modelos-treinamento.js (conteúdo programático copiado das NR).
 const TIPOS_TREINAMENTO = [
-  {key:'nr06', nome:'NR-06 — Equipamento de Proteção Individual (EPI)', certificadoModelo:null},
-  {key:'nr10', nome:'NR-10 — Segurança em Instalações e Serviços em Eletricidade', certificadoModelo:null},
-  {key:'nr12', nome:'NR-12 — Segurança no Trabalho em Máquinas e Equipamentos', certificadoModelo:null},
+  ...MODELOS_TREINAMENTO.map(m => ({key:m.key, nome:m.nome, certificadoModelo:m.key})),
   {key:'nr18', nome:'NR-18 — Condições de Segurança e Saúde no Trabalho na Indústria da Construção', certificadoModelo:'nr18',
-    normasTexto:'01 e 18', treinamentoNome:'Treinamento Inicial Básico em Segurança do Trabalho'},
-  {key:'nr33', nome:'NR-33 — Segurança e Saúde em Espaços Confinados', certificadoModelo:null},
-  {key:'nr35', nome:'NR-35 — Trabalho em Altura', certificadoModelo:null},
-];
+    normasTexto:'01 e 18', treinamentoNome:'Treinamento Inicial Básico em Segurança do Trabalho'}
+].sort((a,b) => a.nome.localeCompare(b.nome, 'pt'));
 function tipoTreinamento(key){ return TIPOS_TREINAMENTO.find(t => t.key === key); }
 function recalcTotalContratoPgr(){
   const total = PRODUTOS_PGR.reduce((s,p) => s + (parseFloat($('#cpgr-prod-'+p.key)?.value) || 0), 0);
@@ -6255,7 +6252,7 @@ function renderTreinamentos(){
       ? `<span style="${t.validade < todayISO() ? 'color:var(--danger-fg);font-weight:600' : ''}">${fmtDate(t.validade)}</span>`
       : '—';
     return `<tr>
-      <td><b>${escapeHtml(tipo ? tipo.nome : t.tipo)}</b></td>
+      <td><b>${escapeHtml(tipo ? tipo.nome : t.tipo)}</b>${modeloTreino(t.tipo) && modeloTreino(t.tipo).modalidades.length > 1 ? `<br><small style="color:var(--ink-muted)">${ROTULO_MODALIDADE[t.modalidade] || 'Inicial'}</small>` : ''}</td>
       <td class="tight">${fmtDate(t.data)}</td>
       <td>${t.cargaHoraria ? t.cargaHoraria+'h' : '—'}</td>
       <td class="tight">${validadeHtml}</td>
@@ -6285,6 +6282,25 @@ function popularSelectsAssinatura(){
   if(selResp){ const cur = selResp.value; selResp.innerHTML = opts; selResp.value = cur; }
 }
 
+// Mostra/oculta os campos que dependem da norma escolhida e sugere a validade (data + prazo da norma).
+function atualizarCamposTurma(sugerirValidade){
+  const m = modeloTreino($('#mt-tipo').value);
+  $('#mt-modalidade-wrap').style.display = m && m.modalidades.length > 1 ? '' : 'none';
+  if(m && m.modalidades.length <= 1) $('#mt-modalidade').value = 'inicial';
+  const mod = $('#mt-modalidade').value;
+  const min = cargaMinima(m, mod);
+  $('#mt-carga-dica').textContent = m && m.avisoCarga ? m.avisoCarga : '';
+  $('#mt-detalhe-wrap').style.display = m && (m.detalheRotulo || m.key) ? '' : 'none';
+  $('#mt-detalhe-label').textContent = m && m.detalheRotulo ? m.detalheRotulo + (m.detalheObrigatorio ? ' *' : '') : 'Observações (aparece no certificado)';
+  $('#mt-detalhe-dica').textContent = m && m.detalheAviso ? m.detalheAviso : '';
+  if(sugerirValidade || $('#mt-validade').dataset.auto === '1'){
+    const v = validadeSugerida(m, $('#mt-data').value);
+    if(v){ $('#mt-validade').value = v; $('#mt-validade').dataset.auto = '1'; }
+    else if($('#mt-validade').dataset.auto === '1'){ $('#mt-validade').value = ''; $('#mt-validade').dataset.auto = ''; }
+  }
+  return min;
+}
+
 function openTurma(id){
   const t = id ? state.turmas.find(x => x.id === id) : null;
   $('#mt-title').textContent = t ? 'Editar turma' : 'Nova turma';
@@ -6296,6 +6312,9 @@ function openTurma(id){
   $('#mt-data').value = t?.data || todayISO();
   $('#mt-carga').value = t?.cargaHoraria || '';
   $('#mt-validade').value = t?.validade || '';
+  $('#mt-validade').dataset.auto = '';
+  $('#mt-modalidade').value = t?.modalidade || 'inicial';
+  $('#mt-detalhe').value = t?.detalhe || '';
   $('#mt-local').value = t?.local || '';
   $('#mt-instrutor').value = t?.instrutor || '';
   $('#mt-responsavel').value = t?.responsavelTecnico || '';
@@ -6306,11 +6325,16 @@ function openTurma(id){
   $('#mt-instrutor-assinatura').value = instrCad ? instrCad.id : '';
   $('#mt-responsavel-assinatura').value = t?.responsavelAssinatura || assinaturaResponsavelPadrao()?.id || '';
   $('#mt-delete').style.display = t ? '' : 'none';
+  atualizarCamposTurma(!t);
   openModal('modal-turma');
 }
 
 function setupTreinamentos(){
   $('#btnNewTurma').onclick = () => openTurma(null);
+  $('#mt-tipo').onchange = () => atualizarCamposTurma(true);
+  $('#mt-modalidade').onchange = () => atualizarCamposTurma(false);
+  $('#mt-data').onchange = () => atualizarCamposTurma(false);
+  $('#mt-validade').oninput = () => { $('#mt-validade').dataset.auto = ''; };
   const fTipo = $('#f-turma-tipo');
   if(fTipo) fTipo.onchange = renderTreinamentos;
 
@@ -6319,6 +6343,13 @@ function setupTreinamentos(){
     const data = $('#mt-data').value;
     const cargaHoraria = parseFloat($('#mt-carga').value) || 0;
     if(!tipo || !data || !cargaHoraria){ toast('Preencha norma, data e carga horária', 'danger'); return; }
+    const mod = modeloTreino(tipo);
+    const modalidade = mod && mod.modalidades.length > 1 ? $('#mt-modalidade').value : 'inicial';
+    if(mod && mod.detalheObrigatorio && !$('#mt-detalhe').value.trim()){
+      toast(`Informe: ${mod.detalheRotulo}. ${mod.detalheAviso || ''}`, 'danger'); $('#mt-detalhe').focus(); return;
+    }
+    const minCarga = cargaMinima(mod, modalidade);
+    if(minCarga && cargaHoraria < minCarga && !confirm(`A carga horária (${cargaHoraria} h) está abaixo do mínimo da norma para este treinamento (${minCarga} h).\n\n${mod.avisoCarga || ''}\n\nSalvar assim mesmo?`)) return;
     const id = $('#mt-id').value || ('tt'+uid());
     const obj = {
       id, tipo, data, cargaHoraria,
@@ -6327,7 +6358,8 @@ function setupTreinamentos(){
       instrutor: $('#mt-instrutor').value.trim(),
       responsavelTecnico: $('#mt-responsavel').value.trim(),
       instrutorAssinatura: $('#mt-instrutor-assinatura').value,
-      responsavelAssinatura: $('#mt-responsavel-assinatura').value
+      responsavelAssinatura: $('#mt-responsavel-assinatura').value,
+      modalidade, detalhe: $('#mt-detalhe').value.trim()
     };
     try {
       await salvarTurmaNuvem(obj);
@@ -6773,6 +6805,10 @@ function dadosCertificadoParticipante(p, t){
   const assinaturaInstrutor = t.instrutorAssinatura ? state.assinaturas.find(a => a.id === t.instrutorAssinatura) : null;
   const assinaturaResponsavel = (t.responsavelAssinatura ? state.assinaturas.find(a => a.id === t.responsavelAssinatura) : null) || assinaturaResponsavelPadrao();
   return {
+    modelo: tipoTreinamento(t.tipo)?.certificadoModelo !== 'nr18' ? t.tipo : '',
+    modalidade: t.modalidade || 'inicial',
+    detalhe: t.detalhe || '',
+    instrutor: (assinaturaInstrutor ? assinaturaInstrutor.nome : t.instrutor) || '',
     nome: p.nome,
     cpf: p.cpf || '',
     data: t.data,
@@ -6787,8 +6823,8 @@ function dadosCertificadoParticipante(p, t){
 // Registra o certificado no banco (gera/reaproveita o código do QR de autenticidade).
 // Os dados do certificado vêm do banco; reemitir o mesmo participante sem mudanças devolve o mesmo código.
 async function registrarCertificado(p, t){
-  const tipo = tipoTreinamento(t.tipo);
-  const { data, error } = await db.rpc('emitir_certificado', { p_participante: p.id, p_treinamento: tipo ? tipo.nome : t.tipo });
+  const tipo = tipoTreinamento(t.tipo), m = modeloTreino(t.tipo);
+  const { data, error } = await db.rpc('emitir_certificado', { p_participante: p.id, p_treinamento: m ? tituloTreino(m, t.modalidade) : (tipo ? tipo.nome : t.tipo) });
   if(error) throw error;
   return data;
 }
@@ -6815,7 +6851,7 @@ function emitirCertificado(participanteId){
   const t = state.turmas.find(x => x.id === p.turma);
   if(!t) return;
   const tipo = tipoTreinamento(t.tipo);
-  if(!tipo || tipo.certificadoModelo !== 'nr18'){
+  if(!tipo || !tipo.certificadoModelo){
     toast('Modelo de certificado desta norma ainda não cadastrado', 'danger');
     return;
   }
@@ -6883,6 +6919,13 @@ function gruposPresenca(turmaId){
 
 function montarHtmlListaPresenca(t, grupos, logoUrl){
   const h = escapeHtml;
+  const m = modeloTreino(t.tipo); // NR-18 (original) não tem modelo na lib
+  const nrRotulo = m ? m.nr.replace('-', ' ') : 'NR 18';
+  const programa = m ? m.programaLista : LISTA_PRESENCA_PROGRAMA;
+  const marca = (cond) => cond ? '&nbsp;X&nbsp;' : '&nbsp;&nbsp;&nbsp;';
+  const tituloBox = m
+    ? `<div class="box tit tit3"><b>Título do Treinamento: ${h(nrRotulo)} – ${h(m.curto)}</b><b>INICIAL (${marca(t.modalidade === 'inicial' || !t.modalidade)})</b><b>PERIÓDICO (${marca(t.modalidade === 'periodico')})</b><b>EVENTUAL (${marca(t.modalidade === 'eventual')})</b></div>`
+    : null;
   const dataTurma = fmtDate(t.data);
   const campo = (rot, val) => `<b>${rot}</b>${val ? ' ' + h(val) : ''}`;
   const folhas = [];
@@ -6899,11 +6942,11 @@ function montarHtmlListaPresenca(t, grupos, logoUrl){
   <div class="cab">
     <div class="t1"><div><b>SISTEMA DE GESTÃO DA QUALIDADE - NBR ISO 9001:2015</b></div><div>RQ - REGISTRO DA QUALIDADE</div></div>
     <div class="logo"><img src="${h(logoUrl)}" alt="SECONCI"></div>
-    <div class="t2"><b>LISTA DE PRESENÇA NR 18</b></div>
+    <div class="t2"><b>LISTA DE PRESENÇA ${h(nrRotulo)}</b></div>
     <div class="id"><div>Identificação: RQ.80<br>Página: ${String(pg+1).padStart(2,'0')}/${String(paginas).padStart(2,'0')}</div><div>Revisão: 11/11/2024<br>Versão: 01</div></div>
   </div>
   <div class="gap4"></div>
-  <div class="box tit"><b>Título do Treinamento: NR 18</b><b>ADMISSIONAL (${g.itens.some(p => p.tipoTreino === 'admissional') ? '&nbsp;X&nbsp;' : '&nbsp;&nbsp;&nbsp;'})</b><b>PERIODICO (${g.itens.some(p => p.tipoTreino === 'periodico') ? '&nbsp;&nbsp;X&nbsp;&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'})</b></div>
+  ${tituloBox || `<div class="box tit"><b>Título do Treinamento: NR 18</b><b>ADMISSIONAL (${g.itens.some(p => p.tipoTreino === 'admissional') ? '&nbsp;X&nbsp;' : '&nbsp;&nbsp;&nbsp;'})</b><b>PERIODICO (${g.itens.some(p => p.tipoTreino === 'periodico') ? '&nbsp;&nbsp;X&nbsp;&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'})</b></div>`}
   <div class="par"><div>${campo('Instrutor :', t.instrutor)}</div><div>${campo('Visto:', '')}</div></div>
   <div class="par"><div>${campo('Local:', t.local)}</div><div>${campo('Horário:', '')}</div></div>
   <div class="gap1"></div>
@@ -6911,13 +6954,13 @@ function montarHtmlListaPresenca(t, grupos, logoUrl){
   <div class="par emp2"><div>${campo('Endereço:', g.endereco)}</div><div>${campo('CNPJ :', g.cnpj)}</div></div>
   <div class="gap1"></div>
   <div class="prog-h"><b>Programa (Principais Assuntos Abordados)</b></div>
-  <div class="prog">${h(LISTA_PRESENCA_PROGRAMA)}</div>
+  <div class="prog">${h(programa)}</div>
   <div class="gap1"></div>
   <table><thead><tr><th class="n">Nº</th><th class="nome">Nome do Participante</th><th class="cpf">CPF</th><th class="fun">Função</th><th class="dt">Data</th><th class="vis">Visto do Participante</th></tr></thead><tbody>${linhas.join('')}</tbody></table>
 </section>`);
     }
   });
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de presença NR 18</title><style>
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de presença ${h(nrRotulo)}</title><style>
     @page{size:A4 portrait;margin:8mm 10mm}
     :root{color-scheme:light}*{box-sizing:border-box}html,body{background:#fff}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#000;font-size:10pt}
     .bar{padding:10px 14px;background:#f3f4f6;border-bottom:1px solid #ddd;display:flex;gap:10px;align-items:center;font-size:13px}
@@ -6932,11 +6975,12 @@ function montarHtmlListaPresenca(t, grupos, logoUrl){
     .gap4{height:4.4mm}.gap1{height:1.5mm}
     .box,.par>div,.prog-h,.prog{border:1px solid #000;padding:0 1mm;display:flex;align-items:center}
     .tit{height:9.7mm;position:relative;padding:0 1.5mm}.tit b:nth-child(n+2){position:absolute;top:50%;transform:translateY(-50%)}.tit b:nth-child(2){left:36%}.tit b:nth-child(3){left:64%}
+    .tit3{display:flex;justify-content:space-between;gap:4mm}.tit3 b:nth-child(n+2){position:static;transform:none;white-space:nowrap}
     .par{display:grid;grid-template-columns:1fr 1fr;height:5.8mm}.par.emp{height:5.1mm}.par.emp2{height:6.2mm}.par>div+div{border-left:0}
     .par:nth-of-type(n)>div{border-top:0}.tit+.par>div{border-top:1px solid #000}
     .par b{margin-right:1.5mm;white-space:nowrap}.par>div{overflow:hidden;white-space:nowrap}
     .par.emp,.par.emp2{height:auto}.par.emp{min-height:5.1mm}.par.emp2{min-height:6.2mm}.par.emp>div,.par.emp2>div{white-space:normal;line-height:1.1;padding-top:.5mm;padding-bottom:.5mm;font-size:9pt}.par.emp b,.par.emp2 b{font-size:10pt}
-    .prog-h{height:6mm;background:#c0c0c0;font-size:8pt}.prog{height:22mm;border-top:0;align-items:flex-start;padding:.6mm 1mm;font-size:10pt;line-height:1.25}
+    .prog-h{height:6mm;background:#c0c0c0;font-size:8pt}.prog{min-height:22mm;border-top:0;align-items:flex-start;padding:.6mm 1mm;font-size:10pt;line-height:1.25}
     table{width:100%;border-collapse:collapse;table-layout:fixed}
     th,td{border:1px solid #000;height:6.5mm;padding:0 1.2mm;font-size:8pt;overflow:hidden;text-align:left;line-height:1.05}
     th{background:#c0c0c0;height:5mm;text-align:center;white-space:nowrap}.c{text-align:center}
@@ -6949,7 +6993,7 @@ function imprimirListaPresenca(turmaId){
   const t = state.turmas.find(x => x.id === turmaId);
   if(!t) return;
   const tipo = tipoTreinamento(t.tipo);
-  if(!tipo || tipo.certificadoModelo !== 'nr18'){
+  if(!tipo || !tipo.certificadoModelo){
     toast('Modelo de lista de presença desta norma ainda não cadastrado', 'danger');
     return;
   }
@@ -7861,7 +7905,8 @@ function turmaRow(t){
     instrutor: t.instrutor || '', validade: t.validade || null,
     responsavel_tecnico: t.responsavelTecnico || '',
     instrutor_assinatura_id: t.instrutorAssinatura || null,
-    responsavel_assinatura_id: t.responsavelAssinatura || null
+    responsavel_assinatura_id: t.responsavelAssinatura || null,
+    modalidade: t.modalidade || 'inicial', detalhe: t.detalhe || ''
   };
 }
 async function salvarTurmaNuvem(t){
@@ -8204,7 +8249,9 @@ async function carregarDaNuvem() {
       validade:      t.validade || '',
       responsavelTecnico:    t.responsavel_tecnico || '',
       instrutorAssinatura:   t.instrutor_assinatura_id || '',
-      responsavelAssinatura: t.responsavel_assinatura_id || ''
+      responsavelAssinatura: t.responsavel_assinatura_id || '',
+      modalidade:    t.modalidade || 'inicial',
+      detalhe:       t.detalhe || ''
     }))
   }
 
